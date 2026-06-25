@@ -1,5 +1,7 @@
 # M4 积分账本 Implementation Plan
 
+**Status:** `[~]` M4.1 已完成并有 RED/GREEN 证据；当前入口是 M4.2 枚举和错误码。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 建立积分流水、账户缓存、冻结、撤销、调整、余额重算能力，让 `club_points_transaction` 成为唯一积分事实源。
@@ -59,18 +61,26 @@
 
 ## 任务 M4.1 DO 和 Mapper
 
-- [ ] 创建 `ClubPointTransactionDO`。
-- [ ] 创建 `ClubPointAccountDO`。
-- [ ] 创建 `ClubPointFreezeDO`。
-- [ ] 创建 `ClubPointUserYearStatusDO`。
-- [ ] 创建对应 Mapper。
-- [ ] DO 字段和 DDL 保持一致。
+- [x] 创建 `ClubPointTransactionDO`。
+- [x] 创建 `ClubPointAccountDO`。
+- [x] 创建 `ClubPointFreezeDO`。
+- [x] 创建 `ClubPointUserYearStatusDO`。
+- [x] 创建对应 Mapper。
+- [x] DO 字段和 DDL 保持一致。
 
 验收：
 
-- [ ] DO 继承 `BaseDO`。
-- [ ] Mapper 继承 `BaseMapperX<T>`。
-- [ ] 不直接暴露余额修改 Mapper 给业务层乱用。
+- [x] DO 继承 `BaseDO`。
+- [x] Mapper 继承 `BaseMapperX<T>`。
+- [x] 不直接暴露余额修改 Mapper 给业务层乱用。
+
+证据：
+
+- RED：新增 `ClubPointLedgerMapperTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLedgerMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `dal.dataobject.ledger` 包和四个 Ledger Mapper 不存在。
+- GREEN：新增 `ClubPointTransactionDO`、`ClubPointAccountDO`、`ClubPointFreezeDO`、`ClubPointUserYearStatusDO`，新增 `ClubPointTransactionMapper`、`ClubPointAccountMapper`、`ClubPointFreezeMapper`、`ClubPointUserYearStatusMapper`。
+- 修复记录：H2 单测环境中 `year` 是保留字，`ClubPointUserYearStatusDO.year` 使用 ``@TableField("`year`")`` 显式映射，保持正式 DDL 字段名不漂移。
+- M4.1 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointLedgerMapperTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
+- 边界：本任务只提供基础查询 Mapper，不实现余额变更业务方法；后续积分变动必须从 M4.3 `LedgerService` 统一进入。
 
 ## 任务 M4.2 枚举和错误码
 

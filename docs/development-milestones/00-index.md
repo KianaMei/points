@@ -42,7 +42,7 @@
 | `[x]` | M1 | `M1-database-and-seed.md` | 正式 schema、seed、测试 DDL 一致 |
 | `[x]` | M2 | `M2-permission-crosscutting.md` | 权限、范围、审计、附件、通知横切能力可复用 |
 | `[x]` | M3 | `M3-rule-config.md` | 规则版本和规则项可发布、停用、读取 |
-| `[ ]` | M4 | `M4-ledger.md` | 积分流水、冻结、余额缓存形成账本脊柱 |
+| `[~]` | M4 | `M4-ledger.md` | 积分流水、冻结、余额缓存形成账本脊柱 |
 | `[ ]` | M5 | `M5-club-member-leader.md` | 俱乐部、成员、负责人闭环可用 |
 | `[ ]` | M6 | `M6-activity-registration-attendance.md` | 活动、报名、签到签退、特殊缺席闭环可用 |
 | `[ ]` | M7 | `M7-activity-settlement.md` | 活动积分和缺席扣分可幂等结算 |
@@ -104,3 +104,5 @@ M0 空模块
 - M3.5 已完成 `ClubPointRuleResolveService`、规则快照 BO、按发生时间读取已发布版本、按版本和编码读取规则项、固定分值读取、区间校验和规则快照构建，并通过 M3.5 RED/GREEN 单测验证。
 - M3.6 已完成规则状态机、业务读取、分值边界和无发布版本失败测试收口，并通过 M3 组合测试验证。
 - M3 已放行；下一步入口是 M4 积分账本脊柱。
+- M4.1 已完成积分流水、账户缓存、冻结、年度状态四张表 DO 与 Mapper，并通过 RED/GREEN 映射测试验证。
+- M4 下一步入口是 M4.2 枚举和错误码。

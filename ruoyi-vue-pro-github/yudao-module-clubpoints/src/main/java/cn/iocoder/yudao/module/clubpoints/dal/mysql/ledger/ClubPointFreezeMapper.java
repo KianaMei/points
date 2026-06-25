@@ -1,0 +1,27 @@
+package cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger;
+
+import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
+import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointFreezeDO;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface ClubPointFreezeMapper extends BaseMapperX<ClubPointFreezeDO> {
+
+    default ClubPointFreezeDO selectByFreezeNo(String freezeNo) {
+        return selectOne(new LambdaQueryWrapperX<ClubPointFreezeDO>()
+                .eq(ClubPointFreezeDO::getFreezeNo, freezeNo));
+    }
+
+    default ClubPointFreezeDO selectByIdempotencyKey(String idempotencyKey) {
+        return selectOne(new LambdaQueryWrapperX<ClubPointFreezeDO>()
+                .eq(ClubPointFreezeDO::getIdempotencyKey, idempotencyKey));
+    }
+
+    default ClubPointFreezeDO selectBySource(Integer sourceType, Long sourceId) {
+        return selectOne(new LambdaQueryWrapperX<ClubPointFreezeDO>()
+                .eq(ClubPointFreezeDO::getSourceType, sourceType)
+                .eq(ClubPointFreezeDO::getSourceId, sourceId));
+    }
+
+}

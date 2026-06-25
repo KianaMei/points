@@ -128,3 +128,12 @@
 - 2026-06-25：M3 组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRuleMapperTest,ClubPointRuleEnumTest,ClubPointRuleServiceImplTest,ClubPointRuleAdminControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `27` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M3.6 测试收口：草稿创建、发布成功、已发布不可修改、停用成功、分值越界失败、固定分值规则、无已发布版本时业务读取失败均已有测试覆盖。
 - 2026-06-25：M3 放行：规则版本、规则项、Admin API、业务读取封装、规则快照 JSON 和测试收口均有验证证据；`00-index.md` 当前入口切换到 M4 积分账本脊柱。
+
+## M4 积分账本
+
+- 2026-06-25：读取 `M4-ledger.md`、账本相关数据库设计、开发计划和当前 schema；确认 M4.1 只处理积分流水、账户缓存、冻结、年度状态四张表 DO/Mapper，不写 LedgerService 或冻结业务。
+- 2026-06-25：M4.1 RED：新增 `ClubPointLedgerMapperTest`，覆盖四张账本表的字段落库和基础查询；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLedgerMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `dal.dataobject.ledger` 包和四个 Ledger Mapper 不存在。
+- 2026-06-25：M4.1 GREEN：新增 `ClubPointTransactionDO`、`ClubPointAccountDO`、`ClubPointFreezeDO`、`ClubPointUserYearStatusDO`，新增 `ClubPointTransactionMapper`、`ClubPointAccountMapper`、`ClubPointFreezeMapper`、`ClubPointUserYearStatusMapper`；Mapper 只提供账本后续需要的基础查询，不提供业务余额修改入口。
+- 2026-06-25：M4.1 调试记录：首次 GREEN 后 H2 在 `club_points_user_year_status.year` 插入时报 `year` 保留字语法错误；根因为 MyBatis 默认生成裸列名，最小修复为 `ClubPointUserYearStatusDO.year` 添加 ``@TableField("`year`")``，不改正式 DDL 字段名。
+- 2026-06-25：M4.1 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointLedgerMapperTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M4.1 文档同步：`M4-ledger.md` 勾选 M4.1 并补证据，`00-index.md` 将 M4 标为进行中并把下一入口切换到 M4.2 枚举和错误码。
