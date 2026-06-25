@@ -43,6 +43,25 @@ Then read at most 1-2 relevant `docs/startup/*` short files for the current task
 
 Do not read all long design documents by default. Only open the detailed documents listed in `docs/startup/09-doc-router.md` when the short startup files are not enough.
 
+## Club Points Milestones
+
+Milestones are mandatory execution inputs, not optional background notes.
+
+- Implementation order summary: `docs/startup/08-implementation-order.md`
+- Overall landing plan: `docs/club-points-development-plan.md`
+- Detailed execution index: `docs/development-milestones/00-index.md`
+- Shared milestone execution rules: `docs/development-milestones/01-superpowers-execution-rules.md`
+
+When doing development work:
+
+1. Read `docs/development-milestones/00-index.md`.
+2. Read `docs/development-milestones/01-superpowers-execution-rules.md`.
+3. Read only the current milestone file under `docs/development-milestones/`.
+4. Do not jump to a later milestone before the current one has verification evidence.
+5. Treat Superpowers commit steps as checkpoints only, because this project forbids git commits unless explicitly requested.
+
+Do not duplicate the milestone details inside this file. `AGENTS.md` is the entry contract; the milestone files are the source of truth.
+
 ## Installed Superpowers Skills
 
 - `using-superpowers`: Entry workflow for checking and using relevant skills before acting.
