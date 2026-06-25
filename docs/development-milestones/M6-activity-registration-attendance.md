@@ -1,6 +1,6 @@
 # M6 活动、报名、签到签退 Implementation Plan
 
-**Status:** `[~]` M6.1-M6.2 已完成并有 RED/GREEN 证据；当前入口是 M6.3 活动 Service。
+**Status:** `[~]` M6.1-M6.4 已完成并有 RED/GREEN 证据；当前入口是 M6.5 签到签退 Service。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -134,19 +134,27 @@
 
 ## 任务 M6.4 报名 Service
 
-- [ ] 员工报名活动。
-- [ ] 员工取消报名。
-- [ ] 负责人查看报名名单。
-- [ ] 管理员查看报名名单。
-- [ ] 校验员工是否满足报名范围。
-- [ ] 校验活动报名时间。
-- [ ] 报名唯一键防重复。
+- [x] 员工报名活动。
+- [x] 员工取消报名。
+- [x] 负责人查看报名名单。
+- [x] 管理员查看报名名单。
+- [x] 校验员工是否满足报名范围。
+- [x] 校验活动报名时间。
+- [x] 报名唯一键防重复。
 
 验收：
 
-- [ ] 员工不能重复报名同一活动。
-- [ ] 非成员不能报名仅限成员活动。
-- [ ] 报名截止后不能报名。
+- [x] 员工不能重复报名同一活动。
+- [x] 非成员不能报名仅限成员活动。
+- [x] 报名截止后不能报名。
+
+证据：
+
+- RED：新增 `ClubPointRegistrationServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRegistrationServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointRegistrationService`、`ClubPointRegistrationServiceImpl`、报名 BO、报名枚举和报名错误码不存在，符合 M6.4 RED 预期。
+- GREEN：新增 `ClubPointRegistrationService` / `ClubPointRegistrationServiceImpl` 和创建、取消、分页 BO；新增报名状态枚举和取消原因枚举；补报名截止、取消窗口关闭、重复报名、报名记录不存在错误码；报名 Mapper 增加有效报名查询和分页查询。
+- 实现边界：员工只能报名已发布活动，且必须是活动所属俱乐部有效成员；报名时间不能晚于 `registrationDeadline`；重复有效报名先业务校验，再由 `active_unique_key` 唯一键兜底；报名保存成员、俱乐部、活动标题和活动时间快照；员工取消本人报名会清空 `activeUniqueKey`，设置 `noAbsenceDeduct=true`；负责人报名分页以 `validateManagedClub(...)` 限制负责俱乐部；管理员报名分页全局查询；M6.4 不生成积分流水。
+- M6.4 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRegistrationServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRegistrationServiceImplTest` 运行 `6` 个测试，失败 `0`，错误 `0`。
+- M6 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivityMapperTest,ClubPointActivityEnumTest,ClubPointActivityServiceImplTest,ClubPointRegistrationServiceImplTest,ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubPointClubQueryControllerTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `61` 个测试，失败 `0`，错误 `0`。
 
 ## 任务 M6.5 签到签退 Service
 

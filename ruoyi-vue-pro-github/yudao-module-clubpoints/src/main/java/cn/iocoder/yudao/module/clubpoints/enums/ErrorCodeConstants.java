@@ -44,5 +44,9 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_ACTIVITY_NOT_FOUND = new ErrorCode(1_300_000_032, "活动不存在");
     ErrorCode CLUB_ACTIVITY_TIME_INVALID = new ErrorCode(1_300_000_033, "活动时间配置无效");
     ErrorCode CLUB_ACTIVITY_LEVEL_INVALID = new ErrorCode(1_300_000_034, "活动等级无效");
+    ErrorCode CLUB_ACTIVITY_REGISTRATION_CLOSED = new ErrorCode(1_300_000_035, "活动报名已截止");
+    ErrorCode CLUB_ACTIVITY_CANCEL_WINDOW_CLOSED = new ErrorCode(1_300_000_036, "活动取消报名窗口已关闭");
+    ErrorCode CLUB_ACTIVITY_REGISTRATION_DUPLICATED = new ErrorCode(1_300_000_037, "活动报名重复");
+    ErrorCode CLUB_ACTIVITY_REGISTRATION_NOT_FOUND = new ErrorCode(1_300_000_038, "活动报名记录不存在");
 
 }
