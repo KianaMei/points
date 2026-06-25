@@ -1,6 +1,6 @@
 # M5 俱乐部、成员、负责人 Implementation Plan
 
-**Status:** `[~]` M5.1-M5.6 已完成并有 RED/GREEN 证据；当前入口是 M5.7 测试。
+**Status:** `[x]` M5.1-M5.7 已完成并有验证证据；下一入口是 M6 活动报名签到。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -315,31 +315,51 @@ GREEN 证据：
 
 ## 任务 M5.7 测试
 
-- [ ] 测试创建俱乐部。
-- [ ] 测试停用俱乐部后不能新增业务。
-- [ ] 测试物理删除强确认。
-- [ ] 测试成员加入和退出。
-- [ ] 测试重复加入失败。
-- [ ] 测试负责人设置和移除。
-- [ ] 测试负责人越权失败。
-- [ ] 测试删除后历史快照仍可读。
+- [x] 测试创建俱乐部。
+- [x] 测试停用俱乐部后不能新增业务。
+- [x] 测试物理删除强确认。
+- [x] 测试成员加入和退出。
+- [x] 测试重复加入失败。
+- [x] 测试负责人设置和移除。
+- [x] 测试负责人越权失败。
+- [x] 测试删除后历史快照仍可读。
 
 验收：
 
-- [ ] 主数据测试通过。
-- [ ] 数据范围测试通过。
-- [ ] 强审计测试通过。
+- [x] 主数据测试通过。
+- [x] 数据范围测试通过。
+- [x] 强审计测试通过。
+
+证据：
+
+- 创建俱乐部、修改、停用、启用、物理删除强确认、物理删除强审计、审计失败回滚由 `ClubPointClubServiceImplTest` 覆盖。
+- 停用俱乐部后不能新增成员业务、成员加入、管理员添加、退出、移除、重复加入失败、历史活动和流水不删除由 `ClubPointMemberServiceImplTest` 覆盖。
+- M5.7 补强 `ClubPointMemberServiceImplTest#removeMemberShouldMarkRemovedCancelRegistrationsAndKeepHistoryRows`，直接读取 `club_points_activity.club_name_snapshot` 和 `club_points_transaction.issuing_club_name_snapshot`，验证移除成员后历史快照仍可读。
+- 负责人设置、移除、重复设置失败、非全局操作者越权失败、移除后范围收缩和审计失败回滚由 `ClubPointLeaderServiceImplTest` 覆盖。
+- 员工本人俱乐部、可加入俱乐部、成员分页范围、负责人负责俱乐部列表和详情、管理员俱乐部/成员/负责人全局分页，以及查询接口路径和权限声明由 `ClubPointClubQueryControllerTest` 覆盖。
+- M5.7 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointMemberServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointMemberServiceImplTest` 运行 `8` 个测试，失败 `0`，错误 `0`。
+- M5 收口组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubPointClubQueryControllerTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `43` 个测试，失败 `0`，错误 `0`。
 
 ## M5 放行标准
 
-- [ ] 俱乐部 CRUD 可用。
-- [ ] 成员关系可用。
-- [ ] 负责人关系可用。
-- [ ] 数据范围可基于负责人关系判断。
-- [ ] 删除和移除都有审计和快照策略。
+- [x] 俱乐部 CRUD 可用。
+- [x] 成员关系可用。
+- [x] 负责人关系可用。
+- [x] 数据范围可基于负责人关系判断。
+- [x] 删除和移除都有审计和快照策略。
+
+放行证据：
+
+- `ClubPointClubServiceImplTest` 验证俱乐部创建、更新、停用、启用、物理删除强确认、历史引用阻断和强审计失败回滚。
+- `ClubPointMemberServiceImplTest` 验证成员加入、管理员添加、退出、移除、重复加入失败、停用俱乐部拒绝加入、报名范围收缩和历史快照保留。
+- `ClubPointLeaderServiceImplTest` 验证负责人任免、有效用户校验、非全局操作者越权失败、移除后 `ClubScopeService` 范围立即收缩和强审计失败回滚。
+- `ClubPointClubQueryControllerTest` 验证员工、负责人、管理员三端查询 API 的数据范围和权限声明。
+- M5 收口组合验证和质量门禁均已通过；未跑 full build。
 
 ## M5 不通过时禁止
 
-- [ ] 禁止写活动报名。
-- [ ] 禁止写负责人活动管理。
-- [ ] 禁止写俱乐部排名。
+- [x] 禁止写活动报名。
+- [x] 禁止写负责人活动管理。
+- [x] 禁止写俱乐部排名。
+
+执行记录：M5 放行前未进入 M6-M10 业务实现；本次只完成 M5 测试收口、文档同步和放行记录。

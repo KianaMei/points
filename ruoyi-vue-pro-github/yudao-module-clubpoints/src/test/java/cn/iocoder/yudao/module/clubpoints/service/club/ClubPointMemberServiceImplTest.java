@@ -178,6 +178,8 @@ class ClubPointMemberServiceImplTest extends BaseDbUnitTest {
         assertTrue(registration.noAbsenceDeduct);
         assertEquals(1L, countRows("club_points_activity", "club_id", club.getId()));
         assertEquals(1L, countRows("club_points_transaction", "issuing_club_id", club.getId()));
+        assertEquals(club.getName(), selectActivityClubNameSnapshot(club.getId()));
+        assertEquals(club.getName(), selectLedgerIssuingClubNameSnapshot(club.getId()));
         assertServiceException(() -> clubScopeService.validateJoinedClub(1006L, club.getId()), CLUB_SCOPE_DENIED);
         ClubAuditLogDO auditLog = selectLatestAuditLog();
         assertEquals(CLUB_MEMBER_REMOVE, auditLog.getActionType());
@@ -391,6 +393,28 @@ class ClubPointMemberServiceImplTest extends BaseDbUnitTest {
                         resultSet.getLong("cancel_operator_user_id"),
                         resultSet.getBoolean("no_absence_deduct"),
                         resultSet.getString("active_unique_key"));
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    private String selectActivityClubNameSnapshot(Long clubId) {
+        return selectString("club_points_activity", "club_name_snapshot", "club_id", clubId);
+    }
+
+    private String selectLedgerIssuingClubNameSnapshot(Long clubId) {
+        return selectString("club_points_transaction", "issuing_club_name_snapshot", "issuing_club_id", clubId);
+    }
+
+    private String selectString(String tableName, String selectColumn, String whereColumn, Long value) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT " + selectColumn + " FROM " + tableName + " WHERE " + whereColumn + " = ?")) {
+            statement.setLong(1, value);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                resultSet.next();
+                return resultSet.getString(1);
             }
         } catch (SQLException ex) {
             throw new IllegalStateException(ex);

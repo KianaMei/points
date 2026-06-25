@@ -43,7 +43,7 @@
 | `[x]` | M2 | `M2-permission-crosscutting.md` | 权限、范围、审计、附件、通知横切能力可复用 |
 | `[x]` | M3 | `M3-rule-config.md` | 规则版本和规则项可发布、停用、读取 |
 | `[x]` | M4 | `M4-ledger.md` | 积分流水、冻结、余额缓存形成账本脊柱 |
-| `[~]` | M5 | `M5-club-member-leader.md` | 俱乐部、成员、负责人闭环可用 |
+| `[x]` | M5 | `M5-club-member-leader.md` | 俱乐部、成员、负责人闭环可用 |
 | `[ ]` | M6 | `M6-activity-registration-attendance.md` | 活动、报名、签到签退、特殊缺席闭环可用 |
 | `[ ]` | M7 | `M7-activity-settlement.md` | 活动积分和缺席扣分可幂等结算 |
 | `[ ]` | M8 | `M8-contribution-violation.md` | 非签到积分、违规扣分、弄虚作假闭环可用 |
@@ -82,7 +82,7 @@ M0 空模块
 
 ## 当前最近入口
 
-当前最近入口是 M5：
+当前最近入口是 M6：
 
 - M0 已创建 `ruoyi-vue-pro-github/yudao-module-clubpoints` 空模块。
 - M0 已在根 POM 和 `yudao-server/pom.xml` 接入 `yudao-module-clubpoints`。
@@ -119,4 +119,5 @@ M0 空模块
 - M5.4 已完成 `ClubPointMemberService` 员工加入、管理员添加、员工退出、管理员移除、成员状态审计、自动取消有效报名和范围收缩，并通过 RED/GREEN 服务测试。
 - M5.5 已完成 `ClubPointLeaderService` 管理员设置负责人、移除负责人、有效用户校验、强审计和负责人范围立即生效，并通过 RED/GREEN 服务测试。
 - M5.6 已完成员工本人俱乐部、可加入俱乐部、成员分页、负责人负责俱乐部、管理员俱乐部/成员/负责人查询 API，并通过 RED/GREEN 查询接口测试。
-- M5 下一步入口是 M5.7 测试。
+- M5.7 已完成测试收口，覆盖创建俱乐部、停用后拒绝新增成员业务、物理删除强确认、成员加入退出、重复加入失败、负责人任免、负责人越权失败和历史快照仍可读，并通过 M5 收口组合验证。
+- M5 已放行；下一步入口是 M6 活动、报名、签到签退、特殊缺席闭环。
