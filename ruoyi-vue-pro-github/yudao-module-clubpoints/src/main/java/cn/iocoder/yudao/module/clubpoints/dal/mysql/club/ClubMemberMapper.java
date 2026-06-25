@@ -7,9 +7,11 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubMemberDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Mapper
 public interface ClubMemberMapper extends BaseMapperX<ClubMemberDO> {
@@ -29,6 +31,30 @@ public interface ClubMemberMapper extends BaseMapperX<ClubMemberDO> {
                 .eqIfPresent(ClubMemberDO::getUserId, userId)
                 .orderByDesc(ClubMemberDO::getId));
     }
+
+    default PageResult<ClubMemberDO> selectPageByClubId(PageParam pageParam, Long clubId,
+                                                        Integer status, Long userId) {
+        return selectPage(pageParam, new LambdaQueryWrapperX<ClubMemberDO>()
+                .eqIfPresent(ClubMemberDO::getClubId, clubId)
+                .eqIfPresent(ClubMemberDO::getStatus, status)
+                .eqIfPresent(ClubMemberDO::getUserId, userId)
+                .orderByDesc(ClubMemberDO::getId));
+    }
+
+    default List<ClubMemberDO> selectActiveListByUserId(Long userId, Integer status) {
+        return selectList(new LambdaQueryWrapperX<ClubMemberDO>()
+                .eq(ClubMemberDO::getUserId, userId)
+                .eq(ClubMemberDO::getStatus, status)
+                .orderByDesc(ClubMemberDO::getId));
+    }
+
+    @Select("SELECT club_id FROM club_points_club_member WHERE user_id = #{userId} AND status = #{status}")
+    List<Long> selectClubIdsByUserIdAndStatus(@Param("userId") Long userId,
+                                              @Param("status") Integer status);
+
+    @Select("SELECT COUNT(1) FROM club_points_club_member WHERE club_id = #{clubId} AND status = #{status}")
+    Long selectCountByClubIdAndStatus(@Param("clubId") Long clubId,
+                                      @Param("status") Integer status);
 
     @Update("UPDATE club_points_activity_registration"
             + " SET status = #{status}, cancel_time = #{cancelTime}, cancel_reason_type = #{cancelReasonType},"

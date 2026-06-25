@@ -1,6 +1,6 @@
 # M5 俱乐部、成员、负责人 Implementation Plan
 
-**Status:** `[~]` M5.1-M5.5 已完成并有 RED/GREEN 证据；当前入口是 M5.6 查询 API。
+**Status:** `[~]` M5.1-M5.6 已完成并有 RED/GREEN 证据；当前入口是 M5.7 测试。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -231,19 +231,87 @@ GREEN 证据：
 
 ## 任务 M5.6 查询 API
 
-- [ ] 员工查询可加入俱乐部列表。
-- [ ] 员工查询本人俱乐部。
-- [ ] 负责人查询负责俱乐部。
-- [ ] 管理员查询俱乐部列表。
-- [ ] 管理员查询俱乐部详情。
-- [ ] 管理员查询成员列表。
-- [ ] 管理员查询负责人列表。
+### Task M5.6: 查询 API
+
+**Files:**
+
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/club/ClubPointClubQueryService.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/club/ClubPointClubQueryServiceImpl.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/club/bo/ClubPointClubPageReqBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/club/bo/ClubPointClubMemberPageReqBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/club/bo/ClubPointClubLeaderPageReqBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/club/bo/ClubPointClubInfoBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/club/bo/ClubPointClubMemberBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/club/bo/ClubPointClubLeaderBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/app/club/ClubPointClubAppController.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/app/club/vo/AppClubPageReqVO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/app/club/vo/AppClubRespVO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/app/club/vo/AppClubMemberPageReqVO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/app/club/vo/AppClubMemberRespVO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/leader/club/ClubPointClubLeaderController.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/leader/club/vo/LeaderClubRespVO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/club/ClubPointClubAdminController.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/club/ClubPointClubMemberAdminController.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/club/ClubPointClubLeaderAdminController.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/club/vo/AdminClubPageReqVO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/club/vo/AdminClubRespVO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/club/vo/AdminClubMemberPageReqVO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/club/vo/AdminClubMemberRespVO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/club/vo/AdminClubLeaderPageReqVO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/club/vo/AdminClubLeaderRespVO.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/club/ClubPointClubMapper.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/club/ClubMemberMapper.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/club/ClubLeaderMapper.java`
+- Test: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/test/java/cn/iocoder/yudao/module/clubpoints/controller/club/ClubPointClubQueryControllerTest.java`
+
+**Interfaces:**
+
+- Consumes: `club_points_club`、`club_points_club_member`、`club_points_club_leader`、`club_points_point_account`、`ClubScopeService.validateSelf(...)`、`ClubScopeService.validateJoinedClub(...)`、`ClubScopeService.validateManagedClub(...)`
+- Produces:
+  - `GET /clubpoints/app/club/my-list`
+  - `GET /clubpoints/app/club/joinable-page`
+  - `GET /clubpoints/app/club/member-page`
+  - `GET /clubpoints/leader/club/my-managed-list`
+  - `GET /clubpoints/leader/club/get`
+  - `GET /clubpoints/club/page`
+  - `GET /clubpoints/club/get`
+  - `GET /clubpoints/club-member/page`
+  - `GET /clubpoints/club-leader/page`
+- Decision: M5.6 只实现里程碑列出的查询接口；负责人端成员分页仍按 API 文档保留给后续负责人运营接口收口，不在本任务越界。
+
+- [x] RED: 写失败测试或失败验证
+- [x] Verify RED: 运行命令，确认失败原因正确
+- [x] GREEN: 写最小实现
+- [x] Verify GREEN: 运行命令，确认通过
+- [x] REFACTOR: 只在绿色后清理命名、重复、结构
+- [x] Checkpoint: 列出变更文件和验证证据，不提交 git
+
+RED 证据：
+
+- 新增 `ClubPointClubQueryControllerTest`，覆盖员工本人俱乐部/可加入俱乐部/成员分页范围、负责人负责俱乐部列表和详情范围、管理员俱乐部/成员/负责人全局分页，以及接口路径和权限声明。
+- RED 命令：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointClubQueryControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`。
+- 失败原因为三端俱乐部查询 Controller、VO 和 `ClubPointClubQueryServiceImpl` 等 M5.6 查询 API 产物不存在，符合 M5.6 RED 预期。
+
+GREEN 证据：
+
+- GREEN：新增员工端、负责人端、管理员端俱乐部查询 Controller/VO 和 `ClubPointClubQueryService` 读侧 BO；补充俱乐部、成员、负责人 Mapper 查询能力。
+- 权限范围：员工端从登录态取本人并以成员关系限制成员分页；负责人端以 `validateManagedClub(...)` 限制负责俱乐部；管理员端查询接口使用对应管理权限全局查询。
+- M5.6 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointClubQueryControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointClubQueryControllerTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- M5 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubPointClubQueryControllerTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `43` 个测试，失败 `0`，错误 `0`。
+
+- [x] 员工查询可加入俱乐部列表。
+- [x] 员工查询本人俱乐部。
+- [x] 负责人查询负责俱乐部。
+- [x] 管理员查询俱乐部列表。
+- [x] 管理员查询俱乐部详情。
+- [x] 管理员查询成员列表。
+- [x] 管理员查询负责人列表。
 
 验收：
 
-- [ ] 员工只能看本人相关数据。
-- [ ] 负责人只能看负责俱乐部数据。
-- [ ] 管理员可全局查询。
+- [x] 员工只能看本人相关数据。
+- [x] 负责人只能看负责俱乐部数据。
+- [x] 管理员可全局查询。
 
 ## 任务 M5.7 测试
 
