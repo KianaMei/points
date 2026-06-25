@@ -1,6 +1,6 @@
 # M4 积分账本 Implementation Plan
 
-**Status:** `[~]` M4.1-M4.3 已完成并有 RED/GREEN 证据；当前入口是 M4.4 冻结服务。
+**Status:** `[~]` M4.1-M4.4 已完成并有 RED/GREEN 证据；当前入口是 M4.5 撤销和调整。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -132,18 +132,58 @@
 
 ## 任务 M4.4 冻结服务
 
-- [ ] 实现冻结积分。
-- [ ] 实现释放冻结。
-- [ ] 实现冻结转扣减。
-- [ ] 冻结操作关联来源类型和来源 ID。
-- [ ] 冻结转扣减生成负向流水。
-- [ ] 释放冻结不生成扣减流水。
+### Task M4.4: 冻结服务
+
+**Files:**
+
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/ClubPointFreezeService.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/ClubPointFreezeServiceImpl.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/bo/ClubPointFreezeCreateReqBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/bo/ClubPointFreezeReleaseReqBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/bo/ClubPointFreezeConvertReqBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/enums/ClubPointFreezeSourceTypeEnum.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/ledger/ClubPointFreezeMapper.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/enums/ErrorCodeConstants.java`
+- Test: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/test/java/cn/iocoder/yudao/module/clubpoints/service/ledger/ClubPointFreezeServiceImplTest.java`
+
+**Interfaces:**
+
+- Consumes: `club_points_freeze`、`club_points_point_account`、`ClubPointFreezeMapper`、`ClubPointAccountMapper`、`ClubPointLedgerService.createTransaction(...)`、`ClubPointFreezeStatusEnum`、`ClubPointTransactionSourceTypeEnum.REDEMPTION`
+- Produces: `freezePoints(...)`、`releaseFreeze(...)`、`convertFreezeToDeduction(...)`，供后续 M9 兑换申请和兑换审核复用
+- Decision: `club_points_freeze.source_type` 是冻结来源枚举，兑换冻结按数据库设计取 `1`；它不是 `ClubPointTransactionSourceTypeEnum.REDEMPTION(4)`。冻结转扣减生成流水时才使用流水来源类型 `REDEMPTION(4)`。
+
+- [x] RED: 写失败测试或失败验证
+- [x] Verify RED: 运行命令，确认失败原因正确
+- [x] GREEN: 写最小实现
+- [x] Verify GREEN: 运行命令，确认通过
+- [x] REFACTOR: 只在绿色后清理命名、重复、结构
+- [x] Checkpoint: 列出变更文件和验证证据
+
+RED 证据：
+
+- 新增 `ClubPointFreezeServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointFreezeServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败。
+- 失败原因为 `ClubPointFreezeService`、`ClubPointFreezeServiceImpl`、`ClubPointFreezeCreateReqBO`、`ClubPointFreezeReleaseReqBO`、`ClubPointFreezeConvertReqBO`、`ClubPointFreezeSourceTypeEnum` 和冻结错误码不存在，符合 M4.4 RED 预期。
+
+GREEN 证据：
+
+- GREEN：新增 `ClubPointFreezeService`、`ClubPointFreezeServiceImpl`、`ClubPointFreezeCreateReqBO`、`ClubPointFreezeReleaseReqBO`、`ClubPointFreezeConvertReqBO` 和 `ClubPointFreezeSourceTypeEnum`；`ClubPointFreezeMapper` 增加 `selectByIdForUpdate`；`ErrorCodeConstants` 补冻结重复、不存在、状态非法错误码。
+- 实现边界：冻结只更新 `club_points_freeze` 和账户缓存；释放冻结不生成流水；冻结转扣减先释放冻结占用，再复用 `ClubPointLedgerService.createTransaction(...)` 生成兑换负向流水。
+- M4.4 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointFreezeServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointFreezeServiceImplTest` 运行 `7` 个测试，失败 `0`，错误 `0`。
+- M4 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointLedgerMapperTest,ClubPointLedgerEnumTest,ClubPointLedgerServiceImplTest,ClubPointFreezeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `20` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；租户字段、租户基类和 AI 元数据模式检查均无命中；生产账户缓存更新入口只在 `ClubPointLedgerServiceImpl` 和 `ClubPointFreezeServiceImpl`。
+
+- [x] 实现冻结积分。
+- [x] 实现释放冻结。
+- [x] 实现冻结转扣减。
+- [x] 冻结操作关联来源类型和来源 ID。
+- [x] 冻结转扣减生成负向流水。
+- [x] 释放冻结不生成扣减流水。
 
 验收：
 
-- [ ] 可用积分减少，冻结积分增加。
-- [ ] 审核拒绝释放冻结后可用积分恢复。
-- [ ] 审核通过转扣减后冻结归零并生成流水。
+- [x] 可用积分减少，冻结积分增加。
+- [x] 审核拒绝释放冻结后可用积分恢复。
+- [x] 审核通过转扣减后冻结归零并生成流水。
 
 ## 任务 M4.5 撤销和调整
 

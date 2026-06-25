@@ -26,5 +26,8 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_LEDGER_TRANSACTION_NOT_EXISTS = new ErrorCode(1_300_000_014, "积分流水不存在");
     ErrorCode CLUB_LEDGER_YEAR_ALREADY_CLEARED = new ErrorCode(1_300_000_015, "年度积分已清零");
     ErrorCode CLUB_LEDGER_REVERSE_INVALID = new ErrorCode(1_300_000_016, "积分流水撤销不允许当前操作");
+    ErrorCode CLUB_LEDGER_FREEZE_DUPLICATED = new ErrorCode(1_300_000_017, "积分冻结记录重复");
+    ErrorCode CLUB_LEDGER_FREEZE_NOT_EXISTS = new ErrorCode(1_300_000_018, "积分冻结记录不存在");
+    ErrorCode CLUB_LEDGER_FREEZE_STATUS_INVALID = new ErrorCode(1_300_000_019, "积分冻结状态不允许当前操作");
 
 }

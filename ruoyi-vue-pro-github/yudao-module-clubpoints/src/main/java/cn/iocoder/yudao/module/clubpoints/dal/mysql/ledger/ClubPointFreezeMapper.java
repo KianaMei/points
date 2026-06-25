@@ -8,6 +8,10 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ClubPointFreezeMapper extends BaseMapperX<ClubPointFreezeDO> {
 
+    default ClubPointFreezeDO selectByIdForUpdate(Long id) {
+        return selectOneForUpdate(ClubPointFreezeDO::getId, id);
+    }
+
     default ClubPointFreezeDO selectByFreezeNo(String freezeNo) {
         return selectOne(new LambdaQueryWrapperX<ClubPointFreezeDO>()
                 .eq(ClubPointFreezeDO::getFreezeNo, freezeNo));

@@ -149,3 +149,11 @@
 - 2026-06-25：M4.3 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointLedgerServiceImplTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M4 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointLedgerMapperTest,ClubPointLedgerEnumTest,ClubPointLedgerServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `13` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M4.3 文档同步：`M4-ledger.md` 勾选 M4.3 并补证据，`00-index.md` 当前入口切换到 M4.4 冻结服务。
+- 2026-06-25：M4.4 事实源确认：`club_points_freeze.source_type` 按数据库设计是冻结来源枚举，兑换冻结取 `1`；它不是流水来源类型 `ClubPointTransactionSourceTypeEnum.REDEMPTION(4)`，冻结转扣减生成流水时才使用流水来源 `REDEMPTION`。
+- 2026-06-25：M4.4 RED：新增 `ClubPointFreezeServiceImplTest`，覆盖冻结减少可用并增加冻结、冻结幂等重复、余额不足拒绝、释放冻结不生成流水、冻结转扣减生成兑换负向流水、已释放冻结禁止转扣减、缺失冻结拒绝；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointFreezeServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是冻结 Service、三个 BO、冻结来源枚举和冻结错误码不存在。
+- 2026-06-25：M4.4 GREEN：新增 `ClubPointFreezeService`、`ClubPointFreezeServiceImpl`、`ClubPointFreezeCreateReqBO`、`ClubPointFreezeReleaseReqBO`、`ClubPointFreezeConvertReqBO`、`ClubPointFreezeSourceTypeEnum`；`ClubPointFreezeMapper` 增加 `selectByIdForUpdate`；补 `CLUB_LEDGER_FREEZE_DUPLICATED`、`CLUB_LEDGER_FREEZE_NOT_EXISTS`、`CLUB_LEDGER_FREEZE_STATUS_INVALID`。
+- 2026-06-25：M4.4 实现边界：冻结只更新冻结表和账户缓存，不写流水；释放冻结恢复可用积分且不写流水；冻结转扣减先减少冻结占用，再复用 `ClubPointLedgerService.createTransaction(...)` 创建兑换负向流水，避免把冻结积分误当不可用积分拦截。
+- 2026-06-25：M4.4 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointFreezeServiceImplTest` 运行 `7` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M4 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointLedgerMapperTest,ClubPointLedgerEnumTest,ClubPointLedgerServiceImplTest,ClubPointFreezeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `20` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M4.4 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；`tenant_id|TenantBaseDO` 无命中；AI/co-author 元数据模式无命中；生产账户缓存更新入口只在 `ClubPointLedgerServiceImpl` 和 `ClubPointFreezeServiceImpl`。
+- 2026-06-25：M4.4 文档同步：`M4-ledger.md` 勾选 M4.4 并补 RED/GREEN/组合/质量证据，`00-index.md` 当前入口切换到 M4.5 撤销和调整。
