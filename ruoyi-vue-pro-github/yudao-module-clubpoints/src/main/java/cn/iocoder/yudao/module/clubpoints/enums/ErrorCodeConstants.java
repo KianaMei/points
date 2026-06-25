@@ -40,5 +40,6 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_DELETE_HAS_REFERENCES = new ErrorCode(1_300_000_028, "俱乐部已有历史关联，不能物理删除");
     ErrorCode CLUB_CODE_DUPLICATED = new ErrorCode(1_300_000_029, "俱乐部编号重复");
     ErrorCode CLUB_NAME_DUPLICATED = new ErrorCode(1_300_000_030, "俱乐部名称重复");
+    ErrorCode CLUB_ACTIVITY_STATUS_INVALID = new ErrorCode(1_300_000_031, "活动状态不允许当前操作");
 
 }

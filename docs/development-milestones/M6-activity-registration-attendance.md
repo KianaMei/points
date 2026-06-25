@@ -1,6 +1,6 @@
 # M6 活动、报名、签到签退 Implementation Plan
 
-**Status:** `[~]` M6.1 已完成并有 RED/GREEN 证据；当前入口是 M6.2 活动状态机。
+**Status:** `[~]` M6.1-M6.2 已完成并有 RED/GREEN 证据；当前入口是 M6.3 活动 Service。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -83,20 +83,28 @@
 
 ## 任务 M6.2 活动状态机
 
-- [ ] 定义草稿状态。
-- [ ] 定义待审核状态。
-- [ ] 定义已发布状态。
-- [ ] 定义已驳回状态。
-- [ ] 定义已取消状态。
-- [ ] 定义已结束状态。
-- [ ] 定义已结算状态。
-- [ ] 限制非法状态跳转。
+- [x] 定义草稿状态。
+- [x] 定义待审核状态。
+- [x] 定义已发布状态。
+- [x] 定义已驳回状态。
+- [x] 定义已取消状态。
+- [x] 定义已结束状态。
+- [x] 定义已结算状态。
+- [x] 限制非法状态跳转。
 
 验收：
 
-- [ ] 未发布活动不能报名。
-- [ ] 已取消活动不能签到。
-- [ ] 已结算活动不能再改关键字段。
+- [x] 未发布活动不能报名。
+- [x] 已取消活动不能签到。
+- [x] 已结算活动不能再改关键字段。
+
+证据：
+
+- RED：新增 `ClubPointActivityEnumTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivityEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointActivityStatusEnum` 和 `CLUB_ACTIVITY_STATUS_INVALID` 不存在，符合 M6.2 RED 预期。
+- GREEN：新增 `ClubPointActivityStatusEnum`，状态编号按 seed 和数据库设计执行：`1` 草稿、`2` 待审核、`3` 已驳回、`4` 已发布、`5` 已取消、`6` 已结束、`7` 已结算、`8` 已删除快照；补 `CLUB_ACTIVITY_STATUS_INVALID` 错误码。
+- 状态机边界：只允许草稿提交审核或管理员直发；待审核可发布或驳回；驳回可重提；已发布可取消或结束；已结束可结算；未发布不能报名，已取消和已结算不能签到，已结算不能改关键字段。
+- M6.2 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointActivityEnumTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- M6 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivityMapperTest,ClubPointActivityEnumTest,ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubPointClubQueryControllerTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `48` 个测试，失败 `0`，错误 `0`。
 
 ## 任务 M6.3 活动 Service
 
