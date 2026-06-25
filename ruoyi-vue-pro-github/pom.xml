@@ -13,6 +13,7 @@
         <module>yudao-server</module>
         <module>yudao-module-system</module>
         <module>yudao-module-infra</module>
+        <module>yudao-module-clubpoints</module>
     </modules>
 
     <name>${project.artifactId}</name>

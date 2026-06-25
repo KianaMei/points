@@ -35,22 +35,22 @@
 
 ## 里程碑文件
 
-| 里程碑 | 文件 | 放行目标 |
-| --- | --- | --- |
-| 规则 | `01-superpowers-execution-rules.md` | 所有里程碑执行前必读 |
-| M0 | `M0-engineering-foundation.md` | `clubpoints` 空模块被 `yudao-server` 扫描，底座能轻量验证 |
-| M1 | `M1-database-and-seed.md` | 正式 schema、seed、测试 DDL 一致 |
-| M2 | `M2-permission-crosscutting.md` | 权限、范围、审计、附件、通知横切能力可复用 |
-| M3 | `M3-rule-config.md` | 规则版本和规则项可发布、停用、读取 |
-| M4 | `M4-ledger.md` | 积分流水、冻结、余额缓存形成账本脊柱 |
-| M5 | `M5-club-member-leader.md` | 俱乐部、成员、负责人闭环可用 |
-| M6 | `M6-activity-registration-attendance.md` | 活动、报名、签到签退、特殊缺席闭环可用 |
-| M7 | `M7-activity-settlement.md` | 活动积分和缺席扣分可幂等结算 |
-| M8 | `M8-contribution-violation.md` | 非签到积分、违规扣分、弄虚作假闭环可用 |
-| M9 | `M9-redemption.md` | 兑换资格、冻结、库存、审核闭环可用 |
-| M10 | `M10-annual-dispute-budget.md` | 异议、年度清零、排名、激励、预算闭环可用 |
-| M11 | `M11-report-job-frontend.md` | 报表、任务监控、通知、前端页面收口 |
-| M12 | `M12-hardening-acceptance.md` | 并发、权限、回归、演示验收完成 |
+| 状态 | 里程碑 | 文件 | 放行目标 |
+| --- | --- | --- | --- |
+| `[x]` | 规则 | `01-superpowers-execution-rules.md` | 所有里程碑执行前必读 |
+| `[x]` | M0 | `M0-engineering-foundation.md` | `clubpoints` 空模块被 `yudao-server` 扫描，底座能轻量验证 |
+| `[x]` | M1 | `M1-database-and-seed.md` | 正式 schema、seed、测试 DDL 一致 |
+| `[~]` | M2 | `M2-permission-crosscutting.md` | 权限、范围、审计、附件、通知横切能力可复用 |
+| `[ ]` | M3 | `M3-rule-config.md` | 规则版本和规则项可发布、停用、读取 |
+| `[ ]` | M4 | `M4-ledger.md` | 积分流水、冻结、余额缓存形成账本脊柱 |
+| `[ ]` | M5 | `M5-club-member-leader.md` | 俱乐部、成员、负责人闭环可用 |
+| `[ ]` | M6 | `M6-activity-registration-attendance.md` | 活动、报名、签到签退、特殊缺席闭环可用 |
+| `[ ]` | M7 | `M7-activity-settlement.md` | 活动积分和缺席扣分可幂等结算 |
+| `[ ]` | M8 | `M8-contribution-violation.md` | 非签到积分、违规扣分、弄虚作假闭环可用 |
+| `[ ]` | M9 | `M9-redemption.md` | 兑换资格、冻结、库存、审核闭环可用 |
+| `[ ]` | M10 | `M10-annual-dispute-budget.md` | 异议、年度清零、排名、激励、预算闭环可用 |
+| `[ ]` | M11 | `M11-report-job-frontend.md` | 报表、任务监控、通知、前端页面收口 |
+| `[ ]` | M12 | `M12-hardening-acceptance.md` | 并发、权限、回归、演示验收完成 |
 
 ## 依赖链
 
@@ -82,9 +82,15 @@ M0 空模块
 
 ## 当前最近入口
 
-当前最近入口是 M0：
+当前最近入口是 M2：
 
-- `ruoyi-vue-pro-github/yudao-module-clubpoints` 还不存在。
-- `sql/mysql/club-points-schema.sql` 还不存在。
-- `sql/mysql/club-points-seed.sql` 还不存在。
-- 根 POM 和 `yudao-server/pom.xml` 还没有接入 `yudao-module-clubpoints`。
+- M0 已创建 `ruoyi-vue-pro-github/yudao-module-clubpoints` 空模块。
+- M0 已在根 POM 和 `yudao-server/pom.xml` 接入 `yudao-module-clubpoints`。
+- M0 已通过 `mvn -pl yudao-server -am -DskipTests "-Dflatten.skip=true" compile` 轻量编译验证。
+- M1 已创建 `sql/mysql/club-points-schema.sql` 和 `sql/mysql/club-points-seed.sql`。
+- M1 已完成正式 schema 的 34 张 `club_points_*` 表、默认 seed、测试 DDL、clean SQL。
+- M1 已通过临时 MySQL 库导入、关键唯一键、权限集合、seed 幂等、H2 测试 DDL、正式/测试字段与唯一键比对验证。
+- M2.1 已完成权限码、三端菜单、按钮权限和三类角色建议授权，并通过临时库导入、权限集合、角色边界和幂等验证。
+- M2.2 已完成 `DictTypeConstants`、seed 字典补齐、常量/seed 一致性测试、MySQL 导入和幂等验证。
+- M2.3 已完成 `ClubScopeService`、成员/负责人 DO 与 Mapper、本人/已加入俱乐部/负责俱乐部/全局范围校验，并通过数据范围单测和 M2 组合验证。
+- M2 下一步入口是 M2.4 `ClubAuditService`。
