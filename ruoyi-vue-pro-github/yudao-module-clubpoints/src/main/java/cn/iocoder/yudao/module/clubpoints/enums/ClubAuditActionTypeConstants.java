@@ -11,6 +11,7 @@ public interface ClubAuditActionTypeConstants {
     String POINT_ADJUST = "POINT_ADJUST";
     String ANNUAL_CLEARING_MANUAL = "ANNUAL_CLEARING_MANUAL";
     String RULE_PUBLISH = "RULE_PUBLISH";
+    String RULE_WITHDRAW = "RULE_WITHDRAW";
     String RULE_DISABLE = "RULE_DISABLE";
 
 }

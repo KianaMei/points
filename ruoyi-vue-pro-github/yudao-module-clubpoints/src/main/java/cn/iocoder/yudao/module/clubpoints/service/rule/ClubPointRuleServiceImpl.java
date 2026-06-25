@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.clubpoints.service.rule;
 
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRuleItemDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRulePublishRecordDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRuleVersionDO;
@@ -22,6 +24,7 @@ import java.util.List;
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.RULE_DISABLE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.RULE_PUBLISH;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.RULE_WITHDRAW;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_ITEM_CODE_DUPLICATED;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_ITEM_NOT_EXISTS;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_VERSION_NOT_EXISTS;
@@ -35,6 +38,7 @@ public class ClubPointRuleServiceImpl implements ClubPointRuleService {
 
     private static final int ITEM_STATUS_ENABLED = 1;
     private static final int PUBLISH_ACTION_PUBLISH = 1;
+    private static final int PUBLISH_ACTION_WITHDRAW = 2;
     private static final int PUBLISH_ACTION_DISABLE = 3;
     private static final int PUBLISH_ACTION_REPLACE = 4;
     private static final String BIZ_TYPE_RULE_VERSION = "RULE_VERSION";
@@ -54,6 +58,13 @@ public class ClubPointRuleServiceImpl implements ClubPointRuleService {
                 .setStatus(ClubPointRuleVersionStatusEnum.DRAFT.getStatus());
         ruleVersionMapper.insert(version);
         return version.getId();
+    }
+
+    @Override
+    public void updateDraftVersion(ClubPointRuleVersionSaveReqBO reqBO) {
+        ClubPointRuleVersionDO version = validateDraftVersion(reqBO.getId());
+        updateVersion(version, reqBO);
+        ruleVersionMapper.updateById(version);
     }
 
     @Override
@@ -109,6 +120,22 @@ public class ClubPointRuleServiceImpl implements ClubPointRuleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public void withdrawVersion(Long ruleVersionId, ClubPointRuleOperationReqBO reqBO) {
+        ClubPointRuleVersionDO version = validateRuleVersionExists(ruleVersionId);
+        if (!ClubPointRuleVersionStatusEnum.DRAFT.getStatus().equals(version.getStatus())) {
+            throw exception(CLUB_RULE_VERSION_STATUS_INVALID);
+        }
+        LocalDateTime operationTime = LocalDateTime.now();
+        Long auditLogId = createRuleAudit(RULE_WITHDRAW, version, reqBO, operationTime,
+                snapshot(version), snapshot(version, ClubPointRuleVersionStatusEnum.WITHDRAWN.getStatus()));
+        version.setStatus(ClubPointRuleVersionStatusEnum.WITHDRAWN.getStatus());
+        ruleVersionMapper.updateById(version);
+        insertPublishRecord(version.getId(), PUBLISH_ACTION_WITHDRAW, reqBO, operationTime, auditLogId,
+                snapshot(version, ClubPointRuleVersionStatusEnum.DRAFT.getStatus()), snapshot(version));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void disableVersion(Long ruleVersionId, ClubPointRuleOperationReqBO reqBO) {
         ClubPointRuleVersionDO version = validateRuleVersionExists(ruleVersionId);
         if (!ClubPointRuleVersionStatusEnum.PUBLISHED.getStatus().equals(version.getStatus())) {
@@ -125,6 +152,17 @@ public class ClubPointRuleServiceImpl implements ClubPointRuleService {
     }
 
     @Override
+    public PageResult<ClubPointRuleVersionDO> getRuleVersionPage(PageParam pageParam, String versionNo,
+                                                                 String name, Integer status) {
+        return ruleVersionMapper.selectPage(pageParam, versionNo, name, status);
+    }
+
+    @Override
+    public ClubPointRuleVersionDO getRuleVersion(Long ruleVersionId) {
+        return validateRuleVersionExists(ruleVersionId);
+    }
+
+    @Override
     public ClubPointRuleVersionDO getCurrentRuleVersion() {
         ClubPointRuleVersionDO version = ruleVersionMapper.selectCurrentPublished(
                 ClubPointRuleVersionStatusEnum.PUBLISHED.getStatus(), LocalDateTime.now());
@@ -132,6 +170,12 @@ public class ClubPointRuleServiceImpl implements ClubPointRuleService {
             throw exception(CLUB_RULE_VERSION_NOT_EXISTS);
         }
         return version;
+    }
+
+    @Override
+    public List<ClubPointRuleItemDO> getRuleItemList(Long ruleVersionId) {
+        validateRuleVersionExists(ruleVersionId);
+        return ruleItemMapper.selectListByRuleVersionId(ruleVersionId);
     }
 
     @Override
@@ -226,8 +270,12 @@ public class ClubPointRuleServiceImpl implements ClubPointRuleService {
     }
 
     private static ClubPointRuleVersionDO buildVersion(ClubPointRuleVersionSaveReqBO reqBO) {
-        return new ClubPointRuleVersionDO()
-                .setVersionNo(reqBO.getVersionNo())
+        return updateVersion(new ClubPointRuleVersionDO(), reqBO);
+    }
+
+    private static ClubPointRuleVersionDO updateVersion(ClubPointRuleVersionDO version,
+                                                        ClubPointRuleVersionSaveReqBO reqBO) {
+        return version.setVersionNo(reqBO.getVersionNo())
                 .setName(reqBO.getName())
                 .setPublicityTime(reqBO.getPublicityTime())
                 .setEffectiveTime(reqBO.getEffectiveTime())

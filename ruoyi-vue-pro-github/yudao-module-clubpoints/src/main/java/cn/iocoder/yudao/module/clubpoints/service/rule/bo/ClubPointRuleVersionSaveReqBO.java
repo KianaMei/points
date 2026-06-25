@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Accessors(chain = true)
 public class ClubPointRuleVersionSaveReqBO {
 
+    private Long id;
     private String versionNo;
     private String name;
     private LocalDateTime publicityTime;

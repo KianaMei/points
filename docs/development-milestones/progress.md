@@ -112,3 +112,13 @@
 - 2026-06-25：M3 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRuleMapperTest,ClubPointRuleEnumTest,ClubPointRuleServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `17` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M3.3 质量验证：`git diff --check` 无 whitespace error，仅 CRLF 提示；源码和测试内租户字段、租户基类和 AI 元数据模式检查均无命中；精确搜索 22 个规则项编码在 main `service` 包内无命中。
 - 2026-06-25：M3.3 文档同步：`M3-rule-config.md` 勾选 M3.3 并补证据，`00-index.md` 当前入口切换到 M3.4 Admin API。
+- 2026-06-25：M3.4 文档冲突处理：M3.4 清单未列规则撤回，但 API 设计、前端页面设计、权限矩阵和流程设计均要求 `POST /clubpoints/rule/withdraw`；按更具体设计文档实现撤回接口和 `RULE_WITHDRAW` 强审计。
+- 2026-06-25：M3.4 RED：运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleAdminControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointRuleVersionSaveReqBO` 缺少 `setId(Long)` 和 `getId()`，规则版本更新路径未闭合。
+- 2026-06-25：M3.4 GREEN：补 `ClubPointRuleVersionSaveReqBO.id`；新增 `ClubPointRuleAdminController` 和规则版本/规则项 VO；Service 增加草稿更新、撤回、分页、详情和规则项列表；Mapper 增加分页和规则项排序；同一 M3.4 测试命令返回 `BUILD SUCCESS`，`ClubPointRuleAdminControllerTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M3.4 覆盖补强 RED：新增规则项值类型非法值测试 `ruleItemSaveReqVOShouldRejectInvalidItemType`；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleAdminControllerTest#ruleItemSaveReqVOShouldRejectInvalidItemType "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，错误为 `expected: <true> but was: <false>`。
+- 2026-06-25：M3.4 覆盖补强 GREEN：`ClubPointRuleItemTypeEnum` 实现 `ArrayValuable<Integer>`，`RuleItemSaveReqVO.itemType` 增加 `@InEnum`；同一单方法命令返回 `BUILD SUCCESS`，测试 `1` 个，失败 `0`，错误 `0`。
+- 2026-06-25：M3.4 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleAdminControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRuleAdminControllerTest` 运行 `6` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M3 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRuleMapperTest,ClubPointRuleEnumTest,ClubPointRuleServiceImplTest,ClubPointRuleAdminControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `23` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M3.4 安全边界：`RuleOperationReqVO` 只允许 `id` 和 `reason`，不接受前端传 `operatorUserId`、`operatorNameSnapshot`、`operatorRoleSnapshot`；发布、撤回、停用操作人从 `SecurityFrameworkUtils` 获取，IP/UA 从 `HttpServletRequest` 获取。
+- 2026-06-25：M3.4 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；源码和测试内租户字段、租户基类和 AI 元数据模式检查均无命中；精确搜索 22 个规则项编码在 main `service` 包内无命中。
+- 2026-06-25：M3.4 文档同步：`M3-rule-config.md` 勾选 M3.4 并补证据，`00-index.md` 当前入口切换到 M3.5 业务读取封装。

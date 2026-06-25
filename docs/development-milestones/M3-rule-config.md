@@ -1,6 +1,6 @@
 # M3 规则版本和配置后台 Implementation Plan
 
-**Status:** `[~]` M3.1-M3.3 已完成并有 RED/GREEN 与质量门禁证据；当前入口是 M3.4 Admin API。
+**Status:** `[~]` M3.1-M3.4 已完成并有 RED/GREEN 与质量门禁证据；当前入口是 M3.5 业务读取封装。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -136,22 +136,35 @@
 
 ## 任务 M3.4 Admin API
 
-- [ ] 创建规则版本分页接口。
-- [ ] 创建规则版本详情接口。
-- [ ] 创建规则版本草稿接口。
-- [ ] 创建规则版本复制接口。
-- [ ] 创建规则版本发布接口。
-- [ ] 创建规则版本停用接口。
-- [ ] 创建规则项列表接口。
-- [ ] 创建规则项保存接口。
-- [ ] Controller 使用 `@PreAuthorize`。
-- [ ] 写 VO 校验规则值类型、区间、默认值。
+- [x] 创建规则版本分页接口。
+- [x] 创建规则版本详情接口。
+- [x] 创建规则版本草稿接口。
+- [x] 创建规则版本复制接口。
+- [x] 创建规则版本发布接口。
+- [x] 创建规则版本撤回接口。
+- [x] 创建规则版本停用接口。
+- [x] 创建规则项列表接口。
+- [x] 创建规则项保存接口。
+- [x] Controller 使用 `@PreAuthorize`。
+- [x] 写 VO 校验规则值类型、区间、默认值。
 
 验收：
 
-- [ ] API 路径和 `club-points-api-design.md` 一致。
-- [ ] 管理员权限才能发布和停用。
-- [ ] 发布接口不接受前端传当前用户 ID。
+- [x] API 路径和 `club-points-api-design.md` 一致。
+- [x] 管理员权限才能发布和停用。
+- [x] 发布接口不接受前端传当前用户 ID。
+
+证据：
+
+- 文档冲突处理：M3.4 原清单未列撤回接口，但 `club-points-api-design.md`、`club-points-frontend-page-design.md`、`club-points-functions-and-permissions.md`、`club-points-flow-design.md` 均要求规则版本撤回；本任务按更具体文档补 `POST /clubpoints/rule/withdraw` 和 `RULE_WITHDRAW` 强审计。
+- RED：运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleAdminControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointRuleVersionSaveReqBO` 缺少 `setId(Long)` 和 `getId()`，证明规则版本更新路径未闭合。
+- GREEN：补 `ClubPointRuleVersionSaveReqBO.id` 后，同一命令返回 `BUILD SUCCESS`；`ClubPointRuleAdminControllerTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
+- 覆盖补强 RED：新增 `ruleItemSaveReqVOShouldRejectInvalidItemType` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleAdminControllerTest#ruleItemSaveReqVOShouldRejectInvalidItemType "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，错误为 `expected: <true> but was: <false>`，证明规则项值类型缺少枚举校验。
+- 覆盖补强 GREEN：`ClubPointRuleItemTypeEnum` 实现 `ArrayValuable<Integer>`，`RuleItemSaveReqVO.itemType` 增加 `@InEnum(ClubPointRuleItemTypeEnum.class)` 后，同一单方法命令返回 `BUILD SUCCESS`；测试 `1` 个，失败 `0`，错误 `0`。
+- M3.4 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleAdminControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRuleAdminControllerTest` 运行 `6` 个测试，失败 `0`，错误 `0`。
+- M3 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRuleMapperTest,ClubPointRuleEnumTest,ClubPointRuleServiceImplTest,ClubPointRuleAdminControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `23` 个测试，失败 `0`，错误 `0`。
+- 安全边界：`RuleOperationReqVO` 只暴露 `id` 和 `reason`；发布、撤回、停用操作人 ID 和昵称均从 `SecurityFrameworkUtils` 取，IP/UA 从 `HttpServletRequest` 取。
+- 质量门禁：`git diff --check` exit `0`，仅 CRLF 提示；源码和测试内租户字段、租户基类、AI 元数据模式均无命中；精确搜索 22 个规则项编码在 main `service` 包内无命中。
 
 ## 任务 M3.5 业务读取封装
 
