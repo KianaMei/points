@@ -41,5 +41,8 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_CODE_DUPLICATED = new ErrorCode(1_300_000_029, "俱乐部编号重复");
     ErrorCode CLUB_NAME_DUPLICATED = new ErrorCode(1_300_000_030, "俱乐部名称重复");
     ErrorCode CLUB_ACTIVITY_STATUS_INVALID = new ErrorCode(1_300_000_031, "活动状态不允许当前操作");
+    ErrorCode CLUB_ACTIVITY_NOT_FOUND = new ErrorCode(1_300_000_032, "活动不存在");
+    ErrorCode CLUB_ACTIVITY_TIME_INVALID = new ErrorCode(1_300_000_033, "活动时间配置无效");
+    ErrorCode CLUB_ACTIVITY_LEVEL_INVALID = new ErrorCode(1_300_000_034, "活动等级无效");
 
 }

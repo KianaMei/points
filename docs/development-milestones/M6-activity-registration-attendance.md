@@ -108,21 +108,29 @@
 
 ## 任务 M6.3 活动 Service
 
-- [ ] 负责人创建活动草稿。
-- [ ] 负责人提交活动审核。
-- [ ] 管理员审核通过活动。
-- [ ] 管理员驳回活动。
-- [ ] 负责人修改未发布活动。
-- [ ] 管理员修改已发布活动关键信息。
-- [ ] 修改已发布活动关键信息写强审计。
-- [ ] 取消活动写强审计。
-- [ ] 活动附件绑定和锁定。
+- [x] 负责人创建活动草稿。
+- [x] 负责人提交活动审核。
+- [x] 管理员审核通过活动。
+- [x] 管理员驳回活动。
+- [x] 负责人修改未发布活动。
+- [x] 管理员修改已发布活动关键信息。
+- [x] 修改已发布活动关键信息写强审计。
+- [x] 取消活动写强审计。
+- [x] 活动附件绑定和锁定。
 
 验收：
 
-- [ ] 负责人只能操作负责俱乐部活动。
-- [ ] 审核记录完整。
-- [ ] 已发布活动关键修改可追溯。
+- [x] 负责人只能操作负责俱乐部活动。
+- [x] 审核记录完整。
+- [x] 已发布活动关键修改可追溯。
+
+证据：
+
+- RED：新增 `ClubPointActivityServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivityServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointActivityService`、活动 Service BO、`BIZ_TYPE_ACTIVITY`、`ACTIVITY_CANCEL`、`ACTIVITY_KEY_FIELD_UPDATE` 等产物不存在，符合 M6.3 RED 预期。
+- GREEN：新增 `ClubPointActivityService` / `ClubPointActivityServiceImpl` 和保存、提交、审核、取消 BO；实现负责人创建草稿、提交审核、管理员审核通过/驳回、负责人修改未发布活动、已发布关键字段修改强审计、取消活动强审计；审核通过生成活动积分配置版本并锁定 `ACTIVITY` 附件。
+- 实现边界：负责人操作通过 `ClubScopeService.validateManagedClub(...)` 限制负责俱乐部；管理员审核通过/驳回通过全局范围校验；活动待发布积分配置保存在活动 `snapshotJson`，审核通过或已发布关键字段变更时生成正式配置版本；M6.3 不生成积分流水。
+- M6.3 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointActivityServiceImplTest` 运行 `7` 个测试，失败 `0`，错误 `0`。
+- M6 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivityMapperTest,ClubPointActivityEnumTest,ClubPointActivityServiceImplTest,ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubPointClubQueryControllerTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `55` 个测试，失败 `0`，错误 `0`。
 
 ## 任务 M6.4 报名 Service
 

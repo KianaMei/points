@@ -12,6 +12,7 @@ public interface ClubAttachmentConstants {
     Integer STATUS_REPLACED = 2;
     Integer STATUS_DELETED = 3;
 
+    String BIZ_TYPE_ACTIVITY = "ACTIVITY";
     String BIZ_TYPE_CONTRIBUTION_MATERIAL = "CONTRIBUTION_MATERIAL";
 
 }

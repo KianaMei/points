@@ -23,5 +23,7 @@ public interface ClubAuditActionTypeConstants {
     String RULE_PUBLISH = "RULE_PUBLISH";
     String RULE_WITHDRAW = "RULE_WITHDRAW";
     String RULE_DISABLE = "RULE_DISABLE";
+    String ACTIVITY_KEY_FIELD_UPDATE = "ACTIVITY_KEY_FIELD_UPDATE";
+    String ACTIVITY_CANCEL = "ACTIVITY_CANCEL";
 
 }
