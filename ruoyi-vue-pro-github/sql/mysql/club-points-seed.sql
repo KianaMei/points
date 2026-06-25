@@ -235,7 +235,8 @@ INSERT INTO `system_dict_type` (`id`, `name`, `type`, `status`, `remark`, `creat
 (1300030020, '规则版本状态', 'club_points_rule_version_status', 0, '1=草稿；2=已发布；3=已撤回；4=已停用', '1', NOW(), '1', NOW(), b'0', NULL),
 (1300030021, '规则项状态', 'club_points_rule_item_status', 0, '1=启用；2=停用', '1', NOW(), '1', NOW(), b'0', NULL),
 (1300030022, '流水来源类型', 'club_points_transaction_source_type', 0, '1=活动结算；2=非签到材料；3=管理员代录；4=兑换；5=年度清零；6=调整；7=撤销；8=异议处理', '1', NOW(), '1', NOW(), b'0', NULL),
-(1300030023, '年度清零状态', 'club_points_annual_clearing_status', 0, '1=成功；2=失败；3=跳过', '1', NOW(), '1', NOW(), b'0', NULL)
+(1300030023, '年度清零状态', 'club_points_annual_clearing_status', 0, '1=成功；2=失败；3=跳过', '1', NOW(), '1', NOW(), b'0', NULL),
+(1300030024, '活动结算状态', 'club_points_activity_settlement_status', 0, '1=待结算；2=结算中；3=已结算；4=结算失败；5=人工处理', '1', NOW(), '1', NOW(), b'0', NULL)
 ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `type` = VALUES(`type`),
@@ -335,7 +336,12 @@ INSERT INTO `system_dict_data` (`id`, `sort`, `label`, `value`, `dict_type`, `st
 (1300031218, 8, '异议处理', '8', 'club_points_transaction_source_type', 0, 'warning', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031221, 1, '成功', '1', 'club_points_annual_clearing_status', 0, 'success', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031222, 2, '失败', '2', 'club_points_annual_clearing_status', 0, 'danger', '', NULL, '1', NOW(), '1', NOW(), b'0'),
-(1300031223, 3, '跳过', '3', 'club_points_annual_clearing_status', 0, 'info', '', NULL, '1', NOW(), '1', NOW(), b'0')
+(1300031223, 3, '跳过', '3', 'club_points_annual_clearing_status', 0, 'info', '', NULL, '1', NOW(), '1', NOW(), b'0'),
+(1300031231, 1, '待结算', '1', 'club_points_activity_settlement_status', 0, 'info', '', NULL, '1', NOW(), '1', NOW(), b'0'),
+(1300031232, 2, '结算中', '2', 'club_points_activity_settlement_status', 0, 'primary', '', NULL, '1', NOW(), '1', NOW(), b'0'),
+(1300031233, 3, '已结算', '3', 'club_points_activity_settlement_status', 0, 'success', '', NULL, '1', NOW(), '1', NOW(), b'0'),
+(1300031234, 4, '结算失败', '4', 'club_points_activity_settlement_status', 0, 'danger', '', NULL, '1', NOW(), '1', NOW(), b'0'),
+(1300031235, 5, '人工处理', '5', 'club_points_activity_settlement_status', 0, 'warning', '', NULL, '1', NOW(), '1', NOW(), b'0')
 ON DUPLICATE KEY UPDATE
   `sort` = VALUES(`sort`),
   `label` = VALUES(`label`),

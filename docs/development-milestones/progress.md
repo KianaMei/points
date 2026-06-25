@@ -283,3 +283,13 @@
 - 2026-06-25：M6.8 收口组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivityMapperTest,ClubPointActivityEnumTest,ClubPointActivityServiceImplTest,ClubPointRegistrationServiceImplTest,ClubPointAttendanceServiceImplTest,ClubPointAttendanceCorrectionServiceImplTest,ClubPointActivityControllerTest,ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubPointClubQueryControllerTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `77` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M6.8 无流水边界复核：`ClubPointActivityServiceImplTest` 和 `ClubPointAttendanceServiceImplTest` 已断言活动审核/取消/签到不生成 `club_points_transaction`；activity Service 与 Controller 主代码范围没有 `ClubPointLedgerService` 或流水创建引用；M6 未进入 M7 自动结算或缺席扣分。
 - 2026-06-25：M6 放行：`M6-activity-registration-attendance.md` 勾选 M6.8、M6 放行标准和 M6 期间禁止越界事项；`00-index.md` 将 M6 标为 `[x]`，当前最近入口切换到 M7。
+
+## M7 活动自动结算
+
+- 2026-06-25：读取 `M7-activity-settlement.md`、数据流和数据库规则文档；确认 M7.1 只处理结算模型、枚举和 seed，不进入 SettlementService、Job、管理员接口或实际流水生成。
+- 2026-06-25：M7.1 RED：新增 `ClubPointActivitySettlementEnumTest`，覆盖活动结算状态字典、结算运行状态、触发来源、活动基础/全程额外/单次缺席/月度缺席结算项类型、流水来源/分类/方向和幂等键形态；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivitySettlementEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 M7.1 结算枚举和 `DictTypeConstants.ACTIVITY_SETTLEMENT_STATUS` 不存在。
+- 2026-06-25：M7.1 GREEN：新增 `ClubPointActivitySettlementStatusEnum`、`ClubPointSettlementRunStatusEnum`、`ClubPointActivitySettlementTriggerSourceEnum`、`ClubPointActivitySettlementItemTypeEnum`；`club-points-seed.sql` 新增 `club_points_activity_settlement_status` 字典类型和值；`DictTypeConstants` 同步新增结算状态常量。
+- 2026-06-25：M7.1 模型边界：活动结算、单次无故缺席和月度累计缺席统一使用 `ClubPointTransactionSourceTypeEnum.ACTIVITY_SETTLEMENT`；结算项模型只生成稳定幂等键和流水分类/方向映射，不直接写 `club_points_transaction`。
+- 2026-06-25：M7.1 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivitySettlementEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointActivitySettlementEnumTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M7 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=DictTypeConstantsTest,ClubPointLedgerEnumTest,ClubPointActivitySettlementEnumTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `13` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M7.1 文档同步：`M7-activity-settlement.md` 勾选 M7.1 并补 RED/GREEN/组合证据，`00-index.md` 将 M7 标为 `[~]`，当前入口切换到 M7.2 SettlementService。

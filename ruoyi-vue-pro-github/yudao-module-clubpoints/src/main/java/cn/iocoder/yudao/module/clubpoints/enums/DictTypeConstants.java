@@ -28,5 +28,6 @@ public interface DictTypeConstants {
     String RULE_ITEM_STATUS = "club_points_rule_item_status";
     String TRANSACTION_SOURCE_TYPE = "club_points_transaction_source_type";
     String ANNUAL_CLEARING_STATUS = "club_points_annual_clearing_status";
+    String ACTIVITY_SETTLEMENT_STATUS = "club_points_activity_settlement_status";
 
 }

@@ -1,5 +1,7 @@
 # M7 活动自动结算 Implementation Plan
 
+**Status:** `[~]` M7.1 已完成并有 RED/GREEN 证据；当前入口是 M7.2 SettlementService。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 根据活动、报名、签到签退、特殊缺席、规则配置生成活动积分和缺席扣分流水，并保证重跑不重复。
@@ -57,17 +59,26 @@
 
 ## 任务 M7.1 结算模型
 
-- [ ] 定义活动结算状态。
-- [ ] 定义结算运行状态。
-- [ ] 定义结算来源类型。
-- [ ] 定义活动积分流水来源类型。
-- [ ] 定义无故缺席扣分来源类型。
-- [ ] 定义月度累计缺席扣分来源类型。
+- [x] 定义活动结算状态。
+- [x] 定义结算运行状态。
+- [x] 定义结算来源类型。
+- [x] 定义活动积分流水来源类型。
+- [x] 定义无故缺席扣分来源类型。
+- [x] 定义月度累计缺席扣分来源类型。
 
 验收：
 
-- [ ] 结算状态和字典一致。
-- [ ] 流水来源类型可追溯到活动和用户。
+- [x] 结算状态和字典一致。
+- [x] 流水来源类型可追溯到活动和用户。
+
+证据：
+
+- RED：新增 `ClubPointActivitySettlementEnumTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivitySettlementEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointActivitySettlementStatusEnum`、`ClubPointSettlementRunStatusEnum`、`ClubPointActivitySettlementTriggerSourceEnum`、`ClubPointActivitySettlementItemTypeEnum` 和 `DictTypeConstants.ACTIVITY_SETTLEMENT_STATUS` 不存在，符合 M7.1 RED 预期。
+- GREEN：新增活动结算状态枚举、结算运行状态枚举、结算触发来源枚举和结算项类型枚举；结算项类型统一使用 `ClubPointTransactionSourceTypeEnum.ACTIVITY_SETTLEMENT`，通过活动 ID、用户 ID、业务月份和结算项生成稳定幂等键。
+- Seed 同步：`club-points-seed.sql` 新增 `club_points_activity_settlement_status` 字典类型和值，状态为 `1` 待结算、`2` 结算中、`3` 已结算、`4` 结算失败、`5` 人工处理；`DictTypeConstants` 同步新增常量。
+- 边界：M7.1 只定义模型，不创建 SettlementService，不写 Job，不生成积分流水；活动结算、单次无故缺席和月度累计缺席都继续使用账本唯一事实源 `club_points_transaction`。
+- M7.1 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivitySettlementEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointActivitySettlementEnumTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- M7 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=DictTypeConstantsTest,ClubPointLedgerEnumTest,ClubPointActivitySettlementEnumTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `13` 个测试，失败 `0`，错误 `0`。
 
 ## 任务 M7.2 SettlementService
 
