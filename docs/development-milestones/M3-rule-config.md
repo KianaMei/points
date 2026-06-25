@@ -1,6 +1,6 @@
 # M3 规则版本和配置后台 Implementation Plan
 
-**Status:** `[~]` M3.1 已完成并有 RED/GREEN 与质量门禁证据；当前入口是 M3.2 枚举和错误码。
+**Status:** `[~]` M3.1-M3.2 已完成并有 RED/GREEN 与质量门禁证据；当前入口是 M3.3 Service。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -83,16 +83,26 @@
 
 ## 任务 M3.2 枚举和错误码
 
-- [ ] 创建规则版本状态枚举。
-- [ ] 创建规则项值类型枚举。
-- [ ] 创建规则项编码枚举。
-- [ ] 补充错误码：版本不存在、版本状态错误、规则项不存在、规则项编码重复、规则值越界。
-- [ ] 固定分值也用区间表达。
+- [x] 创建规则版本状态枚举。
+- [x] 创建规则项值类型枚举。
+- [x] 创建规则项编码枚举。
+- [x] 补充错误码：版本不存在、版本状态错误、规则项不存在、规则项编码重复、规则值越界。
+- [x] 固定分值也用区间表达。
 
 验收：
 
-- [ ] 不在 service 写死制度分值。
-- [ ] 规则项编码和 seed 一致。
+- [x] 不在 service 写死制度分值。
+- [x] 规则项编码和 seed 一致。
+
+证据：
+
+- RED：新增 `ClubPointRuleEnumTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是规则版本状态枚举、规则项值类型枚举、规则项编码枚举和 5 个 M3 规则错误码不存在。
+- GREEN：新增 `ClubPointRuleVersionStatusEnum`、`ClubPointRuleItemTypeEnum`、`ClubPointRuleItemCodeEnum`，并补 `CLUB_RULE_VERSION_NOT_EXISTS`、`CLUB_RULE_VERSION_STATUS_INVALID`、`CLUB_RULE_ITEM_NOT_EXISTS`、`CLUB_RULE_ITEM_CODE_DUPLICATED`、`CLUB_RULE_VALUE_OUT_OF_RANGE` 后，同一命令返回 `BUILD SUCCESS`；`ClubPointRuleEnumTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
+- 组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRuleMapperTest,ClubPointRuleEnumTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `6` 个测试，失败 `0`，错误 `0`。
+- 规则项编码一致性：`ClubPointRuleEnumTest.itemCodeEnumShouldMatchSeedRuleItemCodes` 从 `club-points-seed.sql` 解析 22 个 `item_code` 并与枚举值集合全量比对。
+- 固定分值表达：`ClubPointRuleEnumTest.fixedPointSeedRowsShouldUseMinMaxRange` 验证固定分值规则在 seed 中使用 `min_points=max_points=default_points`。
+- Service 硬编码检查：精确搜索 22 个规则项编码在 `service` 包内无命中。
+- 质量门禁：`git diff --check` 无空白错误；源码和本测试内租户字段、租户基类和 AI 元数据模式检查均无命中。
 
 ## 任务 M3.3 Service
 

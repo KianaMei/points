@@ -15,5 +15,10 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_ATTACHMENT_INVALID = new ErrorCode(1_300_000_003, "附件参数无效");
     ErrorCode CLUB_ATTACHMENT_NOT_EXISTS = new ErrorCode(1_300_000_004, "附件不存在");
     ErrorCode CLUB_ATTACHMENT_LOCKED = new ErrorCode(1_300_000_005, "附件已锁定，不能删除");
+    ErrorCode CLUB_RULE_VERSION_NOT_EXISTS = new ErrorCode(1_300_000_006, "规则版本不存在");
+    ErrorCode CLUB_RULE_VERSION_STATUS_INVALID = new ErrorCode(1_300_000_007, "规则版本状态不允许当前操作");
+    ErrorCode CLUB_RULE_ITEM_NOT_EXISTS = new ErrorCode(1_300_000_008, "规则项不存在");
+    ErrorCode CLUB_RULE_ITEM_CODE_DUPLICATED = new ErrorCode(1_300_000_009, "规则项编码重复");
+    ErrorCode CLUB_RULE_VALUE_OUT_OF_RANGE = new ErrorCode(1_300_000_010, "规则值超出允许范围");
 
 }

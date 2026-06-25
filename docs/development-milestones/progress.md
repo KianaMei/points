@@ -97,3 +97,9 @@
 - 2026-06-25：M3.1 单测验证：同一 Maven 命令返回 `BUILD SUCCESS`；`ClubPointRuleMapperTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M3.1 质量验证：`git diff --check` 无输出；规则 DO/Mapper/Test 包内租户字段、租户基类和 AI 元数据模式检查均无命中；继承检查命中 3 个 `BaseDO` 和 3 个 `BaseMapperX<T>`。
 - 2026-06-25：M3.1 文档同步：`M3-rule-config.md` 勾选 M3.1 并补证据，`00-index.md` 将 M3 标为进行中并把下一入口切换到 M3.2 枚举和错误码。
+- 2026-06-25：M3.2 RED：新增 `ClubPointRuleEnumTest`，覆盖规则版本状态、规则项值类型、规则项编码与 seed 一致性、固定分值区间表达和 5 个规则错误码；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 3 个规则枚举和 5 个规则错误码不存在。
+- 2026-06-25：M3.2 GREEN：新增 `ClubPointRuleVersionStatusEnum`、`ClubPointRuleItemTypeEnum`、`ClubPointRuleItemCodeEnum`，并在 `ErrorCodeConstants` 补 `CLUB_RULE_VERSION_NOT_EXISTS`、`CLUB_RULE_VERSION_STATUS_INVALID`、`CLUB_RULE_ITEM_NOT_EXISTS`、`CLUB_RULE_ITEM_CODE_DUPLICATED`、`CLUB_RULE_VALUE_OUT_OF_RANGE`。
+- 2026-06-25：M3.2 单测验证：同一 Maven 命令返回 `BUILD SUCCESS`；`ClubPointRuleEnumTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M3 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRuleMapperTest,ClubPointRuleEnumTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `6` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M3.2 质量验证：`git diff --check` 无空白错误；源码和 `ClubPointRuleEnumTest` 内租户字段、租户基类和 AI 元数据模式检查均无命中；精确搜索 22 个规则项编码在 `service` 包内无命中。
+- 2026-06-25：M3.2 文档同步：`M3-rule-config.md` 勾选 M3.2 并补证据，`00-index.md` 当前入口切换到 M3.3 Service。
