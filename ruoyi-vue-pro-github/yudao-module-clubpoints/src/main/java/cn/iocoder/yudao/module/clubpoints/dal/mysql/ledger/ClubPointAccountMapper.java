@@ -13,4 +13,9 @@ public interface ClubPointAccountMapper extends BaseMapperX<ClubPointAccountDO> 
                 .eq(ClubPointAccountDO::getUserId, userId));
     }
 
+    default ClubPointAccountDO selectByUserIdForUpdate(Long userId) {
+        return selectOneForUpdate(new LambdaQueryWrapperX<ClubPointAccountDO>()
+                .eq(ClubPointAccountDO::getUserId, userId));
+    }
+
 }

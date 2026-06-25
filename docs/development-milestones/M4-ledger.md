@@ -1,6 +1,6 @@
 # M4 积分账本 Implementation Plan
 
-**Status:** `[~]` M4.1-M4.2 已完成并有 RED/GREEN 证据；当前入口是 M4.3 LedgerService 写流水。
+**Status:** `[~]` M4.1-M4.3 已完成并有 RED/GREEN 证据；当前入口是 M4.4 冻结服务。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -105,21 +105,30 @@
 
 ## 任务 M4.3 LedgerService 写流水
 
-- [ ] 创建 `service/ledger/ClubPointLedgerService.java`。
-- [ ] 创建 `service/ledger/ClubPointLedgerServiceImpl.java`。
-- [ ] 实现正向积分流水。
-- [ ] 实现负向积分流水。
-- [ ] 实现 idempotency key 唯一冲突处理。
-- [ ] 同事务更新账户缓存。
-- [ ] 写入规则快照。
-- [ ] 写入来源快照。
-- [ ] 禁止外部直接改账户余额。
+- [x] 创建 `service/ledger/ClubPointLedgerService.java`。
+- [x] 创建 `service/ledger/ClubPointLedgerServiceImpl.java`。
+- [x] 实现正向积分流水。
+- [x] 实现负向积分流水。
+- [x] 实现 idempotency key 唯一冲突处理。
+- [x] 同事务更新账户缓存。
+- [x] 写入规则快照。
+- [x] 写入来源快照。
+- [x] 禁止外部直接改账户余额。
 
 验收：
 
-- [ ] 重复请求不会重复发分。
-- [ ] 负向扣分不会把可用余额扣成负数。
-- [ ] 流水和账户缓存同事务。
+- [x] 重复请求不会重复发分。
+- [x] 负向扣分不会把可用余额扣成负数。
+- [x] 流水和账户缓存同事务。
+
+证据：
+
+- RED：新增 `ClubPointLedgerServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLedgerServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointLedgerService` 和 `ClubPointLedgerCreateReqBO` 不存在。
+- GREEN：新增 `ClubPointLedgerService`、`ClubPointLedgerServiceImpl`、`ClubPointLedgerCreateReqBO`；`ClubPointAccountMapper` 增加 `selectByUserIdForUpdate`；`createTransaction` 只追加流水并同事务更新账户缓存。
+- M4.3 首轮 GREEN 调试：首次实现后测试上下文未导入 `ClubPointLedgerServiceImpl`，按既有 Service 单测模式补 `@Import({ClubPointLedgerServiceImpl.class, ClubPointRuleServiceImpl.class, ClubAuditServiceImpl.class})`，不启用全量扫描。
+- M4.3 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointLedgerServiceImplTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
+- M4 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointLedgerMapperTest,ClubPointLedgerEnumTest,ClubPointLedgerServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `13` 个测试，失败 `0`，错误 `0`。
+- 边界：本任务不实现冻结、撤销、调整、查询 API；这些仍分别属于 M4.4-M4.7。
 
 ## 任务 M4.4 冻结服务
 

@@ -143,3 +143,9 @@
 - 2026-06-25：M4.2 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLedgerEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointLedgerEnumTest` 运行 `7` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M4 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointLedgerMapperTest,ClubPointLedgerEnumTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `8` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M4.2 文档同步：`M4-ledger.md` 勾选 M4.2 并补证据，`00-index.md` 当前入口切换到 M4.3 LedgerService 写流水。
+- 2026-06-25：M4.3 RED：新增 `ClubPointLedgerServiceImplTest`，覆盖正向发分、负向扣分、幂等重复、幂等冲突和余额不足回滚；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLedgerServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointLedgerService` 和 `ClubPointLedgerCreateReqBO` 不存在。
+- 2026-06-25：M4.3 GREEN：新增 `ClubPointLedgerService`、`ClubPointLedgerServiceImpl`、`ClubPointLedgerCreateReqBO`，`ClubPointAccountMapper` 增加 `selectByUserIdForUpdate`；`createTransaction` 追加有效流水、写规则快照和来源快照、按幂等键重复返回已有流水、冲突抛 `CLUB_LEDGER_TRANSACTION_DUPLICATED`、余额不足抛 `CLUB_LEDGER_AVAILABLE_POINTS_NOT_ENOUGH`，并同事务更新账户缓存。
+- 2026-06-25：M4.3 调试记录：首次 GREEN 后测试上下文未扫描 `ClubPointLedgerService`，按既有 Service 单测模式在测试上 `@Import` Ledger/Rule/Audit 三个实现类，不启用全量扫描。
+- 2026-06-25：M4.3 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointLedgerServiceImplTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M4 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointLedgerMapperTest,ClubPointLedgerEnumTest,ClubPointLedgerServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `13` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M4.3 文档同步：`M4-ledger.md` 勾选 M4.3 并补证据，`00-index.md` 当前入口切换到 M4.4 冻结服务。
