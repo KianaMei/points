@@ -1,0 +1,221 @@
+# M10 异议、年度清零、排名、激励、预算 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** 完成异议处理、年度清零、年度排名、激励建议、预算记录，确保年度清零幂等且排名不受兑换扣分影响。
+
+**Architecture:** 异议不直接改积分，需要变化时走账本撤销或调整。年度清零按用户和年度生成负向流水；排名基于年度获得积分统计，激励和预算是运营记录。
+
+**Tech Stack:** Spring Job、Spring 事务、MyBatis、LedgerService、强审计、JUnit。
+
+## Global Constraints
+
+- 先读 `docs/development-milestones/01-superpowers-execution-rules.md`。
+- 年度清零必须按北京时间 1 月 1 日口径。
+- 冻结积分不清零。
+- 跨年冻结释放回账户，不追加过期清零。
+- 排名不受兑换扣分影响。
+- Java 行为必须 TDD。
+- 不跑 full build，除非用户明确要求。
+- 不提交 git，Superpowers 的 commit 步骤在本项目改为 Checkpoint。
+- 不添加 co-author 或 AI 元数据。
+
+---
+
+## Superpowers 文件与接口索引
+
+**Files:**
+
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/dataobject/dispute/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/dataobject/annual/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/dataobject/budget/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/dispute/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/annual/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/budget/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/annual/`
+- Test: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/test/java/cn/iocoder/yudao/module/clubpoints/service/annual/`
+
+**Interfaces:**
+
+- Consumes: M4 LedgerService、M9 冻结口径、M2 强审计、M1 年度和预算表。
+- Produces: 异议处理、年度清零 Job、年度排名、激励建议、预算记录接口。
+
+**Verification:**
+
+- Run: 年度清零单测。
+- Expected: 同一年同一用户只清零一次，冻结积分不清零。
+- Run: 年度排名测试。
+- Expected: 兑换扣分不影响年度获得积分排名。
+- Run: 异议调整测试。
+- Expected: 积分变化走账本撤销或调整，不直接改余额。
+
+## 目标
+
+完成异议处理、年度清零、年度排名、激励建议、预算记录。年度清零必须幂等，排名不受兑换扣分影响。
+
+## 前置条件
+
+- M9 已放行。
+- LedgerService 可用。
+- 兑换冻结和跨年释放口径已确定。
+- 强审计可用。
+- `club_points_job_run` 可用。
+
+## 任务 M10.1 异议 DO 和 Service
+
+- [ ] 创建 `ClubPointDisputeDO`。
+- [ ] 创建对应 Mapper。
+- [ ] 员工提交异议。
+- [ ] 员工上传附件。
+- [ ] 管理员受理异议。
+- [ ] 管理员驳回异议。
+- [ ] 管理员处理异议。
+- [ ] 需要改积分时调用撤销或调整流水。
+- [ ] 异议本身不直接改积分。
+- [ ] 处理异议写强审计。
+
+验收：
+
+- [ ] 异议状态机可控。
+- [ ] 异议处理可追溯。
+- [ ] 积分变化仍走账本。
+
+## 任务 M10.2 年度清零模型
+
+- [ ] 创建 `ClubPointAnnualClearingRecordDO`。
+- [ ] 创建对应 Mapper。
+- [ ] 定义年度清零状态。
+- [ ] 定义年度清零流水来源类型。
+- [ ] 定义 `ANNUAL_CLEARING:{year}:{userId}` 幂等键。
+- [ ] 明确每年 1 月 1 日北京时间执行。
+- [ ] 跨年冻结兑换拒绝时释放回账户，不追加过期清零。
+
+验收：
+
+- [ ] 清零规则有明确时间口径。
+- [ ] 跨年冻结释放口径固定。
+
+## 任务 M10.3 年度清零 Service
+
+- [ ] 扫描指定年度用户账户。
+- [ ] 只清未冻结可用积分。
+- [ ] 生成年度清零负向流水。
+- [ ] 写年度清零记录。
+- [ ] 更新账户缓存。
+- [ ] 支持单用户重试。
+- [ ] 支持全量重跑。
+- [ ] 使用数据库唯一键防重复。
+
+验收：
+
+- [ ] 同一年同一用户只清零一次。
+- [ ] 已冻结积分不被清零。
+- [ ] 清零不删除历史流水。
+
+## 任务 M10.4 年度清零 Job
+
+- [ ] 创建年度清零 Job Handler。
+- [ ] Job 只调 Service。
+- [ ] 写 `club_points_job_run`。
+- [ ] 失败记录错误摘要。
+- [ ] 支持人工重跑失败用户。
+- [ ] 人工处理写强审计。
+
+验收：
+
+- [ ] Job 可手动触发。
+- [ ] Job 重跑幂等。
+- [ ] 失败用户可定位。
+
+## 任务 M10.5 年度排名
+
+- [ ] 创建 `ClubPointAnnualRankingRecordDO`。
+- [ ] 创建对应 Mapper。
+- [ ] 按年度积分获得值统计排名。
+- [ ] 排名不受兑换扣分影响。
+- [ ] 保存用户、部门、俱乐部快照。
+- [ ] 保存排名生成时间和规则快照。
+- [ ] 支持重新生成排名。
+
+验收：
+
+- [ ] 兑换扣分不会降低年度排名贡献值。
+- [ ] 排名可追溯到年度和统计口径。
+
+## 任务 M10.6 激励建议
+
+- [ ] 创建 `ClubPointIncentiveRecordDO`。
+- [ ] 创建对应 Mapper。
+- [ ] 根据排名生成激励建议。
+- [ ] 保存建议金额或激励等级。
+- [ ] 管理员确认激励。
+- [ ] 管理员取消激励。
+- [ ] 确认和取消写强审计。
+
+验收：
+
+- [ ] 激励建议不自动等于发放。
+- [ ] 管理员确认后状态固定。
+
+## 任务 M10.7 预算记录
+
+- [ ] 创建 `ClubPointBudgetRecordDO`。
+- [ ] 创建对应 Mapper。
+- [ ] 管理员新增预算记录。
+- [ ] 管理员修改预算记录。
+- [ ] 管理员停用预算记录。
+- [ ] 预算记录关联年度、俱乐部或全局范围。
+- [ ] 修改预算写强审计。
+
+验收：
+
+- [ ] 预算记录可查询。
+- [ ] 激励和兑换可引用预算统计。
+
+## 任务 M10.8 API
+
+- [ ] 员工异议提交接口。
+- [ ] 员工异议列表接口。
+- [ ] 管理员异议处理接口。
+- [ ] 管理员年度清零接口。
+- [ ] 管理员年度清零记录接口。
+- [ ] 管理员排名生成接口。
+- [ ] 管理员排名查询接口。
+- [ ] 管理员激励确认接口。
+- [ ] 管理员预算管理接口。
+
+验收：
+
+- [ ] API 路径和 `club-points-api-design.md` 一致。
+- [ ] 员工只能查本人异议。
+- [ ] 负责人不能执行年度清零。
+
+## 任务 M10.9 测试
+
+- [ ] 测试异议提交和处理。
+- [ ] 测试异议调整积分走账本。
+- [ ] 测试年度清零。
+- [ ] 测试重复清零幂等。
+- [ ] 测试冻结积分不清零。
+- [ ] 测试跨年冻结释放。
+- [ ] 测试年度排名不受兑换影响。
+- [ ] 测试激励确认。
+- [ ] 测试预算修改强审计。
+
+验收：
+
+- [ ] 年度运营测试通过。
+- [ ] 清零、排名、激励、预算事实一致。
+
+## M10 放行标准
+
+- [ ] 异议闭环可用。
+- [ ] 年度清零可用且幂等。
+- [ ] 年度排名可用。
+- [ ] 激励建议和确认可用。
+- [ ] 预算记录可用。
+
+## M10 不通过时禁止
+
+- [ ] 禁止做最终 MVP 验收。
+- [ ] 禁止输出“年度闭环完成”结论。

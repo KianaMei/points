@@ -1,0 +1,210 @@
+# M8 非签到积分、违规扣分、弄虚作假 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** 实现负责人提交非签到材料、管理员审核发分、管理员代录、违规扣分、严重违规和弄虚作假处理。
+
+**Architecture:** 非签到材料保存材料主表和明细，审核通过后每条明细通过 LedgerService 生成流水。违规和弄虚作假不得直接改原流水，只能走扣分、撤销或调整流水。
+
+**Tech Stack:** Spring 事务、MyBatis、LedgerService、附件锁定、强审计、JUnit。
+
+## Global Constraints
+
+- 先读 `docs/development-milestones/01-superpowers-execution-rules.md`。
+- 所有发分和扣分必须走 LedgerService。
+- 分值必须按规则项区间校验。
+- 审核通过、代录、违规、弄虚作假必须强审计。
+- Java 行为必须 TDD。
+- 不跑 full build，除非用户明确要求。
+- 不提交 git，Superpowers 的 commit 步骤在本项目改为 Checkpoint。
+- 不添加 co-author 或 AI 元数据。
+
+---
+
+## Superpowers 文件与接口索引
+
+**Files:**
+
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/dataobject/contribution/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/contribution/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/contribution/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/leader/contribution/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/contribution/`
+- Test: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/test/java/cn/iocoder/yudao/module/clubpoints/service/contribution/`
+
+**Interfaces:**
+
+- Consumes: M3 规则项、M4 LedgerService、M2 附件锁定和强审计、M5 负责人范围。
+- Produces: 非签到材料审核发分、管理员代录、违规扣分、弄虚作假处理能力。
+
+**Verification:**
+
+- Run: 非签到审核单测。
+- Expected: 审核通过按明细生成流水，重复审核不重复发分。
+- Run: 弄虚作假处理测试。
+- Expected: 原流水反向撤销，额外扣分通过 LedgerService 生成。
+
+## 目标
+
+实现负责人提交非签到材料、管理员审核发分、违规扣分、严重违规和弄虚作假处理。
+
+## 前置条件
+
+- M7 已放行。
+- LedgerService 可用。
+- 规则读取可用。
+- 附件锁定可用。
+- 强审计可用。
+
+## 任务 M8.1 DO 和 Mapper
+
+- [ ] 创建 `ClubPointContributionMaterialDO`。
+- [ ] 创建 `ClubPointContributionItemDO`。
+- [ ] 创建 `ClubPointContributionReviewRecordDO`。
+- [ ] 创建对应 Mapper。
+- [ ] 字段和 M1 DDL 一致。
+- [ ] 材料和明细分开保存。
+
+验收：
+
+- [ ] 一个材料支持多条积分明细。
+- [ ] 审核记录可追溯。
+- [ ] 附件绑定可追溯。
+
+## 任务 M8.2 状态机和错误码
+
+- [ ] 定义材料草稿状态。
+- [ ] 定义待审核状态。
+- [ ] 定义审核通过状态。
+- [ ] 定义审核驳回状态。
+- [ ] 定义已作废状态。
+- [ ] 补充错误码：材料不存在、状态不允许、规则越界、附件缺失、重复提交、无权限审核。
+
+验收：
+
+- [ ] 状态跳转受控。
+- [ ] 审核后材料不可随意修改。
+
+## 任务 M8.3 负责人提交材料
+
+- [ ] 负责人创建材料草稿。
+- [ ] 负责人添加积分明细。
+- [ ] 负责人上传附件。
+- [ ] 负责人提交审核。
+- [ ] 校验负责人数据范围。
+- [ ] 校验规则项存在。
+- [ ] 校验录入分值在规则区间内。
+- [ ] 提交后锁定提交内容。
+
+验收：
+
+- [ ] 负责人不能给非负责俱乐部提交材料。
+- [ ] 分值越界失败。
+- [ ] 附件缺失按规则失败。
+
+## 任务 M8.4 管理员审核材料
+
+- [ ] 管理员查看待审核材料。
+- [ ] 管理员审核通过。
+- [ ] 管理员审核驳回。
+- [ ] 审核通过锁定附件。
+- [ ] 每条明细生成一条积分流水。
+- [ ] 审核通过写强审计。
+- [ ] 审核驳回写审核记录。
+
+验收：
+
+- [ ] 审核通过生成流水。
+- [ ] 重复审核不会重复发分。
+- [ ] 审核失败不会生成半截流水。
+
+## 任务 M8.5 管理员代录
+
+- [ ] 管理员创建代录申请。
+- [ ] 管理员选择用户和规则项。
+- [ ] 管理员录入实际分值。
+- [ ] 校验规则区间。
+- [ ] 生成积分流水。
+- [ ] 使用前端 requestNo 或后端请求号做幂等。
+- [ ] 写强审计。
+
+验收：
+
+- [ ] 重复提交不重复发分。
+- [ ] 代录原因必填。
+- [ ] 代录附件按规则绑定。
+
+## 任务 M8.6 违规扣分
+
+- [ ] 管理员创建违规扣分。
+- [ ] 选择违规规则项。
+- [ ] 录入扣分值。
+- [ ] 校验扣分值在规则区间内。
+- [ ] 调用 LedgerService 生成负向流水。
+- [ ] 写强审计。
+
+验收：
+
+- [ ] 扣分不会使可用余额变成非法负数，除非规则明确允许。
+- [ ] 违规扣分可追溯到规则和原因。
+
+## 任务 M8.7 弄虚作假处理
+
+- [ ] 管理员标记材料弄虚作假。
+- [ ] 撤销原材料已发流水。
+- [ ] 按弄虚作假规则扣分。
+- [ ] 锁定相关附件。
+- [ ] 写强审计。
+- [ ] 通知相关员工或负责人。
+
+验收：
+
+- [ ] 原流水用反向流水撤销。
+- [ ] 不直接删除原流水。
+- [ ] 弄虚作假扣分和撤销都可追溯。
+
+## 任务 M8.8 API
+
+- [ ] 负责人材料列表。
+- [ ] 负责人材料详情。
+- [ ] 负责人提交材料。
+- [ ] 负责人撤回草稿。
+- [ ] 管理员审核列表。
+- [ ] 管理员审核接口。
+- [ ] 管理员代录接口。
+- [ ] 管理员违规扣分接口。
+- [ ] 管理员弄虚作假处理接口。
+
+验收：
+
+- [ ] API 路径和 `club-points-api-design.md` 一致。
+- [ ] 负责人和管理员权限边界清楚。
+
+## 任务 M8.9 测试
+
+- [ ] 测试负责人提交材料。
+- [ ] 测试负责人越权失败。
+- [ ] 测试分值越界失败。
+- [ ] 测试审核通过发分。
+- [ ] 测试重复审核幂等。
+- [ ] 测试管理员代录幂等。
+- [ ] 测试违规扣分。
+- [ ] 测试弄虚作假撤销加扣分。
+
+验收：
+
+- [ ] 非签到闭环测试通过。
+- [ ] 所有发分扣分都走 LedgerService。
+
+## M8 放行标准
+
+- [ ] 非签到材料提交可用。
+- [ ] 非签到审核发分可用。
+- [ ] 管理员代录可用。
+- [ ] 违规扣分可用。
+- [ ] 弄虚作假处理可用。
+
+## M8 不通过时禁止
+
+- [ ] 禁止做积分来源统计验收。
+- [ ] 禁止做 MVP 全量演示。

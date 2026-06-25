@@ -1,0 +1,24 @@
+# Build outputs
+**/target/
+**/dist/
+**/.vite/
+**/.flattened-pom.xml
+
+# Frontend dependencies
+**/node_modules/
+
+# Logs and local runtime artifacts
+**/*.log
+*.log
+.m2-tmp/
+
+# IDE and OS files
+.idea/
+.vscode/
+**/.idea/
+**/.vscode/
+.DS_Store
+**/.DS_Store
+
+# Local backups created when vendoring an upstream repository into this project
+ruoyi-vue-pro-github/.git.bak*/

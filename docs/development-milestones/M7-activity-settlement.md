@@ -1,0 +1,175 @@
+# M7 活动自动结算 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** 根据活动、报名、签到签退、特殊缺席、规则配置生成活动积分和缺席扣分流水，并保证重跑不重复。
+
+**Architecture:** 结算服务读取 M6 事实和 M3 规则，通过 M4 LedgerService 写流水。Job Handler 只触发 Service，不写业务逻辑；结算结果和任务运行记录分开保存。
+
+**Tech Stack:** Spring 事务、MyBatis、RuoYi Job、LedgerService、数据库唯一键、JUnit。
+
+## Global Constraints
+
+- 先读 `docs/development-milestones/01-superpowers-execution-rules.md`。
+- 活动积分和缺席扣分必须用规则配置。
+- 结算重跑和并发结算必须幂等。
+- Job 不能直接写业务逻辑。
+- Java 行为必须 TDD。
+- 不跑 full build，除非用户明确要求。
+- 不提交 git，Superpowers 的 commit 步骤在本项目改为 Checkpoint。
+- 不添加 co-author 或 AI 元数据。
+
+---
+
+## Superpowers 文件与接口索引
+
+**Files:**
+
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/settlement/ClubPointActivitySettlementService.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/job/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/settlement/`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/enums/ErrorCodeConstants.java`
+- Test: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/test/java/cn/iocoder/yudao/module/clubpoints/service/settlement/`
+
+**Interfaces:**
+
+- Consumes: M6 活动事实、M3 规则项、M4 LedgerService、M2 强审计、`club_points_job_run`。
+- Produces: 活动积分流水、缺席扣分流水、结算运行记录、结算 Job Handler。
+
+**Verification:**
+
+- Run: 活动结算单测。
+- Expected: 正常签到发分、无故缺席扣分、特殊缺席不扣分。
+- Run: 重复结算和并发结算测试。
+- Expected: 不重复发分，不重复扣分。
+
+## 目标
+
+根据活动、报名、签到签退、特殊缺席、规则配置生成活动积分和缺席扣分流水，保证重跑不重复。
+
+## 前置条件
+
+- M6 已放行。
+- LedgerService 可用。
+- 规则读取可用。
+- `club_points_activity_settlement_run` 已建表。
+- 结算相关唯一键已落库。
+
+## 任务 M7.1 结算模型
+
+- [ ] 定义活动结算状态。
+- [ ] 定义结算运行状态。
+- [ ] 定义结算来源类型。
+- [ ] 定义活动积分流水来源类型。
+- [ ] 定义无故缺席扣分来源类型。
+- [ ] 定义月度累计缺席扣分来源类型。
+
+验收：
+
+- [ ] 结算状态和字典一致。
+- [ ] 流水来源类型可追溯到活动和用户。
+
+## 任务 M7.2 SettlementService
+
+- [ ] 创建 `service/settlement/ClubPointActivitySettlementService.java`。
+- [ ] 创建 `service/settlement/ClubPointActivitySettlementServiceImpl.java`。
+- [ ] 读取已结束未结算活动。
+- [ ] 读取活动报名记录。
+- [ ] 读取签到签退记录。
+- [ ] 读取特殊缺席标记。
+- [ ] 读取活动积分配置版本。
+- [ ] 计算应得活动积分。
+- [ ] 计算无故缺席扣分。
+- [ ] 调用 LedgerService 写流水。
+- [ ] 写结算运行记录。
+
+验收：
+
+- [ ] 活动积分用规则配置，不硬编码。
+- [ ] 缺席扣分用规则配置，不硬编码。
+- [ ] 结算结果和运行记录一致。
+
+## 任务 M7.3 结算幂等
+
+- [ ] 活动结算运行加 request key。
+- [ ] 单个用户活动发分生成稳定 idempotency key。
+- [ ] 单个用户活动缺席扣分生成稳定 idempotency key。
+- [ ] 月度累计缺席扣分生成稳定 idempotency key。
+- [ ] 重跑时识别已处理流水。
+- [ ] 数据库唯一键冲突按已处理返回。
+
+验收：
+
+- [ ] 同一活动重复结算不重复发分。
+- [ ] 同一缺席重复结算不重复扣分。
+- [ ] 并发结算不会生成重复流水。
+
+## 任务 M7.4 月度累计缺席
+
+- [ ] 统计用户当月无故缺席次数。
+- [ ] 读取月度累计缺席规则。
+- [ ] 达到阈值后生成扣分流水。
+- [ ] 同一用户同一年月只扣一次。
+- [ ] 记录统计快照。
+
+验收：
+
+- [ ] 未达到阈值不扣分。
+- [ ] 达到阈值扣分一次。
+- [ ] 重算不重复扣。
+
+## 任务 M7.5 Job Handler
+
+- [ ] 创建活动结算 Job Handler。
+- [ ] Job 只调 Service，不写业务逻辑。
+- [ ] 写 `club_points_job_run` 记录。
+- [ ] 支持失败重试。
+- [ ] 失败记录错误摘要。
+
+验收：
+
+- [ ] Job 可手动触发。
+- [ ] Job 重试不重复发分。
+- [ ] Job 失败能在任务运行记录中追踪。
+
+## 任务 M7.6 管理员接口
+
+- [ ] 管理员查看待结算活动。
+- [ ] 管理员手动触发结算。
+- [ ] 管理员查看结算运行记录。
+- [ ] 管理员查看结算明细。
+- [ ] 手动结算写强审计。
+
+验收：
+
+- [ ] 手动重跑不重复流水。
+- [ ] 非管理员不能触发全局结算。
+
+## 任务 M7.7 测试
+
+- [ ] 测试正常签到发分。
+- [ ] 测试未签到缺席扣分。
+- [ ] 测试特殊缺席不扣分。
+- [ ] 测试重复结算。
+- [ ] 测试并发结算。
+- [ ] 测试月度累计缺席。
+- [ ] 测试余额不足时扣分规则。
+- [ ] 测试 Job 失败记录。
+
+验收：
+
+- [ ] 所有结算测试通过。
+- [ ] 流水、账户缓存、结算记录一致。
+
+## M7 放行标准
+
+- [ ] 自动结算可用。
+- [ ] 手动结算可用。
+- [ ] 重跑幂等。
+- [ ] 月度缺席扣分可用。
+- [ ] 结算记录可追溯。
+
+## M7 不通过时禁止
+
+- [ ] 禁止写活动相关前端收口。
+- [ ] 禁止做全链路积分演示。

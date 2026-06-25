@@ -1,0 +1,221 @@
+# M9 兑换闭环 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** 实现兑换批次、礼品、资格快照、申请、冻结、库存锁、审核发放，保证并发不超兑、重复提交不重复扣分。
+
+**Architecture:** 兑换申请同事务冻结积分、锁库存、创建申请；审核通过冻结转扣减并生成兑换流水，拒绝或取消释放冻结和库存。库存事实源是数据库条件更新，不是 Redis。
+
+**Tech Stack:** Spring 事务、MyBatis、LedgerService、Lock4j 短锁、数据库条件更新、强审计、JUnit。
+
+## Global Constraints
+
+- 先读 `docs/development-milestones/01-superpowers-execution-rules.md`。
+- 不能用 Redis 当库存事实源。
+- 兑换申请、库存锁、审核扣分必须数据库幂等。
+- 资格判断使用快照。
+- 审核必须强审计。
+- Java 行为必须 TDD。
+- 不跑 full build，除非用户明确要求。
+- 不提交 git，Superpowers 的 commit 步骤在本项目改为 Checkpoint。
+- 不添加 co-author 或 AI 元数据。
+
+---
+
+## Superpowers 文件与接口索引
+
+**Files:**
+
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/dataobject/redemption/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/redemption/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/redemption/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/app/redemption/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/redemption/`
+- Test: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/test/java/cn/iocoder/yudao/module/clubpoints/service/redemption/`
+
+**Interfaces:**
+
+- Consumes: M4 LedgerService 冻结能力、M3 规则项、M2 强审计、M1 库存条件更新字段。
+- Produces: 批次、礼品、资格快照、申请、库存锁、审核发放接口。
+
+**Verification:**
+
+- Run: 兑换申请并发测试。
+- Expected: 不超兑，不重复冻结。
+- Run: 兑换审核测试。
+- Expected: 通过后冻结转扣减并生成流水，拒绝或取消后释放冻结和库存。
+- Run: 跨年冻结释放测试。
+- Expected: 释放回账户，不追加过期清零。
+
+## 目标
+
+实现兑换批次、礼品、资格快照、申请、冻结、库存锁、审核发放。重点是并发不超兑、重复提交不重复扣分。
+
+## 前置条件
+
+- M8 已放行。
+- LedgerService 冻结和冻结转扣减可用。
+- 规则读取可用。
+- 库存相关唯一键和字段已落库。
+- 强审计可用。
+
+## 任务 M9.1 DO 和 Mapper
+
+- [ ] 创建 `ClubPointRedemptionBatchDO`。
+- [ ] 创建 `ClubPointRedemptionGiftDO`。
+- [ ] 创建 `ClubPointRedemptionEligibilitySnapshotDO`。
+- [ ] 创建 `ClubPointRedemptionApplicationDO`。
+- [ ] 创建 `ClubPointStockLockDO`。
+- [ ] 创建 `ClubPointRedemptionReviewRecordDO`。
+- [ ] 创建对应 Mapper。
+- [ ] 字段和 M1 DDL 一致。
+
+验收：
+
+- [ ] 批次、礼品、资格、申请、库存锁、审核记录都可落库。
+- [ ] 申请幂等键存在。
+
+## 任务 M9.2 批次 Service
+
+- [ ] 创建兑换批次。
+- [ ] 修改未开启批次。
+- [ ] 开启批次。
+- [ ] 关闭批次。
+- [ ] 生成资格快照。
+- [ ] 修改资格规则写强审计。
+- [ ] 批次开启后关键规则不可随意变更。
+
+验收：
+
+- [ ] 批次状态机受控。
+- [ ] 资格快照可追溯。
+- [ ] 批次关闭后不能新增申请。
+
+## 任务 M9.3 礼品 Service
+
+- [ ] 新增礼品。
+- [ ] 修改礼品。
+- [ ] 上架礼品。
+- [ ] 下架礼品。
+- [ ] 设置积分价格。
+- [ ] 设置库存。
+- [ ] 使用数据库条件更新锁库存。
+- [ ] 不用 Redis 当库存事实源。
+
+验收：
+
+- [ ] 已锁库存和已兑库存字段准确。
+- [ ] 库存不足时申请失败。
+- [ ] 并发申请不会超兑。
+
+## 任务 M9.4 资格快照
+
+- [ ] 按批次生成人员资格快照。
+- [ ] 保存用户、部门、积分、排名、规则快照。
+- [ ] 员工申请时读取快照。
+- [ ] 批次内资格不受后续积分变化影响，除非设计明确允许刷新。
+- [ ] 支持管理员查看资格快照。
+
+验收：
+
+- [ ] 资格判断有历史依据。
+- [ ] 申请时不重新临时拼规则。
+
+## 任务 M9.5 申请 Service
+
+- [ ] 员工查看可兑换礼品。
+- [ ] 员工提交兑换申请。
+- [ ] 校验批次状态。
+- [ ] 校验资格快照。
+- [ ] 校验礼品状态。
+- [ ] 校验可用积分。
+- [ ] 同事务冻结积分。
+- [ ] 同事务锁定库存。
+- [ ] 同事务创建申请。
+- [ ] 使用 requestNo 或 idempotency key 防重复提交。
+
+验收：
+
+- [ ] 申请成功后可用积分减少，冻结积分增加。
+- [ ] 礼品已锁库存增加。
+- [ ] 重复提交返回同一结果或被幂等拦截。
+
+## 任务 M9.6 审核 Service
+
+- [ ] 管理员查看待审核申请。
+- [ ] 管理员审核通过。
+- [ ] 审核通过冻结转扣减。
+- [ ] 审核通过库存锁转已兑。
+- [ ] 审核通过写兑换负向流水。
+- [ ] 管理员审核拒绝。
+- [ ] 审核拒绝释放冻结。
+- [ ] 审核拒绝释放库存锁。
+- [ ] 审核写强审计。
+- [ ] 通知员工审核结果。
+
+验收：
+
+- [ ] 通过后积分真正扣减。
+- [ ] 拒绝后积分和库存恢复。
+- [ ] 重复审核不重复扣分。
+
+## 任务 M9.7 取消和超时
+
+- [ ] 员工在允许状态取消申请。
+- [ ] 取消释放冻结。
+- [ ] 取消释放库存锁。
+- [ ] 超时未审核按规则处理。
+- [ ] 取消和超时写记录。
+
+验收：
+
+- [ ] 取消不生成扣减流水。
+- [ ] 释放后库存和积分一致。
+
+## 任务 M9.8 API
+
+- [ ] 管理员批次管理接口。
+- [ ] 管理员礼品管理接口。
+- [ ] 管理员资格快照接口。
+- [ ] 管理员审核接口。
+- [ ] 员工可兑换列表接口。
+- [ ] 员工提交申请接口。
+- [ ] 员工申请记录接口。
+- [ ] 员工取消申请接口。
+
+验收：
+
+- [ ] API 路径和 `club-points-api-design.md` 一致。
+- [ ] 负责人不能审核兑换。
+
+## 任务 M9.9 测试
+
+- [ ] 测试批次状态机。
+- [ ] 测试资格快照生成。
+- [ ] 测试库存不足失败。
+- [ ] 测试积分不足失败。
+- [ ] 测试并发申请不超兑。
+- [ ] 测试重复申请幂等。
+- [ ] 测试审核通过扣分。
+- [ ] 测试审核拒绝释放。
+- [ ] 测试取消释放。
+- [ ] 测试跨年冻结释放口径。
+
+验收：
+
+- [ ] 并发测试通过。
+- [ ] 冻结、库存、申请、流水一致。
+
+## M9 放行标准
+
+- [ ] 批次可用。
+- [ ] 礼品可用。
+- [ ] 资格快照可用。
+- [ ] 申请冻结库存闭环可用。
+- [ ] 审核扣分和释放闭环可用。
+- [ ] 并发不超兑。
+
+## M9 不通过时禁止
+
+- [ ] 禁止做兑换前端验收。
+- [ ] 禁止做 MVP 闭环演示。

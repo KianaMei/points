@@ -32,6 +32,17 @@ Hard project rules still apply:
 - Do not run a full build unless explicitly asked.
 - Do not add AI co-author metadata.
 
+## Club Points Startup
+
+Every time you handle this project, read these first:
+
+1. `docs/startup/00-readme.md`
+2. `docs/startup/09-doc-router.md`
+
+Then read at most 1-2 relevant `docs/startup/*` short files for the current task.
+
+Do not read all long design documents by default. Only open the detailed documents listed in `docs/startup/09-doc-router.md` when the short startup files are not enough.
+
 ## Installed Superpowers Skills
 
 - `using-superpowers`: Entry workflow for checking and using relevant skills before acting.
@@ -59,4 +70,3 @@ Hard project rules still apply:
 - For review flow: use `requesting-code-review` or `receiving-code-review`.
 - For isolated branch/worktree work: use `using-git-worktrees`.
 - For many independent subtasks: use `dispatching-parallel-agents` or `subagent-driven-development`.
-
