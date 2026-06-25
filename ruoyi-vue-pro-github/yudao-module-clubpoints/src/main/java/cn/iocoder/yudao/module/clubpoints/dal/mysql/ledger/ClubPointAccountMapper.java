@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger;
 
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
@@ -23,6 +25,12 @@ public interface ClubPointAccountMapper extends BaseMapperX<ClubPointAccountDO> 
     default ClubPointAccountDO selectByUserIdForUpdate(Long userId) {
         return selectOneForUpdate(new LambdaQueryWrapperX<ClubPointAccountDO>()
                 .eq(ClubPointAccountDO::getUserId, userId));
+    }
+
+    default PageResult<ClubPointAccountDO> selectPage(PageParam pageParam, Long userId) {
+        return selectPage(pageParam, new LambdaQueryWrapperX<ClubPointAccountDO>()
+                .eqIfPresent(ClubPointAccountDO::getUserId, userId)
+                .orderByDesc(ClubPointAccountDO::getId));
     }
 
 }

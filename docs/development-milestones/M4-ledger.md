@@ -1,6 +1,6 @@
 # M4 积分账本 Implementation Plan
 
-**Status:** `[~]` M4.1-M4.6 已完成并有 RED/GREEN 证据；当前入口是 M4.7 查询 API。
+**Status:** `[x]` M4.1-M4.8 已完成并有 RED/GREEN、组合测试和质量门禁证据；下一入口是 M5 俱乐部成员负责人闭环。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -298,45 +298,121 @@ GREEN 证据：
 
 ## 任务 M4.7 查询 API
 
-- [ ] 员工查询本人积分明细。
-- [ ] 员工查询本人余额。
-- [ ] 负责人查询负责俱乐部成员积分摘要。
-- [ ] 管理员查询全局积分流水。
-- [ ] 管理员查询账户缓存。
-- [ ] 所有敏感读接口校验数据范围。
+### Task M4.7: 查询 API
+
+**Files:**
+
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/ClubPointLedgerQueryService.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/ClubPointLedgerQueryServiceImpl.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/bo/ClubPointLedgerPageReqBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/bo/ClubPointAccountPageReqBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/bo/ClubPointLedgerSummaryBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/bo/ClubPointLedgerMemberSummaryBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/app/ledger/ClubPointLedgerAppController.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/app/ledger/vo/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/leader/ledger/ClubPointLedgerLeaderController.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/leader/ledger/vo/`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/ledger/ClubPointLedgerAdminController.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/controller/admin/ledger/vo/`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/ledger/ClubPointTransactionMapper.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/ledger/ClubPointAccountMapper.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/club/ClubMemberMapper.java`
+- Test: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/test/java/cn/iocoder/yudao/module/clubpoints/controller/ledger/ClubPointLedgerQueryControllerTest.java`
+
+**Interfaces:**
+
+- Consumes: `club_points_transaction`、`club_points_point_account`、`club_points_club_member`、`club_points_club_leader`、`ClubScopeService.validateSelf(...)`、`ClubScopeService.validateManagedClub(...)`、`ClubPointTransactionStatusEnum`、`ClubPointCategoryEnum`
+- Produces:
+  - `GET /clubpoints/app/ledger/summary`
+  - `GET /clubpoints/app/ledger/page`
+  - `GET /clubpoints/leader/ledger/member-summary-page`
+  - `GET /clubpoints/leader/ledger/transaction-page`
+  - `GET /clubpoints/ledger/account-page`
+  - `GET /clubpoints/ledger/transaction-page`
+- Decision: 负责人不是全局账本角色；负责人只能查看自己负责俱乐部作为 `issuing_club_id` 发出的积分流水，以及该负责俱乐部成员在本俱乐部来源下汇总出的积分摘要。负责人不得查看同一员工在其他俱乐部或无俱乐部来源下的积分流水、原因、材料或来源快照。
+- Decision: 员工端账本接口不接收 `userId`；当前登录人从 `SecurityFrameworkUtils.getLoginUserId()` 获取。
+- Decision: 管理员查询使用 `clubpoints:ledger:query`，员工自助账本按登录态本人范围，负责人账本查询使用 `clubpoints:leader` 并由服务层强制 `validateManagedClub(...)`。
+
+- [x] RED: 写失败测试或失败验证
+- [x] Verify RED: 运行命令，确认失败原因正确
+- [x] GREEN: 写最小实现
+- [x] Verify GREEN: 运行命令，确认通过
+- [x] REFACTOR: 只在绿色后清理命名、重复、结构
+- [x] Checkpoint: 列出变更文件和验证证据
+
+RED 证据：
+
+- 新增 `ClubPointLedgerQueryControllerTest`，覆盖员工本人账本、负责人负责俱乐部发放来源账本、管理员全局账本和接口路径/权限声明。
+- RED 命令：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLedgerQueryControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`。
+- 失败原因为 `controller.admin.ledger`、`controller.app.ledger`、`controller.leader.ledger` 和 `ClubPointLedgerQueryServiceImpl` 等查询 API 产物不存在，符合 M4.7 RED 预期。
+
+GREEN 证据：
+
+- GREEN：新增员工端、负责人端、管理员端账本查询 Controller、VO、`ClubPointLedgerQueryService`、读侧 BO；补充 `ClubPointTransactionMapper`、`ClubPointAccountMapper`、`ClubMemberMapper` 查询能力。
+- 权限范围：员工端从登录态取本人；负责人端以 `validateManagedClub(...)` 和 `issuing_club_id` 为硬边界；管理员端使用 `clubpoints:ledger:query` 全局查询。
+- M4.7 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLedgerQueryControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointLedgerQueryControllerTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- M4 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointLedgerMapperTest,ClubPointLedgerEnumTest,ClubPointLedgerServiceImplTest,ClubPointFreezeServiceImplTest,ClubPointLedgerAdjustmentServiceImplTest,ClubPointAccountRebuildServiceImplTest,ClubPointLedgerQueryControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `33` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；源码范围 `tenant_id|TenantBaseDO` 无命中；源码范围 AI/co-author 元数据模式无命中；账户缓存写入口仍只在 `ClubPointLedgerServiceImpl` 和 `ClubPointFreezeServiceImpl`，查询服务只读账户缓存。
 
 验收：
 
-- [ ] 员工不能看别人流水。
-- [ ] 负责人不能看非负责俱乐部流水。
-- [ ] 管理员可以全局查询。
+- [x] 员工查询本人积分明细。
+- [x] 员工查询本人余额。
+- [x] 负责人查询负责俱乐部成员积分摘要。
+- [x] 负责人查询负责俱乐部作为发放俱乐部的积分流水。
+- [x] 负责人不能看非负责俱乐部流水。
+- [x] 负责人不能看负责俱乐部成员在其他俱乐部或无俱乐部来源下的流水来源。
+- [x] 管理员查询全局积分流水。
+- [x] 管理员查询账户缓存。
+- [x] 所有敏感读接口校验数据范围。
+- [x] 员工不能看别人流水。
+- [x] 管理员可以全局查询。
 
 ## 任务 M4.8 测试
 
-- [ ] 测试正向发分。
-- [ ] 测试负向扣分。
-- [ ] 测试重复 idempotency key。
-- [ ] 测试余额不足。
-- [ ] 测试冻结、释放、转扣减。
-- [ ] 测试撤销。
-- [ ] 测试调整强审计失败回滚。
-- [ ] 测试余额重算。
+- [x] 测试正向发分。
+- [x] 测试负向扣分。
+- [x] 测试重复 idempotency key。
+- [x] 测试余额不足。
+- [x] 测试冻结、释放、转扣减。
+- [x] 测试撤销。
+- [x] 测试调整强审计失败回滚。
+- [x] 测试余额重算。
 
 验收：
 
-- [ ] 账本核心测试通过。
-- [ ] 并发重复请求不会重复流水。
+- [x] 账本核心测试通过。
+- [x] 并发重复请求不会重复流水。
+
+证据：
+
+- 正向发分、负向扣分、重复幂等键、余额不足由 `ClubPointLedgerServiceImplTest` 覆盖。
+- 并发重复幂等键由 `ClubPointLedgerServiceImplTest#createDuplicateIdempotencyConcurrentlyShouldPersistOnce` 覆盖，单方法验证返回 `BUILD SUCCESS`；测试 `1` 个，失败 `0`，错误 `0`。
+- 冻结、释放、转扣减由 `ClubPointFreezeServiceImplTest` 覆盖。
+- 撤销和调整强审计失败回滚由 `ClubPointLedgerAdjustmentServiceImplTest` 覆盖。
+- 余额重算由 `ClubPointAccountRebuildServiceImplTest` 覆盖。
+- M4 收口组合验证返回 `BUILD SUCCESS`；合计 `33` 个测试，失败 `0`，错误 `0`。
 
 ## M4 放行标准
 
-- [ ] 所有积分变动都只能通过 LedgerService。
-- [ ] 流水是唯一事实源。
-- [ ] 账户缓存可重算。
-- [ ] 冻结闭环可用。
-- [ ] 撤销和调整闭环可用。
+- [x] 所有积分变动都只能通过 LedgerService。
+- [x] 流水是唯一事实源。
+- [x] 账户缓存可重算。
+- [x] 冻结闭环可用。
+- [x] 撤销和调整闭环可用。
+
+放行证据：
+
+- 生产账户缓存写入口检查只命中 `ClubPointLedgerServiceImpl` 和 `ClubPointFreezeServiceImpl`；`ClubPointLedgerQueryServiceImpl` 只读 `availablePoints`、`frozenPoints`。
+- `ClubPointAccountRebuildServiceImplTest` 验证删除或修改账户缓存后可从有效流水和冻结事实源恢复，且重算不改变流水。
+- `ClubPointFreezeServiceImplTest` 验证冻结减少可用并增加冻结、释放恢复可用且不生成流水、冻结转扣减生成兑换负向流水。
+- `ClubPointLedgerAdjustmentServiceImplTest` 验证撤销只能生成反向流水、原流水事实不改、管理员调整写强审计且审计失败回滚。
+- M4 收口组合验证和质量门禁均已通过；未跑 full build。
 
 ## M4 不通过时禁止
 
-- [ ] 禁止写活动结算。
-- [ ] 禁止写非签到审核通过发分。
-- [ ] 禁止写兑换冻结和扣分。
+- [x] 禁止写活动结算。
+- [x] 禁止写非签到审核通过发分。
+- [x] 禁止写兑换冻结和扣分。
+
+执行记录：M4 放行前未进入 M5-M9 业务实现；本次只完成 M4 账本查询 API、测试收口、文档同步和放行记录。

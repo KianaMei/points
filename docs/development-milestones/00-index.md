@@ -42,7 +42,7 @@
 | `[x]` | M1 | `M1-database-and-seed.md` | 正式 schema、seed、测试 DDL 一致 |
 | `[x]` | M2 | `M2-permission-crosscutting.md` | 权限、范围、审计、附件、通知横切能力可复用 |
 | `[x]` | M3 | `M3-rule-config.md` | 规则版本和规则项可发布、停用、读取 |
-| `[~]` | M4 | `M4-ledger.md` | 积分流水、冻结、余额缓存形成账本脊柱 |
+| `[x]` | M4 | `M4-ledger.md` | 积分流水、冻结、余额缓存形成账本脊柱 |
 | `[ ]` | M5 | `M5-club-member-leader.md` | 俱乐部、成员、负责人闭环可用 |
 | `[ ]` | M6 | `M6-activity-registration-attendance.md` | 活动、报名、签到签退、特殊缺席闭环可用 |
 | `[ ]` | M7 | `M7-activity-settlement.md` | 活动积分和缺席扣分可幂等结算 |
@@ -82,7 +82,7 @@ M0 空模块
 
 ## 当前最近入口
 
-当前最近入口是 M4：
+当前最近入口是 M5：
 
 - M0 已创建 `ruoyi-vue-pro-github/yudao-module-clubpoints` 空模块。
 - M0 已在根 POM 和 `yudao-server/pom.xml` 接入 `yudao-module-clubpoints`。
@@ -110,4 +110,6 @@ M0 空模块
 - M4.4 已完成 `ClubPointFreezeService` 冻结积分、释放冻结、冻结转扣减、冻结来源枚举、冻结错误码和账户缓存同事务更新，并通过 RED/GREEN 服务测试和 M4 当前组合验证。
 - M4.5 已完成 `ClubPointLedgerService` 撤销反向流水、管理员调整、撤销幂等、调整附件快照、强审计失败回滚和账户缓存同事务更新，并通过 RED/GREEN 服务测试、M4 当前组合验证和质量门禁。
 - M4.6 已完成按用户和全量账户缓存重算、冻结中积分重算、重算任务运行记录、流水事实源不变验证，并通过 RED/GREEN 服务测试、M4 当前组合验证和质量门禁。
-- M4 下一步入口是 M4.7 查询 API。
+- M4.7 已完成员工本人账本、负责人负责俱乐部发放来源账本、管理员全局账本查询 API；负责人范围按 `issuing_club_id` 限定为自己负责俱乐部发放来源，并通过 RED/GREEN 查询接口测试、M4 收口组合验证和质量门禁。
+- M4.8 已完成账本核心测试收口，覆盖正向发分、负向扣分、重复幂等键、并发重复幂等、余额不足、冻结/释放/转扣减、撤销、调整强审计失败回滚和余额重算。
+- M4 已放行；下一步入口是 M5 俱乐部、成员、负责人闭环。

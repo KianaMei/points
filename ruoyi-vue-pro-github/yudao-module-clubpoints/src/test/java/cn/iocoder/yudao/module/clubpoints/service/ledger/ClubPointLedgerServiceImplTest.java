@@ -24,6 +24,12 @@ import org.springframework.context.annotation.Import;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_LEDGER_AVAILABLE_POINTS_NOT_ENOUGH;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_LEDGER_TRANSACTION_DUPLICATED;
@@ -123,6 +129,36 @@ class ClubPointLedgerServiceImplTest extends BaseDbUnitTest {
         Long secondId = clubPointLedgerService.createTransaction(reqBO);
 
         assertEquals(firstId, secondId);
+        ClubPointAccountDO account = accountMapper.selectByUserId(100L);
+        assertEquals(8, account.getTotalPositivePoints());
+        assertEquals(8, account.getAvailablePoints());
+    }
+
+    @Test
+    void createDuplicateIdempotencyConcurrentlyShouldPersistOnce() throws Exception {
+        insertPublishedRule(5, 10, 5);
+        ClubPointLedgerCreateReqBO reqBO = buildPositiveReq("TX-M4-3007", "IDEMP-M4-3007", 8);
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        Callable<Long> task = () -> {
+            ready.countDown();
+            assertTrue(start.await(5, TimeUnit.SECONDS));
+            return clubPointLedgerService.createTransaction(reqBO);
+        };
+
+        Future<Long> first = executorService.submit(task);
+        Future<Long> second = executorService.submit(task);
+        assertTrue(ready.await(5, TimeUnit.SECONDS));
+        start.countDown();
+        Long firstId = first.get(10, TimeUnit.SECONDS);
+        Long secondId = second.get(10, TimeUnit.SECONDS);
+        executorService.shutdownNow();
+
+        assertEquals(firstId, secondId);
+        assertEquals(1L, transactionMapper.selectList().stream()
+                .filter(transaction -> "IDEMP-M4-3007".equals(transaction.getIdempotencyKey()))
+                .count());
         ClubPointAccountDO account = accountMapper.selectByUserId(100L);
         assertEquals(8, account.getTotalPositivePoints());
         assertEquals(8, account.getAvailablePoints());
