@@ -1,6 +1,6 @@
 # M6 活动、报名、签到签退 Implementation Plan
 
-**Status:** `[~]` M6.1-M6.6 已完成并有 RED/GREEN 证据；当前入口是 M6.7 API。
+**Status:** `[~]` M6.1-M6.7 已完成并有 RED/GREEN 证据；当前入口是 M6.8 测试。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -207,20 +207,29 @@
 
 ## 任务 M6.7 API
 
-- [ ] 员工活动列表。
-- [ ] 员工活动详情。
-- [ ] 员工报名接口。
-- [ ] 员工取消报名接口。
-- [ ] 员工签到接口。
-- [ ] 员工签退接口。
-- [ ] 负责人活动管理接口。
-- [ ] 管理员活动审核接口。
-- [ ] 管理员签到修正接口。
+- [x] 员工活动列表。
+- [x] 员工活动详情。
+- [x] 员工报名接口。
+- [x] 员工取消报名接口。
+- [x] 员工签到接口。
+- [x] 员工签退接口。
+- [x] 负责人活动管理接口。
+- [x] 管理员活动审核接口。
+- [x] 管理员签到修正接口。
 
 验收：
 
-- [ ] API 路径和 `club-points-api-design.md` 一致。
-- [ ] 写接口都有后端权限和范围校验。
+- [x] API 路径和 `club-points-api-design.md` 一致。
+- [x] 写接口都有后端权限和范围校验。
+
+证据：
+
+- RED：新增 `ClubPointActivityControllerTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivityControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是员工端、负责人端、管理员端 activity/registration/attendance Controller、VO 和 `ClubPointActivityQueryServiceImpl` 不存在，符合 M6.7 RED 预期。
+- GREEN：新增员工端活动查询、报名、签到签退 Controller；新增负责人活动分页、详情、创建、修改、提交、取消 Controller；新增管理员活动审核、签到补录、签到修正、特殊缺席 Controller；新增活动查询 Service、活动查询 BO、三端 VO，并补活动 Mapper 分页查询。
+- 实现边界：员工端活动查询按已加入俱乐部和可见活动状态限制，详情允许已加入俱乐部或本人历史参与；报名、取消、签到、签退均从登录态取本人；负责人活动管理通过 `ClubScopeService.validateManagedClub(...)` 限制负责俱乐部；管理员审核、补录、修正、特殊缺席写入全局操作者上下文和强审计快照；M6.7 不生成积分流水。
+- M6.7 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivityControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointActivityControllerTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
+- M6 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivityMapperTest,ClubPointActivityEnumTest,ClubPointActivityServiceImplTest,ClubPointRegistrationServiceImplTest,ClubPointAttendanceServiceImplTest,ClubPointAttendanceCorrectionServiceImplTest,ClubPointActivityControllerTest,ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubPointClubQueryControllerTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `77` 个测试，失败 `0`，错误 `0`。
+- M6.7 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；源码范围 `tenant_id|TenantBaseDO` 无命中；源码和本次文档范围 AI/co-author 元数据模式无命中；activity Service 与 Controller 范围 `club_points_transaction|ClubPointTransactionMapper|ClubPointLedgerService|createTransaction|append` 无命中。
 
 ## 任务 M6.8 测试
 
