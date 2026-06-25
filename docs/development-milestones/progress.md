@@ -137,3 +137,9 @@
 - 2026-06-25：M4.1 调试记录：首次 GREEN 后 H2 在 `club_points_user_year_status.year` 插入时报 `year` 保留字语法错误；根因为 MyBatis 默认生成裸列名，最小修复为 `ClubPointUserYearStatusDO.year` 添加 ``@TableField("`year`")``，不改正式 DDL 字段名。
 - 2026-06-25：M4.1 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointLedgerMapperTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M4.1 文档同步：`M4-ledger.md` 勾选 M4.1 并补证据，`00-index.md` 将 M4 标为进行中并把下一入口切换到 M4.2 枚举和错误码。
+- 2026-06-25：M4.2 RED：新增 `ClubPointLedgerEnumTest`，覆盖账本枚举与 seed 字典一致、M4 错误码编号和文案；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLedgerEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 6 个账本枚举和 6 个 `CLUB_LEDGER_*` 错误码不存在。
+- 2026-06-25：M4.2 GREEN：新增 `ClubPointTransactionDirectionEnum`、`ClubPointTransactionStatusEnum`、`ClubPointTransactionSourceTypeEnum`、`ClubPointFreezeStatusEnum`、`ClubPointCategoryEnum`、`ClubPointAnnualClearingStatusEnum`，并补余额不足、冻结不足、流水重复、流水不存在、年度已清零、撤销非法 6 个错误码。
+- 2026-06-25：M4.2 决策记录：`club_points_user_year_status` 没有 `status` 字段，M4.2 的“年度状态枚举”按已有 `club_points_annual_clearing_status` 字典实现为年度清零状态枚举，不新增无事实源字段。
+- 2026-06-25：M4.2 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLedgerEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointLedgerEnumTest` 运行 `7` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M4 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointLedgerMapperTest,ClubPointLedgerEnumTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `8` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M4.2 文档同步：`M4-ledger.md` 勾选 M4.2 并补证据，`00-index.md` 当前入口切换到 M4.3 LedgerService 写流水。

@@ -1,6 +1,6 @@
 # M4 积分账本 Implementation Plan
 
-**Status:** `[~]` M4.1 已完成并有 RED/GREEN 证据；当前入口是 M4.2 枚举和错误码。
+**Status:** `[~]` M4.1-M4.2 已完成并有 RED/GREEN 证据；当前入口是 M4.3 LedgerService 写流水。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -84,16 +84,24 @@
 
 ## 任务 M4.2 枚举和错误码
 
-- [ ] 创建流水类型枚举。
-- [ ] 创建来源类型枚举。
-- [ ] 创建冻结状态枚举。
-- [ ] 创建年度状态枚举。
-- [ ] 补充错误码：余额不足、冻结不足、流水重复、流水不存在、年度已清零、撤销非法。
+- [x] 创建流水类型枚举。
+- [x] 创建来源类型枚举。
+- [x] 创建冻结状态枚举。
+- [x] 创建年度状态枚举。
+- [x] 补充错误码：余额不足、冻结不足、流水重复、流水不存在、年度已清零、撤销非法。
 
 验收：
 
-- [ ] 所有账本状态都有枚举。
-- [ ] 错误码归入 `clubpoints` 段。
+- [x] 所有账本状态都有枚举。
+- [x] 错误码归入 `clubpoints` 段。
+
+证据：
+
+- RED：新增 `ClubPointLedgerEnumTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLedgerEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointTransactionDirectionEnum`、`ClubPointTransactionStatusEnum`、`ClubPointTransactionSourceTypeEnum`、`ClubPointFreezeStatusEnum`、`ClubPointCategoryEnum`、`ClubPointAnnualClearingStatusEnum` 和 6 个 `CLUB_LEDGER_*` 错误码不存在。
+- GREEN：新增流水方向、流水状态、流水来源类型、冻结状态、积分分类、年度清零状态 6 个枚举，并补 `CLUB_LEDGER_AVAILABLE_POINTS_NOT_ENOUGH`、`CLUB_LEDGER_FROZEN_POINTS_NOT_ENOUGH`、`CLUB_LEDGER_TRANSACTION_DUPLICATED`、`CLUB_LEDGER_TRANSACTION_NOT_EXISTS`、`CLUB_LEDGER_YEAR_ALREADY_CLEARED`、`CLUB_LEDGER_REVERSE_INVALID`。
+- M4.2 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointLedgerEnumTest` 运行 `7` 个测试，失败 `0`，错误 `0`。
+- M4 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointLedgerMapperTest,ClubPointLedgerEnumTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `8` 个测试，失败 `0`，错误 `0`。
+- 决策：`club_points_user_year_status` 没有 `status` 字段，M4.2 的“年度状态枚举”按已有 `club_points_annual_clearing_status` 字典落地为 `ClubPointAnnualClearingStatusEnum`，不硬造年度状态字段或无事实源枚举。
 
 ## 任务 M4.3 LedgerService 写流水
 

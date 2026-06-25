@@ -20,5 +20,11 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_RULE_ITEM_NOT_EXISTS = new ErrorCode(1_300_000_008, "规则项不存在");
     ErrorCode CLUB_RULE_ITEM_CODE_DUPLICATED = new ErrorCode(1_300_000_009, "规则项编码重复");
     ErrorCode CLUB_RULE_VALUE_OUT_OF_RANGE = new ErrorCode(1_300_000_010, "规则值超出允许范围");
+    ErrorCode CLUB_LEDGER_AVAILABLE_POINTS_NOT_ENOUGH = new ErrorCode(1_300_000_011, "可用积分不足");
+    ErrorCode CLUB_LEDGER_FROZEN_POINTS_NOT_ENOUGH = new ErrorCode(1_300_000_012, "冻结积分不足");
+    ErrorCode CLUB_LEDGER_TRANSACTION_DUPLICATED = new ErrorCode(1_300_000_013, "积分流水重复");
+    ErrorCode CLUB_LEDGER_TRANSACTION_NOT_EXISTS = new ErrorCode(1_300_000_014, "积分流水不存在");
+    ErrorCode CLUB_LEDGER_YEAR_ALREADY_CLEARED = new ErrorCode(1_300_000_015, "年度积分已清零");
+    ErrorCode CLUB_LEDGER_REVERSE_INVALID = new ErrorCode(1_300_000_016, "积分流水撤销不允许当前操作");
 
 }
