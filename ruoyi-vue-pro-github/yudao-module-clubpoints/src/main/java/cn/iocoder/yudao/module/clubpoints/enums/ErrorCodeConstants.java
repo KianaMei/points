@@ -29,5 +29,6 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_LEDGER_FREEZE_DUPLICATED = new ErrorCode(1_300_000_017, "积分冻结记录重复");
     ErrorCode CLUB_LEDGER_FREEZE_NOT_EXISTS = new ErrorCode(1_300_000_018, "积分冻结记录不存在");
     ErrorCode CLUB_LEDGER_FREEZE_STATUS_INVALID = new ErrorCode(1_300_000_019, "积分冻结状态不允许当前操作");
+    ErrorCode CLUB_LEDGER_ADJUST_INVALID = new ErrorCode(1_300_000_020, "积分调整参数无效");
 
 }

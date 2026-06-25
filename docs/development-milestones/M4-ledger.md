@@ -1,6 +1,6 @@
 # M4 积分账本 Implementation Plan
 
-**Status:** `[~]` M4.1-M4.4 已完成并有 RED/GREEN 证据；当前入口是 M4.5 撤销和调整。
+**Status:** `[~]` M4.1-M4.5 已完成并有 RED/GREEN 证据；当前入口是 M4.6 余额重算。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -187,18 +187,59 @@ GREEN 证据：
 
 ## 任务 M4.5 撤销和调整
 
-- [ ] 实现按原流水撤销。
-- [ ] 撤销只能生成反向流水。
-- [ ] 原流水不删除不修改积分。
-- [ ] 实现管理员调整积分。
-- [ ] 调整必须写强审计。
-- [ ] 调整必须带原因和附件。
+### Task M4.5: 撤销和调整
+
+**Files:**
+
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/ClubPointLedgerService.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/ClubPointLedgerServiceImpl.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/bo/ClubPointLedgerReverseReqBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/bo/ClubPointLedgerAdjustReqBO.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/ledger/ClubPointTransactionMapper.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/enums/ClubAuditActionTypeConstants.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/enums/ErrorCodeConstants.java`
+- Test: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/test/java/cn/iocoder/yudao/module/clubpoints/service/ledger/ClubPointLedgerAdjustmentServiceImplTest.java`
+
+**Interfaces:**
+
+- Consumes: `ClubPointLedgerService.createTransaction(...)`、`club_points_transaction`、`club_points_point_account`、`ClubPointTransactionMapper`、`ClubPointAccountMapper`、`ClubAuditService.createAuditLog(...)`、`ClubPointRuleResolveService`、`ClubPointTransactionStatusEnum`
+- Produces: `reverseTransaction(...)` 和 `adjustPoints(...)`，供管理员撤销流水、管理员手工调整和后续 M10 异议处理复用
+- Decision: 撤销以新增反向流水为唯一事实修正，不删除原流水、不修改原流水积分字段；是否已撤销可由 `reverse_of_transaction_id` 关联查询判断，避免“排除原流水 + 新增反向流水”双重抵消。
+- Decision: M4.5 的附件要求先以 `attachmentSnapshotJson` 作为强制材料快照进入流水/审计；真实附件绑定由后续 Admin API 或业务入口使用 M2 `ClubAttachmentService` 绑定并锁定。
+
+- [x] RED: 写失败测试或失败验证
+- [x] Verify RED: 运行命令，确认失败原因正确
+- [x] GREEN: 写最小实现
+- [x] Verify GREEN: 运行命令，确认通过
+- [x] REFACTOR: 只在绿色后清理命名、重复、结构
+- [x] Checkpoint: 列出变更文件和验证证据
+
+RED 证据：
+
+- 新增 `ClubPointLedgerAdjustmentServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLedgerAdjustmentServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败。
+- 失败原因为 `ClubPointLedgerReverseReqBO`、`ClubPointLedgerAdjustReqBO`、`POINT_REVERSE` 和 `CLUB_LEDGER_ADJUST_INVALID` 不存在，符合 M4.5 RED 预期。
+
+GREEN 证据：
+
+- GREEN：新增 `ClubPointLedgerReverseReqBO`、`ClubPointLedgerAdjustReqBO`，`ClubPointLedgerService` 增加 `reverseTransaction(...)` 和 `adjustPoints(...)`；`ClubPointLedgerServiceImpl` 实现撤销反向流水、管理员调整、幂等键、强审计和账户缓存同事务更新。
+- Mapper/常量：`ClubPointTransactionMapper` 增加 `selectByIdForUpdate(...)`；`ClubAuditActionTypeConstants` 增加 `POINT_REVERSE`；`ErrorCodeConstants` 增加 `CLUB_LEDGER_ADJUST_INVALID`。
+- M4.5 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLedgerAdjustmentServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointLedgerAdjustmentServiceImplTest` 运行 `6` 个测试，失败 `0`，错误 `0`。
+- M4 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointLedgerMapperTest,ClubPointLedgerEnumTest,ClubPointLedgerServiceImplTest,ClubPointFreezeServiceImplTest,ClubPointLedgerAdjustmentServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `26` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；租户字段、租户基类和 AI 元数据模式检查均无命中；生产账户缓存更新入口仍只在 `ClubPointLedgerServiceImpl` 和 `ClubPointFreezeServiceImpl`。
+- 边界：撤销新增 `status=REVERSAL` 的反向流水，原流水仍保持原积分、方向和 `VALID` 状态；调整先写强审计，再通过 `createTransaction(...)` 追加调整流水，不绕开账本。
+
+- [x] 实现按原流水撤销。
+- [x] 撤销只能生成反向流水。
+- [x] 原流水不删除不修改积分。
+- [x] 实现管理员调整积分。
+- [x] 调整必须写强审计。
+- [x] 调整必须带原因和附件。
 
 验收：
 
-- [ ] 同一原流水只能撤销一次。
-- [ ] 撤销有 idempotency key。
-- [ ] 调整不绕过账本。
+- [x] 同一原流水只能撤销一次。
+- [x] 撤销有 idempotency key。
+- [x] 调整不绕过账本。
 
 ## 任务 M4.6 余额重算
 

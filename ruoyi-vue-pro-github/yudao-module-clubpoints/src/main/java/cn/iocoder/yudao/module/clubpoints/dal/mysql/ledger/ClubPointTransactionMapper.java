@@ -8,6 +8,10 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ClubPointTransactionMapper extends BaseMapperX<ClubPointTransactionDO> {
 
+    default ClubPointTransactionDO selectByIdForUpdate(Long id) {
+        return selectOneForUpdate(ClubPointTransactionDO::getId, id);
+    }
+
     default ClubPointTransactionDO selectByTransactionNo(String transactionNo) {
         return selectOne(new LambdaQueryWrapperX<ClubPointTransactionDO>()
                 .eq(ClubPointTransactionDO::getTransactionNo, transactionNo));
