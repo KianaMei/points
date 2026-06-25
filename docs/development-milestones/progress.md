@@ -228,3 +228,12 @@
 - 2026-06-25：M5 收口组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubPointClubQueryControllerTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `43` 个测试，失败 `0`，错误 `0`；其中 `ClubPointClubQueryControllerTest` 覆盖 M5 查询 API 路径、权限声明和三端数据范围。
 - 2026-06-25：M5.7 覆盖映射：创建/修改/停用/启用/物理删除俱乐部由 `ClubPointClubServiceImplTest` 覆盖；停用后拒绝新增成员业务、成员加入退出、重复加入、移除后历史快照由 `ClubPointMemberServiceImplTest` 覆盖；负责人任免和越权失败由 `ClubPointLeaderServiceImplTest` 覆盖；负责人范围收缩由 `ClubScopeServiceImplTest` 与负责人服务测试共同覆盖。
 - 2026-06-25：M5 放行：`M5-club-member-leader.md` 勾选 M5.7、M5 放行标准和 M5 期间禁止越界事项；`00-index.md` 将 M5 标为 `[x]`，当前最近入口切换到 M6。
+
+## M6 活动、报名、签到签退
+
+- 2026-06-25：读取 `M6-activity-registration-attendance.md`、数据流和数据库规则文档；确认 M6.1 只处理活动、报名、签到签退、修正事实 DO/Mapper，不进入活动状态机、Service、API 或 M7 结算。
+- 2026-06-25：M6.1 RED：新增 `ClubPointActivityMapperTest`，覆盖活动、活动审核记录、活动积分配置版本、活动报名、签到签退有效事实、签到签退补录修正 6 张表字段落库和规则快照保存；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivityMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `dal.dataobject.activity` 包和 6 个 activity Mapper 不存在。
+- 2026-06-25：M6.1 GREEN：新增 `ClubPointActivityDO`、`ClubPointActivityReviewRecordDO`、`ClubPointActivityPointConfigVersionDO`、`ClubPointActivityRegistrationDO`、`ClubPointAttendanceRecordDO`、`ClubPointAttendanceCorrectionDO`，以及对应 6 个 Mapper；字段按 M1 DDL 映射，未新增 `tenant_id`，未生成积分流水。
+- 2026-06-25：M6.1 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivityMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointActivityMapperTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M6 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivityMapperTest,ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubPointClubQueryControllerTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `44` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M6.1 文档同步：`M6-activity-registration-attendance.md` 勾选 M6.1 并补 RED/GREEN/组合证据，`00-index.md` 将 M6 标为 `[~]`，当前入口切换到 M6.2 活动状态机。

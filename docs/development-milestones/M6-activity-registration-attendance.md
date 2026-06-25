@@ -1,5 +1,7 @@
 # M6 活动、报名、签到签退 Implementation Plan
 
+**Status:** `[~]` M6.1 已完成并有 RED/GREEN 证据；当前入口是 M6.2 活动状态机。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 实现活动发布、报名、签到、签退、修正、特殊缺席；本阶段只记录事实，不生成积分流水。
@@ -58,19 +60,26 @@
 
 ## 任务 M6.1 DO 和 Mapper
 
-- [ ] 创建 `ClubPointActivityDO`。
-- [ ] 创建 `ClubPointActivityReviewRecordDO`。
-- [ ] 创建 `ClubPointActivityPointConfigVersionDO`。
-- [ ] 创建 `ClubPointActivityRegistrationDO`。
-- [ ] 创建 `ClubPointAttendanceRecordDO`。
-- [ ] 创建 `ClubPointAttendanceCorrectionDO`。
-- [ ] 创建对应 Mapper。
-- [ ] 字段和 M1 DDL 一致。
+- [x] 创建 `ClubPointActivityDO`。
+- [x] 创建 `ClubPointActivityReviewRecordDO`。
+- [x] 创建 `ClubPointActivityPointConfigVersionDO`。
+- [x] 创建 `ClubPointActivityRegistrationDO`。
+- [x] 创建 `ClubPointAttendanceRecordDO`。
+- [x] 创建 `ClubPointAttendanceCorrectionDO`。
+- [x] 创建对应 Mapper。
+- [x] 字段和 M1 DDL 一致。
 
 验收：
 
-- [ ] 活动、报名、签到、修正事实都可落库。
-- [ ] 活动积分配置版本保存规则快照。
+- [x] 活动、报名、签到、修正事实都可落库。
+- [x] 活动积分配置版本保存规则快照。
+
+证据：
+
+- RED：新增 `ClubPointActivityMapperTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivityMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `dal.dataobject.activity` 包和 6 个 activity Mapper 不存在，符合 M6.1 RED 预期。
+- GREEN：新增活动、活动审核记录、活动积分配置版本、活动报名、签到签退有效事实、签到签退补录修正 6 个 DO；新增对应 6 个 Mapper，均继承 `BaseMapperX`，字段按 M1 DDL 映射，不新增表和字段。
+- M6.1 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointActivityMapperTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
+- M6 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivityMapperTest,ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubPointClubQueryControllerTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `44` 个测试，失败 `0`，错误 `0`。
 
 ## 任务 M6.2 活动状态机
 
