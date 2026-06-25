@@ -93,4 +93,5 @@ M0 空模块
 - M2.1 已完成权限码、三端菜单、按钮权限和三类角色建议授权，并通过临时库导入、权限集合、角色边界和幂等验证。
 - M2.2 已完成 `DictTypeConstants`、seed 字典补齐、常量/seed 一致性测试、MySQL 导入和幂等验证。
 - M2.3 已完成 `ClubScopeService`、成员/负责人 DO 与 Mapper、本人/已加入俱乐部/负责俱乐部/全局范围校验，并通过数据范围单测和 M2 组合验证。
-- M2 下一步入口是 M2.4 `ClubAuditService`。
+- M2.4 已完成 `ClubAuditService`、审计日志 DO 与 Mapper、审计创建 BO、强审计动作常量和审计失败回滚业务测试，并通过 M2 组合验证。
+- M2 下一步入口是 M2.5 `AttachmentService`。
