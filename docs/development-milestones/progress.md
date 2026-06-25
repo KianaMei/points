@@ -178,7 +178,8 @@
 - 2026-06-25：M4.8 并发幂等补强：`ClubPointLedgerServiceImplTest#createDuplicateIdempotencyConcurrentlyShouldPersistOnce` 验证两个并发请求使用同一 `idempotencyKey` 时只落一条流水、账户缓存只增加一次；单方法验证返回 `BUILD SUCCESS`，测试 `1` 个，失败 `0`，错误 `0`。
 - 2026-06-25：M4 收口组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointLedgerMapperTest,ClubPointLedgerEnumTest,ClubPointLedgerServiceImplTest,ClubPointFreezeServiceImplTest,ClubPointLedgerAdjustmentServiceImplTest,ClubPointAccountRebuildServiceImplTest,ClubPointLedgerQueryControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `33` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M4 收口质量验证：`git diff --check` exit `0`，仅 CRLF 提示；源码范围 `tenant_id|TenantBaseDO` 无命中；源码范围 AI/co-author 元数据模式无命中；生产账户缓存写入口检查只命中 `ClubPointLedgerServiceImpl` 和 `ClubPointFreezeServiceImpl`，查询服务只读账户缓存。
-- 2026-06-25：M4.7 权限文档冲突二次收口：权限总表的账本摘要从“查看他人/全局积分账户与流水”改为“本人、负责俱乐部发放来源、管理员全局”三段口径；`docs/startup/07-permission-audit.md` 补充负责人可看自己负责俱乐部发放来源，不能看其他俱乐部、无俱乐部来源或全局来源积分明细。
+- 2026-06-25：M4.7 权限文档冲突二次收口：权限总表的账本摘要改为“本人、负责俱乐部发放来源、管理员全局”三段口径；`docs/startup/07-permission-audit.md` 补充负责人可看自己负责俱乐部发放来源，不能看其他俱乐部、无俱乐部来源或全局来源积分明细。
+- 2026-06-25：M4.7 权限文档冲突三次收口：明确“他人/其他”只指其他俱乐部、无俱乐部来源或全局来源；自己负责俱乐部分发给成员的积分流水和成员摘要可查，但员工全量积分账户不可查。
 - 2026-06-25：M4 放行：`M4-ledger.md` 勾选 M4.7、M4.8、M4 放行标准和 M4 期间禁止越界事项；`00-index.md` 将 M4 标为 `[x]`，当前最近入口切换到 M5。
 
 ## M5 俱乐部、成员、负责人

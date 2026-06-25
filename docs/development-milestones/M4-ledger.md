@@ -329,7 +329,7 @@ GREEN 证据：
   - `GET /clubpoints/leader/ledger/transaction-page`
   - `GET /clubpoints/ledger/account-page`
   - `GET /clubpoints/ledger/transaction-page`
-- Decision: 负责人不是全局账本角色；负责人只能查看自己负责俱乐部作为 `issuing_club_id` 发出的积分流水，以及该负责俱乐部成员在本俱乐部来源下汇总出的积分摘要。负责人不得查看同一员工在其他俱乐部或无俱乐部来源下的积分流水、原因、材料或来源快照。
+- Decision: 负责人不是全局账本角色；负责人可以查看自己负责俱乐部作为 `issuing_club_id` 发出的积分流水，以及该负责俱乐部成员在本俱乐部来源下汇总出的积分摘要。这里的“他人/其他”指其他俱乐部、无俱乐部来源或全局来源，不包括自己负责俱乐部分发给成员的积分。负责人不得查看同一员工在这些来源下的积分流水、原因、材料或来源快照。
 - Decision: 员工端账本接口不接收 `userId`；当前登录人从 `SecurityFrameworkUtils.getLoginUserId()` 获取。
 - Decision: 管理员查询使用 `clubpoints:ledger:query`，员工自助账本按登录态本人范围，负责人账本查询使用 `clubpoints:leader` 并由服务层强制 `validateManagedClub(...)`。
 
