@@ -95,4 +95,5 @@ M0 空模块
 - M2.3 已完成 `ClubScopeService`、成员/负责人 DO 与 Mapper、本人/已加入俱乐部/负责俱乐部/全局范围校验，并通过数据范围单测和 M2 组合验证。
 - M2.4 已完成 `ClubAuditService`、审计日志 DO 与 Mapper、审计创建 BO、强审计动作常量和审计失败回滚业务测试，并通过 M2 组合验证。
 - M2.5 已完成 `ClubAttachmentService`、附件绑定 DO 与 Mapper、infra 文件复用、附件锁定、删除前校验和软删除，并通过 M2 组合验证。
-- M2 下一步入口是 M2.6 `ClubNotifyService`。
+- M2.6 已完成 `ClubNotifyService`、通知模板常量、活动审核/积分变动/兑换审核/异议回复通知封装、通知失败不回滚业务测试，并通过 M2 组合验证。
+- M2 下一步入口是 M2.7 横切测试。

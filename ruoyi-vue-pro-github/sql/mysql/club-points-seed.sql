@@ -423,7 +423,8 @@ INSERT INTO `system_notify_template` (`id`, `name`, `code`, `nickname`, `content
 (1300050001, '积分变动通知', 'club_points_transaction_changed', '俱乐部积分', '你的积分发生变动：${reason}，${direction}${points} 分，当前可用积分 ${availablePoints} 分。', 2, '["reason","direction","points","availablePoints"]', 0, '积分流水生成后通知员工', '1', NOW(), '1', NOW(), b'0'),
 (1300050002, '兑换审核结果通知', 'club_points_redemption_reviewed', '俱乐部积分', '你的兑换申请 ${applicationNo} 审核结果：${result}。${reason}', 2, '["applicationNo","result","reason"]', 0, '兑换审核后通知员工', '1', NOW(), '1', NOW(), b'0'),
 (1300050003, '异议处理结果通知', 'club_points_dispute_replied', '俱乐部积分', '你的异议 ${title} 已处理：${replyContent}', 2, '["title","replyContent"]', 0, '异议回复后通知员工', '1', NOW(), '1', NOW(), b'0'),
-(1300050004, '活动结算完成通知', 'club_points_activity_settled', '俱乐部积分', '活动 ${activityTitle} 已完成积分结算，本次获得 ${points} 分。', 2, '["activityTitle","points"]', 0, '活动结算后通知员工', '1', NOW(), '1', NOW(), b'0')
+(1300050004, '活动结算完成通知', 'club_points_activity_settled', '俱乐部积分', '活动 ${activityTitle} 已完成积分结算，本次获得 ${points} 分。', 2, '["activityTitle","points"]', 0, '活动结算后通知员工', '1', NOW(), '1', NOW(), b'0'),
+(1300050005, '活动审核结果通知', 'club_points_activity_reviewed', '俱乐部积分', '你提交的活动 ${activityTitle} 审核结果：${result}。${reason}', 2, '["activityTitle","result","reason"]', 0, '活动审核后通知提交人', '1', NOW(), '1', NOW(), b'0')
 ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `code` = VALUES(`code`),
