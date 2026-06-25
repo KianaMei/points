@@ -16,6 +16,13 @@ public interface ClubPointRuleItemMapper extends BaseMapperX<ClubPointRuleItemDO
                 .eq(ClubPointRuleItemDO::getItemCode, itemCode));
     }
 
+    default ClubPointRuleItemDO selectByRuleVersionIdAndItemCodeAndStatus(Long ruleVersionId, String itemCode, Integer status) {
+        return selectOne(new LambdaQueryWrapperX<ClubPointRuleItemDO>()
+                .eq(ClubPointRuleItemDO::getRuleVersionId, ruleVersionId)
+                .eq(ClubPointRuleItemDO::getItemCode, itemCode)
+                .eq(ClubPointRuleItemDO::getStatus, status));
+    }
+
     default List<ClubPointRuleItemDO> selectListByRuleVersionId(Long ruleVersionId) {
         return selectList(new LambdaQueryWrapperX<ClubPointRuleItemDO>()
                 .eq(ClubPointRuleItemDO::getRuleVersionId, ruleVersionId));

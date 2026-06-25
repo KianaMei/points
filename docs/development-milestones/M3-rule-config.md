@@ -1,6 +1,6 @@
 # M3 规则版本和配置后台 Implementation Plan
 
-**Status:** `[~]` M3.1-M3.2 已完成并有 RED/GREEN 与质量门禁证据；当前入口是 M3.3 Service。
+**Status:** `[~]` M3.1-M3.3 已完成并有 RED/GREEN 与质量门禁证据；当前入口是 M3.4 Admin API。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -106,23 +106,33 @@
 
 ## 任务 M3.3 Service
 
-- [ ] 创建 `service/rule/ClubPointRuleService.java`。
-- [ ] 创建 `service/rule/ClubPointRuleServiceImpl.java`。
-- [ ] 实现创建草稿版本。
-- [ ] 实现复制已有版本。
-- [ ] 实现新增规则项。
-- [ ] 实现修改草稿规则项。
-- [ ] 实现发布版本。
-- [ ] 实现停用版本。
-- [ ] 实现读取当前已发布版本。
-- [ ] 实现按编码读取规则项。
-- [ ] 发布和停用必须写强审计。
+- [x] 创建 `service/rule/ClubPointRuleService.java`。
+- [x] 创建 `service/rule/ClubPointRuleServiceImpl.java`。
+- [x] 实现创建草稿版本。
+- [x] 实现复制已有版本。
+- [x] 实现新增规则项。
+- [x] 实现修改草稿规则项。
+- [x] 实现发布版本。
+- [x] 实现停用版本。
+- [x] 实现读取当前已发布版本。
+- [x] 实现按编码读取规则项。
+- [x] 发布和停用必须写强审计。
 
 验收：
 
-- [ ] 同一时间只有一个当前有效版本。
-- [ ] 已发布版本不可直接改规则项。
-- [ ] 业务读取只读已发布版本。
+- [x] 同一时间只有一个当前有效版本。
+- [x] 已发布版本不可直接改规则项。
+- [x] 业务读取只读已发布版本。
+
+证据：
+
+- RED：新增 `ClubPointRuleServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`，目标失败确认为规则 Service、ServiceImpl、BO、审计动作常量等 M3.3 产物不存在。
+- GREEN：新增 `ClubPointRuleService`、`ClubPointRuleServiceImpl`、三个规则 Service BO，补 Mapper 当前发布版本和规则项启用状态查询、补 `RULE_PUBLISH` 与 `RULE_DISABLE` 审计动作常量；同一命令返回 `BUILD SUCCESS`，`ClubPointRuleServiceImplTest` 运行 `11` 个测试，失败 `0`，错误 `0`。
+- 回归 RED：自审发现发布新版本替代旧发布版本时，旧版本 `publish_record` 使用 `operator_user_id=0` 且 reason 为默认值；补断言后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleServiceImplTest#publishVersionShouldPublishDraftDisableOldPublishedAndWriteAudit "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，错误为 `expected: <100> but was: <0>`。
+- 回归 GREEN：`disableOtherPublishedVersions(...)` 传入 `ClubPointRuleOperationReqBO`，替代记录复用真实操作人和原因；同一单方法命令返回 `BUILD SUCCESS`，测试 `1` 个，失败 `0`，错误 `0`。
+- M3.3 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRuleServiceImplTest` 运行 `11` 个测试，失败 `0`，错误 `0`。
+- M3 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRuleMapperTest,ClubPointRuleEnumTest,ClubPointRuleServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `17` 个测试，失败 `0`，错误 `0`。
+- 质量门禁：`git diff --check` 无 whitespace error，仅 CRLF 提示；源码和测试内租户字段、租户基类和 AI 元数据模式检查均无命中；精确搜索 22 个规则项编码在 main `service` 包内无命中。
 
 ## 任务 M3.4 Admin API
 

@@ -103,3 +103,12 @@
 - 2026-06-25：M3 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRuleMapperTest,ClubPointRuleEnumTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `6` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M3.2 质量验证：`git diff --check` 无空白错误；源码和 `ClubPointRuleEnumTest` 内租户字段、租户基类和 AI 元数据模式检查均无命中；精确搜索 22 个规则项编码在 `service` 包内无命中。
 - 2026-06-25：M3.2 文档同步：`M3-rule-config.md` 勾选 M3.2 并补证据，`00-index.md` 当前入口切换到 M3.3 Service。
+- 2026-06-25：M3.3 RED：新增 `ClubPointRuleServiceImplTest`，覆盖草稿创建、复制版本、规则项新增和修改、发布、停用、当前版本读取、按编码读取、已发布版本不可改和强审计；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`，目标失败确认为规则 Service、ServiceImpl、BO、审计动作常量等 M3.3 产物不存在。
+- 2026-06-25：M3.3 GREEN：新增 `ClubPointRuleService`、`ClubPointRuleServiceImpl`、`ClubPointRuleVersionSaveReqBO`、`ClubPointRuleItemSaveReqBO`、`ClubPointRuleOperationReqBO`；Mapper 补当前发布版本和启用规则项查询；审计动作常量补 `RULE_PUBLISH`、`RULE_DISABLE`。
+- 2026-06-25：M3.3 首轮单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRuleServiceImplTest` 运行 `11` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M3.3 回归 RED：自审发现发布新版本替代旧已发布版本时，旧版本替代 `publish_record` 丢失真实操作人和原因；补断言后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleServiceImplTest#publishVersionShouldPublishDraftDisableOldPublishedAndWriteAudit "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，错误为 `expected: <100> but was: <0>`。
+- 2026-06-25：M3.3 回归 GREEN：`disableOtherPublishedVersions(...)` 改为接收 `ClubPointRuleOperationReqBO` 并传入替代发布记录写入，旧版本替代记录保留真实 `operatorUserId` 和 `reason`；同一单方法命令返回 `BUILD SUCCESS`，测试 `1` 个，失败 `0`，错误 `0`。
+- 2026-06-25：M3.3 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRuleServiceImplTest` 运行 `11` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M3 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRuleMapperTest,ClubPointRuleEnumTest,ClubPointRuleServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `17` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M3.3 质量验证：`git diff --check` 无 whitespace error，仅 CRLF 提示；源码和测试内租户字段、租户基类和 AI 元数据模式检查均无命中；精确搜索 22 个规则项编码在 main `service` 包内无命中。
+- 2026-06-25：M3.3 文档同步：`M3-rule-config.md` 勾选 M3.3 并补证据，`00-index.md` 当前入口切换到 M3.4 Admin API。
