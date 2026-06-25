@@ -1,6 +1,6 @@
 # M5 俱乐部、成员、负责人 Implementation Plan
 
-**Status:** `[~]` M5.1 已完成并有 RED/GREEN 证据；当前入口是 M5.2 枚举和错误码。
+**Status:** `[~]` M5.1-M5.2 已完成并有 RED/GREEN 证据；当前入口是 M5.3 ClubService。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -108,15 +108,23 @@
 
 ## 任务 M5.2 枚举和错误码
 
-- [ ] 创建俱乐部状态枚举。
-- [ ] 创建成员状态枚举。
-- [ ] 创建负责人状态枚举。
-- [ ] 补充错误码：俱乐部不存在、俱乐部已停用、成员已存在、成员不存在、负责人已存在、负责人不存在、无权限操作俱乐部。
+- [x] 创建俱乐部状态枚举。
+- [x] 创建成员状态枚举。
+- [x] 创建负责人状态枚举。
+- [x] 补充错误码：俱乐部不存在、俱乐部已停用、成员已存在、成员不存在、负责人已存在、负责人不存在、无权限操作俱乐部。
 
 验收：
 
-- [ ] 业务失败有明确错误码。
-- [ ] 不用通用异常糊弄业务状态。
+- [x] 业务失败有明确错误码。
+- [x] 不用通用异常糊弄业务状态。
+
+证据：
+
+- RED：新增 `ClubPointClubEnumTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointClubEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointClubStatusEnum`、`ClubPointMemberStatusEnum`、`ClubPointLeaderStatusEnum` 和 M5 俱乐部错误码不存在，符合 M5.2 RED 预期。
+- GREEN：新增俱乐部状态、成员状态、负责人状态 3 个枚举，枚举值与 `club-points-seed.sql` 字典保持一致；补充 `CLUB_NOT_FOUND`、`CLUB_DISABLED`、`CLUB_ALREADY_JOINED`、`CLUB_NOT_MEMBER`、`CLUB_LEADER_ALREADY_EXISTS`、`CLUB_LEADER_NOT_EXISTS`，并将 `CLUB_SCOPE_DENIED` 文案泛化为俱乐部数据权限。
+- M5.2 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointClubEnumTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- M5 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointClubMapperTest,ClubPointClubEnumTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `15` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；枚举范围 `tenant_id|TenantBaseDO` 无命中；枚举范围 AI/co-author 元数据模式无命中。
 
 ## 任务 M5.3 ClubService
 

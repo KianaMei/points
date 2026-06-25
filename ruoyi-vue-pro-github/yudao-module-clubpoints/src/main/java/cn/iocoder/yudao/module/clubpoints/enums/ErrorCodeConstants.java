@@ -10,7 +10,7 @@ import cn.iocoder.yudao.framework.common.exception.ErrorCode;
 public interface ErrorCodeConstants {
 
     ErrorCode CLUB_POINTS_MODULE_NOT_INITIALIZED = new ErrorCode(1_300_000_000, "俱乐部积分模块尚未初始化");
-    ErrorCode CLUB_SCOPE_DENIED = new ErrorCode(1_300_000_001, "无权访问该俱乐部积分数据");
+    ErrorCode CLUB_SCOPE_DENIED = new ErrorCode(1_300_000_001, "无权访问该俱乐部数据");
     ErrorCode CLUB_AUDIT_WRITE_FAILED = new ErrorCode(1_300_000_002, "强审计写入失败");
     ErrorCode CLUB_ATTACHMENT_INVALID = new ErrorCode(1_300_000_003, "附件参数无效");
     ErrorCode CLUB_ATTACHMENT_NOT_EXISTS = new ErrorCode(1_300_000_004, "附件不存在");
@@ -30,5 +30,11 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_LEDGER_FREEZE_NOT_EXISTS = new ErrorCode(1_300_000_018, "积分冻结记录不存在");
     ErrorCode CLUB_LEDGER_FREEZE_STATUS_INVALID = new ErrorCode(1_300_000_019, "积分冻结状态不允许当前操作");
     ErrorCode CLUB_LEDGER_ADJUST_INVALID = new ErrorCode(1_300_000_020, "积分调整参数无效");
+    ErrorCode CLUB_NOT_FOUND = new ErrorCode(1_300_000_021, "俱乐部不存在");
+    ErrorCode CLUB_DISABLED = new ErrorCode(1_300_000_022, "俱乐部已停用");
+    ErrorCode CLUB_ALREADY_JOINED = new ErrorCode(1_300_000_023, "成员已存在");
+    ErrorCode CLUB_NOT_MEMBER = new ErrorCode(1_300_000_024, "成员不存在");
+    ErrorCode CLUB_LEADER_ALREADY_EXISTS = new ErrorCode(1_300_000_025, "负责人已存在");
+    ErrorCode CLUB_LEADER_NOT_EXISTS = new ErrorCode(1_300_000_026, "负责人不存在");
 
 }

@@ -192,3 +192,9 @@
 - 2026-06-25：M5 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointClubMapperTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `11` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M5.1 质量验证：`git diff --check` 无输出；club DO/Mapper/Test 范围 `tenant_id|TenantBaseDO` 无命中；AI/co-author 元数据模式无命中。
 - 2026-06-25：M5.1 文档同步：`M5-club-member-leader.md` 勾选 M5.1 并补 RED/GREEN/组合/质量证据，`00-index.md` 将 M5 标为 `[~]`，当前入口切换到 M5.2 枚举和错误码。
+- 2026-06-25：M5.2 RED：新增 `ClubPointClubEnumTest`，覆盖俱乐部/成员/负责人状态枚举与 seed 字典一致、M5 业务错误码编号和文案；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointClubEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 3 个状态枚举和 M5 错误码不存在。
+- 2026-06-25：M5.2 GREEN：新增 `ClubPointClubStatusEnum`、`ClubPointMemberStatusEnum`、`ClubPointLeaderStatusEnum`；补 `CLUB_NOT_FOUND`、`CLUB_DISABLED`、`CLUB_ALREADY_JOINED`、`CLUB_NOT_MEMBER`、`CLUB_LEADER_ALREADY_EXISTS`、`CLUB_LEADER_NOT_EXISTS`，并将 `CLUB_SCOPE_DENIED` 文案泛化为俱乐部数据权限。
+- 2026-06-25：M5.2 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointClubEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointClubEnumTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M5 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointClubMapperTest,ClubPointClubEnumTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `15` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M5.2 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；枚举范围 `tenant_id|TenantBaseDO` 无命中；枚举范围 AI/co-author 元数据模式无命中。
+- 2026-06-25：M5.2 文档同步：`M5-club-member-leader.md` 勾选 M5.2 并补 RED/GREEN/组合/质量证据，`00-index.md` 当前入口切换到 M5.3 ClubService，`club-points-api-design.md` 同步 M5 俱乐部错误码。
