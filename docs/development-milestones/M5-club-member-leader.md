@@ -1,6 +1,6 @@
 # M5 俱乐部、成员、负责人 Implementation Plan
 
-**Status:** `[~]` M5.1-M5.4 已完成并有 RED/GREEN 证据；当前入口是 M5.5 LeaderService。
+**Status:** `[~]` M5.1-M5.5 已完成并有 RED/GREEN 证据；当前入口是 M5.6 查询 API。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -179,18 +179,55 @@
 
 ## 任务 M5.5 LeaderService
 
-- [ ] 管理员设置负责人。
-- [ ] 管理员移除负责人。
-- [ ] 负责人必须是有效用户。
-- [ ] 负责人不一定必须是普通成员，但必须按产品口径固定。
-- [ ] 设置和移除负责人写强审计。
-- [ ] 负责人数据范围立即生效。
+### Task M5.5: LeaderService
+
+**Files:**
+
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/club/ClubPointLeaderService.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/club/ClubPointLeaderServiceImpl.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/club/bo/ClubPointLeaderAssignReqBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/club/bo/ClubPointLeaderRemoveReqBO.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/enums/ClubAuditActionTypeConstants.java`
+- Test: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/test/java/cn/iocoder/yudao/module/clubpoints/service/club/ClubPointLeaderServiceImplTest.java`
+
+**Interfaces:**
+
+- Consumes: `club_points_club`、`club_points_club_leader`、`ClubLeaderMapper.selectByUserIdAndClubIdAndStatus(...)`、`ClubScopeService.validateGlobal(...)`、`ClubScopeService.validateManagedClub(...)`、`ClubAuditService.createAuditLog(...)`、`AdminUserApi.validateUser(...)`、`AdminUserApi.getUser(...)`
+- Produces: `assignLeader(...)`、`removeLeader(...)`、`CLUB_LEADER_ASSIGN`、`CLUB_LEADER_REMOVE`，供管理员负责人任免接口和后续负责人范围判断复用。
+- Decision: 设置负责人必须是有效系统用户，但不要求该用户已是俱乐部普通成员；负责人任免只能由管理员全局操作，负责人不能自行设置、移除或转授权负责人。
+
+- [x] RED: 写失败测试或失败验证
+- [x] Verify RED: 运行命令，确认失败原因正确
+- [x] GREEN: 写最小实现
+- [x] Verify GREEN: 运行命令，确认通过
+- [x] REFACTOR: 只在绿色后清理命名、重复、结构
+- [x] Checkpoint: 列出变更文件和验证证据，不提交 git
+
+RED 证据：
+
+- 新增 `ClubPointLeaderServiceImplTest`，覆盖设置负责人不要求成员关系、重复设置、禁用用户拒绝、移除负责人、移除不存在负责人、非全局操作者禁止任免、审计失败回滚和范围立即收缩。
+- RED 命令：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLeaderServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`。
+- 失败原因为 `ClubPointLeaderService`、`ClubPointLeaderServiceImpl`、负责人任免 BO 和负责人审计动作常量不存在，符合 M5.5 RED 预期。
+
+GREEN 证据：
+
+- GREEN：新增 `ClubPointLeaderService` / `ClubPointLeaderServiceImpl` 和 `ClubPointLeaderAssignReqBO`、`ClubPointLeaderRemoveReqBO`；补 `CLUB_LEADER_ASSIGN`、`CLUB_LEADER_REMOVE` 审计动作。
+- 实现边界：设置负责人先校验管理员全局范围、俱乐部存在、系统用户有效，再按有效负责人关系去重；移除负责人将状态改为解除并清空 `active_unique_key`，使 `ClubScopeService` 范围立即收缩；设置和移除都写强审计，审计失败回滚业务。
+- M5.5 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointLeaderServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointLeaderServiceImplTest` 运行 `7` 个测试，失败 `0`，错误 `0`。
+- M5 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `39` 个测试，失败 `0`，错误 `0`。
+
+- [x] 管理员设置负责人。
+- [x] 管理员移除负责人。
+- [x] 负责人必须是有效用户。
+- [x] 负责人不一定必须是普通成员，但必须按产品口径固定。
+- [x] 设置和移除负责人写强审计。
+- [x] 负责人数据范围立即生效。
 
 验收：
 
-- [ ] 负责人只能管理负责俱乐部。
-- [ ] 负责人不能设置或移除负责人。
-- [ ] 移除负责人后权限范围立即收缩。
+- [x] 负责人只能管理负责俱乐部。
+- [x] 负责人不能设置或移除负责人。
+- [x] 移除负责人后权限范围立即收缩。
 
 ## 任务 M5.6 查询 API
 

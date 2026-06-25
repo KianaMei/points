@@ -117,4 +117,5 @@ M0 空模块
 - M5.2 已完成俱乐部状态、成员状态、负责人状态枚举，补齐俱乐部/成员/负责人业务错误码，并通过 RED/GREEN 枚举测试和 M5 当前组合验证。
 - M5.3 已完成 `ClubPointClubService` 创建、修改、停用、启用、物理删除、强确认、强审计和引用阻断，并通过 RED/GREEN 服务测试。
 - M5.4 已完成 `ClubPointMemberService` 员工加入、管理员添加、员工退出、管理员移除、成员状态审计、自动取消有效报名和范围收缩，并通过 RED/GREEN 服务测试。
-- M5 下一步入口是 M5.5 LeaderService。
+- M5.5 已完成 `ClubPointLeaderService` 管理员设置负责人、移除负责人、有效用户校验、强审计和负责人范围立即生效，并通过 RED/GREEN 服务测试。
+- M5 下一步入口是 M5.6 查询 API。
