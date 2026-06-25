@@ -180,3 +180,14 @@
 - 2026-06-25：M4 收口质量验证：`git diff --check` exit `0`，仅 CRLF 提示；源码范围 `tenant_id|TenantBaseDO` 无命中；源码范围 AI/co-author 元数据模式无命中；生产账户缓存写入口检查只命中 `ClubPointLedgerServiceImpl` 和 `ClubPointFreezeServiceImpl`，查询服务只读账户缓存。
 - 2026-06-25：M4.7 权限文档冲突二次收口：权限总表的账本摘要从“查看他人/全局积分账户与流水”改为“本人、负责俱乐部发放来源、管理员全局”三段口径；`docs/startup/07-permission-audit.md` 补充负责人可看自己负责俱乐部发放来源，不能看其他俱乐部、无俱乐部来源或全局来源积分明细。
 - 2026-06-25：M4 放行：`M4-ledger.md` 勾选 M4.7、M4.8、M4 放行标准和 M4 期间禁止越界事项；`00-index.md` 将 M4 标为 `[x]`，当前最近入口切换到 M5。
+
+## M5 俱乐部、成员、负责人
+
+- 2026-06-25：读取 `M5-club-member-leader.md`、共享执行规则、后端规则、数据库规则和权限审计文档；确认 M5.1 先处理俱乐部主表 DO/Mapper，并复核 M2 已经落地 `ClubMemberDO`、`ClubLeaderDO` 和对应 Mapper。
+- 2026-06-25：M5.1 决策记录：M2 已经创建并使用 `ClubMemberDO`/`ClubLeaderDO`，且范围服务和 M4 账本查询已经依赖它们；M5.1 不重复创建 `ClubPointClubMemberDO`/`ClubPointClubLeaderDO`，避免同表双模型和范围判断漂移。
+- 2026-06-25：M5.1 RED：新增 `ClubPointClubMapperTest`，覆盖俱乐部主表字段、成员快照、负责人快照和关系查询；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointClubMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointClubDO` 和 `ClubPointClubMapper` 不存在。
+- 2026-06-25：M5.1 GREEN：新增 `ClubPointClubDO` 映射 `club_points_club` 全部业务字段；新增 `ClubPointClubMapper.selectByCode(...)`；成员/负责人关系沿用 M2 已落地 DO 和 Mapper。
+- 2026-06-25：M5.1 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointClubMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointClubMapperTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M5 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointClubMapperTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `11` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M5.1 质量验证：`git diff --check` 无输出；club DO/Mapper/Test 范围 `tenant_id|TenantBaseDO` 无命中；AI/co-author 元数据模式无命中。
+- 2026-06-25：M5.1 文档同步：`M5-club-member-leader.md` 勾选 M5.1 并补 RED/GREEN/组合/质量证据，`00-index.md` 将 M5 标为 `[~]`，当前入口切换到 M5.2 枚举和错误码。

@@ -1,5 +1,7 @@
 # M5 俱乐部、成员、负责人 Implementation Plan
 
+**Status:** `[~]` M5.1 已完成并有 RED/GREEN 证据；当前入口是 M5.2 枚举和错误码。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 实现俱乐部主数据、成员关系、负责人关系，为活动、积分范围、负责人权限提供组织基础。
@@ -58,18 +60,51 @@
 
 ## 任务 M5.1 DO 和 Mapper
 
-- [ ] 创建 `ClubPointClubDO`。
-- [ ] 创建 `ClubPointClubMemberDO`。
-- [ ] 创建 `ClubPointClubLeaderDO`。
-- [ ] 创建对应 Mapper。
-- [ ] 字段和 M1 DDL 一致。
-- [ ] 保存用户、部门、俱乐部快照字段。
+### Task M5.1: DO 和 Mapper
+
+**Files:**
+
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/dataobject/club/ClubPointClubDO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/club/ClubPointClubMapper.java`
+- Existing: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/dataobject/club/ClubMemberDO.java`
+- Existing: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/dataobject/club/ClubLeaderDO.java`
+- Existing: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/club/ClubMemberMapper.java`
+- Existing: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/club/ClubLeaderMapper.java`
+- Test: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/test/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/club/ClubPointClubMapperTest.java`
+
+**Interfaces:**
+
+- Consumes: M1 `club_points_club`、`club_points_club_member`、`club_points_club_leader` DDL，M2 已落地的 `ClubScopeService` 成员/负责人范围查询。
+- Produces: `ClubPointClubDO`、`ClubPointClubMapper.selectByCode(...)`，以及可继续复用的 `ClubMemberDO`、`ClubLeaderDO`、`ClubMemberMapper`、`ClubLeaderMapper`。
+- Decision: M2 已经为 `ClubScopeService` 创建 `ClubMemberDO` 和 `ClubLeaderDO`，并已被范围服务、账本查询测试使用；M5.1 不重复创建 `ClubPointClubMemberDO` / `ClubPointClubLeaderDO`，避免同表双模型和范围服务漂移。
+
+- [x] RED: 写失败测试或失败验证
+- [x] Verify RED: 运行命令，确认失败原因正确
+- [x] GREEN: 写最小实现
+- [x] Verify GREEN: 运行命令，确认通过
+- [x] REFACTOR: 只在绿色后清理命名、重复、结构
+- [x] Checkpoint: 列出变更文件和验证证据，不提交 git
+
+- [x] 创建 `ClubPointClubDO`。
+- [x] 创建成员关系 DO。M2 已创建并复用 `ClubMemberDO`。
+- [x] 创建负责人关系 DO。M2 已创建并复用 `ClubLeaderDO`。
+- [x] 创建对应 Mapper。
+- [x] 字段和 M1 DDL 一致。
+- [x] 保存用户、部门、俱乐部快照字段。
 
 验收：
 
-- [ ] 成员关系可查询。
-- [ ] 负责人关系可查询。
-- [ ] 历史快照不依赖当前用户资料实时变化。
+- [x] 成员关系可查询。
+- [x] 负责人关系可查询。
+- [x] 历史快照不依赖当前用户资料实时变化。
+
+证据：
+
+- RED：新增 `ClubPointClubMapperTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointClubMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointClubDO` 和 `ClubPointClubMapper` 不存在，符合 M5.1 RED 预期。
+- GREEN：新增 `ClubPointClubDO` 映射 `club_points_club` 全部业务字段；新增 `ClubPointClubMapper` 并提供按 `code` 查询；成员/负责人关系沿用 M2 已落地的 `ClubMemberDO`、`ClubLeaderDO` 和 Mapper。
+- M5.1 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointClubMapperTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
+- M5 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointClubMapperTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `11` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无输出；club DO/Mapper/Test 范围 `tenant_id|TenantBaseDO` 无命中；AI/co-author 元数据模式无命中。
 
 ## 任务 M5.2 枚举和错误码
 

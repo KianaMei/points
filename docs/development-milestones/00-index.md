@@ -43,7 +43,7 @@
 | `[x]` | M2 | `M2-permission-crosscutting.md` | 权限、范围、审计、附件、通知横切能力可复用 |
 | `[x]` | M3 | `M3-rule-config.md` | 规则版本和规则项可发布、停用、读取 |
 | `[x]` | M4 | `M4-ledger.md` | 积分流水、冻结、余额缓存形成账本脊柱 |
-| `[ ]` | M5 | `M5-club-member-leader.md` | 俱乐部、成员、负责人闭环可用 |
+| `[~]` | M5 | `M5-club-member-leader.md` | 俱乐部、成员、负责人闭环可用 |
 | `[ ]` | M6 | `M6-activity-registration-attendance.md` | 活动、报名、签到签退、特殊缺席闭环可用 |
 | `[ ]` | M7 | `M7-activity-settlement.md` | 活动积分和缺席扣分可幂等结算 |
 | `[ ]` | M8 | `M8-contribution-violation.md` | 非签到积分、违规扣分、弄虚作假闭环可用 |
@@ -113,3 +113,5 @@ M0 空模块
 - M4.7 已完成员工本人账本、负责人负责俱乐部发放来源账本、管理员全局账本查询 API；负责人范围按 `issuing_club_id` 限定为自己负责俱乐部发放来源，并通过 RED/GREEN 查询接口测试、M4 收口组合验证和质量门禁。
 - M4.8 已完成账本核心测试收口，覆盖正向发分、负向扣分、重复幂等键、并发重复幂等、余额不足、冻结/释放/转扣减、撤销、调整强审计失败回滚和余额重算。
 - M4 已放行；下一步入口是 M5 俱乐部、成员、负责人闭环。
+- M5.1 已完成 `club_points_club` 主表 DO/Mapper，复用 M2 已落地的成员/负责人 DO/Mapper，并通过 RED/GREEN Mapper 测试和 M5 当前组合验证。
+- M5 下一步入口是 M5.2 枚举和错误码。
