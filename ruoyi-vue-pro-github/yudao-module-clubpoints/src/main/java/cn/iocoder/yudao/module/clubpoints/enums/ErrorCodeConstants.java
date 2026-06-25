@@ -36,5 +36,9 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_NOT_MEMBER = new ErrorCode(1_300_000_024, "成员不存在");
     ErrorCode CLUB_LEADER_ALREADY_EXISTS = new ErrorCode(1_300_000_025, "负责人已存在");
     ErrorCode CLUB_LEADER_NOT_EXISTS = new ErrorCode(1_300_000_026, "负责人不存在");
+    ErrorCode CLUB_STRONG_CONFIRM_INVALID = new ErrorCode(1_300_000_027, "俱乐部强确认无效");
+    ErrorCode CLUB_DELETE_HAS_REFERENCES = new ErrorCode(1_300_000_028, "俱乐部已有历史关联，不能物理删除");
+    ErrorCode CLUB_CODE_DUPLICATED = new ErrorCode(1_300_000_029, "俱乐部编号重复");
+    ErrorCode CLUB_NAME_DUPLICATED = new ErrorCode(1_300_000_030, "俱乐部名称重复");
 
 }

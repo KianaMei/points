@@ -1,6 +1,6 @@
 # M5 俱乐部、成员、负责人 Implementation Plan
 
-**Status:** `[~]` M5.1-M5.2 已完成并有 RED/GREEN 证据；当前入口是 M5.3 ClubService。
+**Status:** `[~]` M5.1-M5.3 已完成并有 RED/GREEN 证据；当前入口是 M5.4 MemberService。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -128,20 +128,29 @@
 
 ## 任务 M5.3 ClubService
 
-- [ ] 创建俱乐部。
-- [ ] 修改俱乐部基础信息。
-- [ ] 停用俱乐部。
-- [ ] 启用俱乐部。
-- [ ] 物理删除俱乐部。
-- [ ] 物理删除俱乐部必须强确认。
-- [ ] 物理删除俱乐部必须写强审计。
-- [ ] 有历史活动、历史流水、历史兑换关联时按设计限制删除或保留快照。
+- [x] 创建俱乐部。
+- [x] 修改俱乐部基础信息。
+- [x] 停用俱乐部。
+- [x] 启用俱乐部。
+- [x] 物理删除俱乐部。
+- [x] 物理删除俱乐部必须强确认。
+- [x] 物理删除俱乐部必须写强审计。
+- [x] 有历史活动、历史流水、历史兑换关联时按设计限制删除或保留快照。
 
 验收：
 
-- [ ] 普通停用不需要强确认。
-- [ ] 物理删除必须输入强确认文本。
-- [ ] 删除后历史记录仍可读。
+- [x] 普通停用不需要强确认。
+- [x] 物理删除必须输入强确认文本。
+- [x] 删除后历史记录仍可读。
+
+证据：
+
+- RED：新增 `ClubPointClubServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointClubServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointClubService`、服务 BO、俱乐部操作错误码和俱乐部审计动作常量不存在，符合 M5.3 RED 预期。
+- GREEN：新增 `ClubPointClubService` / `ClubPointClubServiceImpl` 和保存、停用、启用、物理删除、强确认 BO；`ClubPointClubMapper` 增加按名称查询、下游引用计数和物理删除 SQL；补充俱乐部修改、停用、启用审计动作和 M5.3 错误码。
+- 实现边界：创建默认启用；修改和停用写强审计；停用不需要强确认；启用清理停用字段；物理删除必须匹配 `确认删除俱乐部：{俱乐部名称}` 并写 `PHYSICAL_DELETE` 强审计；存在成员、负责人、活动、报名、积分流水、非签到材料/明细、年度排名或激励等引用时拒绝物理删除。
+- M5.3 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointClubServiceImplTest` 运行 `9` 个测试，失败 `0`，错误 `0`。
+- M5 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `24` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；源码范围 `tenant_id|TenantBaseDO` 无命中；源码和本次文档范围 AI/co-author 元数据模式无命中。
 
 ## 任务 M5.4 MemberService
 

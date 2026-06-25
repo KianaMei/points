@@ -115,4 +115,5 @@ M0 空模块
 - M4 已放行；下一步入口是 M5 俱乐部、成员、负责人闭环。
 - M5.1 已完成 `club_points_club` 主表 DO/Mapper，复用 M2 已落地的成员/负责人 DO/Mapper，并通过 RED/GREEN Mapper 测试和 M5 当前组合验证。
 - M5.2 已完成俱乐部状态、成员状态、负责人状态枚举，补齐俱乐部/成员/负责人业务错误码，并通过 RED/GREEN 枚举测试和 M5 当前组合验证。
-- M5 下一步入口是 M5.3 ClubService。
+- M5.3 已完成 `ClubPointClubService` 创建、修改、停用、启用、物理删除、强确认、强审计和引用阻断，并通过 RED/GREEN 服务测试。
+- M5 下一步入口是 M5.4 MemberService。

@@ -198,3 +198,9 @@
 - 2026-06-25：M5 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointClubMapperTest,ClubPointClubEnumTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `15` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M5.2 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；枚举范围 `tenant_id|TenantBaseDO` 无命中；枚举范围 AI/co-author 元数据模式无命中。
 - 2026-06-25：M5.2 文档同步：`M5-club-member-leader.md` 勾选 M5.2 并补 RED/GREEN/组合/质量证据，`00-index.md` 当前入口切换到 M5.3 ClubService，`club-points-api-design.md` 同步 M5 俱乐部错误码。
+- 2026-06-25：M5.3 RED：新增 `ClubPointClubServiceImplTest`，覆盖创建默认启用、修改强审计、停用无需强确认但写审计、启用清理停用字段、物理删除强确认、历史流水引用阻断、物理删除强审计和审计失败回滚；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointClubServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointClubService`、服务 BO、俱乐部操作错误码和俱乐部审计动作常量不存在。
+- 2026-06-25：M5.3 GREEN：新增 `ClubPointClubService` / `ClubPointClubServiceImpl` 和保存、停用、启用、物理删除、强确认 BO；`ClubPointClubMapper` 增加按名称查询、下游引用计数和物理删除 SQL；补俱乐部修改、停用、启用审计动作以及强确认无效、存在历史关联、编号重复、名称重复错误码。
+- 2026-06-25：M5.3 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointClubServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointClubServiceImplTest` 运行 `9` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M5 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `24` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M5.3 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；源码范围 `tenant_id|TenantBaseDO` 无命中；源码和本次文档范围 AI/co-author 元数据模式无命中。
+- 2026-06-25：M5.3 文档同步：`M5-club-member-leader.md` 勾选 M5.3 并补 RED/GREEN/组合/质量证据，`00-index.md` 当前入口切换到 M5.4 MemberService，`club-points-api-design.md` 同步俱乐部编号、排序和 M5.3 错误码。
