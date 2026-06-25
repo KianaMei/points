@@ -1,6 +1,6 @@
 # M6 活动、报名、签到签退 Implementation Plan
 
-**Status:** `[~]` M6.1-M6.5 已完成并有 RED/GREEN 证据；当前入口是 M6.6 修正和特殊缺席。
+**Status:** `[~]` M6.1-M6.6 已完成并有 RED/GREEN 证据；当前入口是 M6.7 API。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -183,17 +183,27 @@
 
 ## 任务 M6.6 修正和特殊缺席
 
-- [ ] 管理员补录签到。
-- [ ] 管理员修正签到签退。
-- [ ] 管理员标记特殊缺席。
-- [ ] 修正必须写强审计。
-- [ ] 特殊缺席不拆独立表。
-- [ ] 修正后保留原始签到事实。
+- [x] 管理员补录签到。
+- [x] 管理员修正签到签退。
+- [x] 管理员标记特殊缺席。
+- [x] 修正必须写强审计。
+- [x] 特殊缺席不拆独立表。
+- [x] 修正后保留原始签到事实。
 
 验收：
 
-- [ ] 补录和修正可追溯。
-- [ ] 特殊缺席能被 M7 结算读取。
+- [x] 补录和修正可追溯。
+- [x] 特殊缺席能被 M7 结算读取。
+
+证据：
+
+- RED：新增 `ClubPointAttendanceCorrectionServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAttendanceCorrectionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是修正 BO、修正类型枚举、审计动作常量、`CLUB_ATTENDANCE_NOT_FOUND` 和 Service 方法不存在，符合 M6.6 RED 预期。
+- GREEN：`ClubPointAttendanceService` / `ClubPointAttendanceServiceImpl` 增加管理员补录、管理员修正、管理员标记特殊缺席；新增补录、修正、特殊缺席 BO 和修正类型枚举；补 `ATTENDANCE_SUPPLEMENT`、`ATTENDANCE_CORRECT`、`SPECIAL_ABSENCE_MARK` 强审计动作和 `ATTENDANCE`、`ACTIVITY_REGISTRATION` 审计业务类型。
+- 实现边界：三类动作均要求管理员全局范围；补录写有效签到签退事实、修正历史和强审计；修正保留原有效记录 ID，仅更新有效记录的时间、来源、操作人和原因，并写 before/after 修正历史；特殊缺席只更新报名记录的 `specialAbsenceFlag`、`noAbsenceDeduct`、原因、时间和操作人，不拆独立表、不写修正表；M6.6 不生成积分流水。
+- M6.6 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAttendanceCorrectionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointAttendanceCorrectionServiceImplTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
+- M6.5 回归验证：为适配签到服务新增强审计依赖，`ClubPointAttendanceServiceImplTest` 的测试上下文补充 `ClubAuditServiceImpl`；复跑 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAttendanceServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointAttendanceServiceImplTest` 运行 `6` 个测试，失败 `0`，错误 `0`。
+- M6 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivityMapperTest,ClubPointActivityEnumTest,ClubPointActivityServiceImplTest,ClubPointRegistrationServiceImplTest,ClubPointAttendanceServiceImplTest,ClubPointAttendanceCorrectionServiceImplTest,ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubPointClubQueryControllerTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `72` 个测试，失败 `0`，错误 `0`。
+- M6.6 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；源码范围 `tenant_id|TenantBaseDO` 无命中；源码和本次文档范围 AI/co-author 元数据模式无命中；activity Service 主代码范围 `club_points_transaction|ClubPointTransactionMapper|ClubPointLedgerService|createTransaction|append` 无命中。
 
 ## 任务 M6.7 API
 

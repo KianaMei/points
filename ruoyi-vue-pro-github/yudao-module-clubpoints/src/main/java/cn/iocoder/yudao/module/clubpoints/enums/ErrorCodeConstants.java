@@ -51,5 +51,7 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_ATTENDANCE_WINDOW_CLOSED = new ErrorCode(1_300_000_039, "签到签退不在允许窗口内");
     ErrorCode CLUB_ATTENDANCE_ALREADY_EXISTS = new ErrorCode(1_300_000_040, "签到签退记录已存在");
     ErrorCode CLUB_ATTENDANCE_CHECKIN_REQUIRED = new ErrorCode(1_300_000_041, "请先完成签到");
+    ErrorCode CLUB_ATTENDANCE_NOT_FOUND = new ErrorCode(1_300_000_042, "签到签退记录不存在");
+    ErrorCode CLUB_ATTENDANCE_TARGET_INVALID = new ErrorCode(1_300_000_043, "签到签退类型无效");
 
 }

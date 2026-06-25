@@ -19,6 +19,7 @@ import cn.iocoder.yudao.module.clubpoints.enums.ClubPointClubStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointMemberStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRegistrationStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.service.activity.bo.ClubPointAttendanceSelfReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
@@ -36,7 +37,7 @@ import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_S
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@Import({ClubPointAttendanceServiceImpl.class, ClubScopeServiceImpl.class})
+@Import({ClubPointAttendanceServiceImpl.class, ClubScopeServiceImpl.class, ClubAuditServiceImpl.class})
 class ClubPointAttendanceServiceImplTest extends BaseDbUnitTest {
 
     private static final LocalDateTime BASE_TIME = LocalDateTime.of(2026, 7, 1, 9, 0);
