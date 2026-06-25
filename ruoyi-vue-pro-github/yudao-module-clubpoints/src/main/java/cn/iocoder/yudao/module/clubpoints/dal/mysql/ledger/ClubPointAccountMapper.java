@@ -5,8 +5,15 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 @Mapper
 public interface ClubPointAccountMapper extends BaseMapperX<ClubPointAccountDO> {
+
+    default List<ClubPointAccountDO> selectListForRebuild() {
+        return selectList(new LambdaQueryWrapperX<ClubPointAccountDO>()
+                .orderByAsc(ClubPointAccountDO::getUserId));
+    }
 
     default ClubPointAccountDO selectByUserId(Long userId) {
         return selectOne(new LambdaQueryWrapperX<ClubPointAccountDO>()

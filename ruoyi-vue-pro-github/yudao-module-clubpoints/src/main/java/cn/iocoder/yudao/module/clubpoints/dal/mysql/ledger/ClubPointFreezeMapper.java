@@ -5,8 +5,22 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointFreezeDO;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 @Mapper
 public interface ClubPointFreezeMapper extends BaseMapperX<ClubPointFreezeDO> {
+
+    default List<ClubPointFreezeDO> selectFrozenListForRebuild() {
+        return selectList(new LambdaQueryWrapperX<ClubPointFreezeDO>()
+                .eq(ClubPointFreezeDO::getStatus, 1)
+                .orderByAsc(ClubPointFreezeDO::getUserId));
+    }
+
+    default List<ClubPointFreezeDO> selectFrozenListByUserId(Long userId) {
+        return selectList(new LambdaQueryWrapperX<ClubPointFreezeDO>()
+                .eq(ClubPointFreezeDO::getUserId, userId)
+                .eq(ClubPointFreezeDO::getStatus, 1));
+    }
 
     default ClubPointFreezeDO selectByIdForUpdate(Long id) {
         return selectOneForUpdate(ClubPointFreezeDO::getId, id);

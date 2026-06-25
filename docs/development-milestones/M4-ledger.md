@@ -1,6 +1,6 @@
 # M4 积分账本 Implementation Plan
 
-**Status:** `[~]` M4.1-M4.5 已完成并有 RED/GREEN 证据；当前入口是 M4.6 余额重算。
+**Status:** `[~]` M4.1-M4.6 已完成并有 RED/GREEN 证据；当前入口是 M4.7 查询 API。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -243,15 +243,58 @@ GREEN 证据：
 
 ## 任务 M4.6 余额重算
 
-- [ ] 实现按用户和年度重算账户缓存。
-- [ ] 实现按全量用户重算账户缓存。
-- [ ] 重算只读流水事实源。
-- [ ] 重算结果写 `club_points_job_run`。
+### Task M4.6: 余额重算
+
+**Files:**
+
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/dataobject/job/ClubJobRunDO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/job/ClubJobRunMapper.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/bo/ClubPointAccountRebuildReqBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/bo/ClubPointAccountRebuildAllReqBO.java`
+- Create: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/test/java/cn/iocoder/yudao/module/clubpoints/service/ledger/ClubPointAccountRebuildServiceImplTest.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/ClubPointLedgerService.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/service/ledger/ClubPointLedgerServiceImpl.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/ledger/ClubPointAccountMapper.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/ledger/ClubPointTransactionMapper.java`
+- Modify: `ruoyi-vue-pro-github/yudao-module-clubpoints/src/main/java/cn/iocoder/yudao/module/clubpoints/dal/mysql/ledger/ClubPointFreezeMapper.java`
+
+**Interfaces:**
+
+- Consumes: `club_points_transaction`、`club_points_freeze`、`club_points_point_account`、`club_points_job_run`、`ClubPointTransactionStatusEnum`、`ClubPointFreezeStatusEnum`
+- Produces: `ClubPointLedgerService.rebuildUserAccount(...)`、`ClubPointLedgerService.rebuildAllAccounts(...)`，供管理员修复账户缓存、年度维护和后续任务监控复用
+- Decision: `club_points_transaction` 是唯一积分事实源，重算只从有效流水和冻结事实源重建 `club_points_point_account` 缓存；`club_points_job_run` 记录重算结果，不依赖 `infra_job_log` 当业务事实。
+
+- [x] RED: 写失败测试或失败验证
+- [x] Verify RED: 运行命令，确认失败原因正确
+- [x] GREEN: 写最小实现
+- [x] Verify GREEN: 运行命令，确认通过
+- [x] REFACTOR: 只在绿色后清理命名、重复、结构
+- [x] Checkpoint: 列出变更文件和验证证据，不提交 git
+
+RED 证据：
+
+- 新增 `ClubPointAccountRebuildServiceImplTest`，覆盖单用户缓存修复、全量缓存修复、冻结中积分重算、已撤销流水排除、撤销流水纳入、流水总数不变和 `club_points_job_run` 写入。
+- RED 命令：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAccountRebuildServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`。
+- 失败原因为 `dal.dataobject.job`、`dal.mysql.job`、`ClubPointAccountRebuildReqBO`、`ClubPointAccountRebuildAllReqBO`、`ClubJobRunMapper` 等 M4.6 产物不存在，符合 RED 预期。
+
+GREEN 证据：
+
+- GREEN：新增 `ClubJobRunDO`、`ClubJobRunMapper`、`ClubPointAccountRebuildReqBO`、`ClubPointAccountRebuildAllReqBO`；`ClubPointLedgerService` 增加单用户和全量账户重算入口；`ClubPointLedgerServiceImpl` 从流水和冻结事实源重建账户缓存并写任务运行记录。
+- Mapper：`ClubPointAccountMapper` 增加账户列表和按用户查询，`ClubPointTransactionMapper` 增加有效重算流水和用户集合查询，`ClubPointFreezeMapper` 增加冻结中积分和用户集合查询。
+- M4.6 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAccountRebuildServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointAccountRebuildServiceImplTest` 运行 `2` 个测试，失败 `0`，错误 `0`。
+- M4 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointLedgerMapperTest,ClubPointLedgerEnumTest,ClubPointLedgerServiceImplTest,ClubPointFreezeServiceImplTest,ClubPointLedgerAdjustmentServiceImplTest,ClubPointAccountRebuildServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `28` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；租户字段、租户基类和 AI 元数据模式检查均无命中。
+- 边界：重算会更新账户缓存，但不新增、不删除、不修改任何积分流水；`status=VALID` 和 `status=REVERSAL` 参与重算，`status=REVERSED` 不参与；仅 `FROZEN` 状态冻结记录计入冻结积分。
+
+- [x] 实现按用户和年度重算账户缓存。
+- [x] 实现按全量用户重算账户缓存。
+- [x] 重算只读流水事实源。
+- [x] 重算结果写 `club_points_job_run`。
 
 验收：
 
-- [ ] 删除或修改缓存后可从流水恢复。
-- [ ] 重算不改变流水。
+- [x] 删除或修改缓存后可从流水恢复。
+- [x] 重算不改变流水。
 
 ## 任务 M4.7 查询 API
 

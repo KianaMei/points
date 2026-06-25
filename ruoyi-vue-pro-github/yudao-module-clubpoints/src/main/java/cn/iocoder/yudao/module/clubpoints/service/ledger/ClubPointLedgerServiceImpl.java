@@ -1,17 +1,24 @@
 package cn.iocoder.yudao.module.clubpoints.service.ledger;
 
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.job.ClubJobRunDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointFreezeDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointTransactionDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRuleVersionDO;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.job.ClubJobRunMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointAccountMapper;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointFreezeMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointTransactionMapper;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointCategoryEnum;
+import cn.iocoder.yudao.module.clubpoints.enums.ClubPointFreezeStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionDirectionEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionSourceTypeEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditService;
 import cn.iocoder.yudao.module.clubpoints.service.audit.bo.ClubAuditCreateReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointAccountRebuildAllReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointAccountRebuildReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointLedgerAdjustReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointLedgerCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointLedgerReverseReqBO;
@@ -24,7 +31,10 @@ import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_LEDGER_ADJUST_INVALID;
@@ -39,10 +49,20 @@ import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_L
 @Service
 public class ClubPointLedgerServiceImpl implements ClubPointLedgerService {
 
+    private static final String JOB_TASK_LEDGER_ACCOUNT_REBUILD = "LEDGER_ACCOUNT_REBUILD";
+    private static final String JOB_BIZ_USER_ACCOUNT = "USER_ACCOUNT";
+    private static final String JOB_BIZ_ALL_ACCOUNT = "ALL_ACCOUNT";
+    private static final Integer JOB_STATUS_SUCCESS = 3;
+    private static final Integer DEFAULT_MANUAL_TRIGGER_SOURCE = 2;
+
     @Resource
     private ClubPointTransactionMapper transactionMapper;
     @Resource
     private ClubPointAccountMapper accountMapper;
+    @Resource
+    private ClubPointFreezeMapper freezeMapper;
+    @Resource
+    private ClubJobRunMapper jobRunMapper;
     @Resource
     private ClubPointRuleResolveService ruleResolveService;
     @Resource
@@ -129,6 +149,47 @@ public class ClubPointLedgerServiceImpl implements ClubPointLedgerService {
                 reqBO.getClientIp(), reqBO.getUserAgent(), reqBO.getReason(),
                 "{\"requestNo\":\"" + reqBO.getRequestNo() + "\"}", reqBO.getAttachmentSnapshotJson()));
         return createTransaction(buildAdjustmentTransactionReq(reqBO, idempotencyKey, auditLogId));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long rebuildUserAccount(ClubPointAccountRebuildReqBO reqBO) {
+        String idempotencyKey = buildUserAccountRebuildIdempotencyKey(
+                reqBO.getBusinessYear(), reqBO.getUserId(), reqBO.getRunKey());
+        ClubJobRunDO existing = jobRunMapper.selectByIdempotencyKey(idempotencyKey);
+        if (existing != null) {
+            return existing.getId();
+        }
+
+        LocalDateTime startTime = LocalDateTime.now();
+        rebuildSingleAccount(reqBO.getUserId(), reqBO.getBusinessYear(), startTime);
+        ClubJobRunDO jobRun = buildJobRun(JOB_BIZ_USER_ACCOUNT, reqBO.getUserId(), reqBO.getRunKey(),
+                idempotencyKey, reqBO.getPlannedTime(), startTime, reqBO.getTriggerSource(),
+                reqBO.getHandlerUserId(), 1, 1, reqBO.getManualHandleReason(),
+                "{\"businessYear\":" + reqBO.getBusinessYear() + ",\"userId\":" + reqBO.getUserId() + "}");
+        return insertJobRun(jobRun);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long rebuildAllAccounts(ClubPointAccountRebuildAllReqBO reqBO) {
+        String idempotencyKey = buildAllAccountRebuildIdempotencyKey(reqBO.getBusinessYear(), reqBO.getRunKey());
+        ClubJobRunDO existing = jobRunMapper.selectByIdempotencyKey(idempotencyKey);
+        if (existing != null) {
+            return existing.getId();
+        }
+
+        LocalDateTime startTime = LocalDateTime.now();
+        Set<Long> userIds = collectRebuildUserIds();
+        for (Long userId : userIds) {
+            rebuildSingleAccount(userId, reqBO.getBusinessYear(), startTime);
+        }
+        int totalCount = userIds.size();
+        ClubJobRunDO jobRun = buildJobRun(JOB_BIZ_ALL_ACCOUNT, null, reqBO.getRunKey(),
+                idempotencyKey, reqBO.getPlannedTime(), startTime, reqBO.getTriggerSource(),
+                reqBO.getHandlerUserId(), totalCount, totalCount, reqBO.getManualHandleReason(),
+                "{\"businessYear\":" + reqBO.getBusinessYear() + ",\"rebuiltUsers\":" + totalCount + "}");
+        return insertJobRun(jobRun);
     }
 
     private Long handleExistingTransaction(ClubPointTransactionDO existing, ClubPointLedgerCreateReqBO reqBO) {
@@ -286,6 +347,119 @@ public class ClubPointLedgerServiceImpl implements ClubPointLedgerService {
                 .setSuccess(true);
     }
 
+    private Set<Long> collectRebuildUserIds() {
+        Set<Long> userIds = new LinkedHashSet<>();
+        for (ClubPointTransactionDO transaction : transactionMapper.selectEffectiveListForRebuild()) {
+            userIds.add(transaction.getUserId());
+        }
+        for (ClubPointFreezeDO freeze : freezeMapper.selectFrozenListForRebuild()) {
+            userIds.add(freeze.getUserId());
+        }
+        for (ClubPointAccountDO account : accountMapper.selectListForRebuild()) {
+            userIds.add(account.getUserId());
+        }
+        return userIds;
+    }
+
+    private void rebuildSingleAccount(Long userId, Integer businessYear, LocalDateTime rebuildTime) {
+        List<ClubPointTransactionDO> transactions = transactionMapper.selectEffectiveListByUserId(userId);
+        int totalPositivePoints = 0;
+        int totalNegativePoints = 0;
+        int annualEarnedPoints = 0;
+        ClubPointTransactionDO lastTransaction = null;
+        for (ClubPointTransactionDO transaction : transactions) {
+            if (isIncrease(transaction)) {
+                totalPositivePoints += transaction.getPoints();
+                if (Objects.equals(transaction.getBusinessYear(), businessYear)) {
+                    annualEarnedPoints += transaction.getPoints();
+                }
+            } else {
+                totalNegativePoints += transaction.getPoints();
+            }
+            lastTransaction = transaction;
+        }
+
+        int netPoints = totalPositivePoints - totalNegativePoints;
+        int frozenPoints = sumFrozenPoints(userId);
+        ClubPointAccountDO account = accountMapper.selectByUserIdForUpdate(userId);
+        if (account == null) {
+            account = new ClubPointAccountDO()
+                    .setUserId(userId)
+                    .setVersion(0);
+        }
+        applyRebuildResult(account, totalPositivePoints, totalNegativePoints, netPoints, frozenPoints,
+                annualEarnedPoints, lastTransaction, rebuildTime);
+        if (account.getId() == null) {
+            accountMapper.insert(account);
+        } else {
+            accountMapper.updateById(account);
+        }
+    }
+
+    private int sumFrozenPoints(Long userId) {
+        int frozenPoints = 0;
+        for (ClubPointFreezeDO freeze : freezeMapper.selectFrozenListByUserId(userId)) {
+            if (ClubPointFreezeStatusEnum.FROZEN.getStatus().equals(freeze.getStatus())) {
+                frozenPoints += freeze.getPoints();
+            }
+        }
+        return frozenPoints;
+    }
+
+    private static void applyRebuildResult(ClubPointAccountDO account, int totalPositivePoints,
+                                           int totalNegativePoints, int netPoints, int frozenPoints,
+                                           int annualEarnedPoints, ClubPointTransactionDO lastTransaction,
+                                           LocalDateTime rebuildTime) {
+        account.setTotalPositivePoints(totalPositivePoints)
+                .setTotalNegativePoints(totalNegativePoints)
+                .setNetPoints(netPoints)
+                .setFrozenPoints(frozenPoints)
+                .setAvailablePoints(Math.max(netPoints - frozenPoints, 0))
+                .setAnnualEarnedPoints(annualEarnedPoints)
+                .setLastTransactionId(lastTransaction == null ? null : lastTransaction.getId())
+                .setLastTransactionTime(lastTransaction == null ? null : lastTransaction.getOccurredAt())
+                .setLastRebuildTime(rebuildTime)
+                .setVersion((account.getVersion() == null ? 0 : account.getVersion()) + 1);
+    }
+
+    private Long insertJobRun(ClubJobRunDO jobRun) {
+        try {
+            jobRunMapper.insert(jobRun);
+            return jobRun.getId();
+        } catch (DuplicateKeyException ex) {
+            ClubJobRunDO duplicated = jobRunMapper.selectByIdempotencyKey(jobRun.getIdempotencyKey());
+            if (duplicated != null) {
+                return duplicated.getId();
+            }
+            throw ex;
+        }
+    }
+
+    private static ClubJobRunDO buildJobRun(String bizType, Long bizId, String runKey, String idempotencyKey,
+                                            LocalDateTime plannedTime, LocalDateTime startTime,
+                                            Integer triggerSource, Long handlerUserId, Integer totalCount,
+                                            Integer successCount, String manualHandleReason, String resultJson) {
+        return new ClubJobRunDO()
+                .setTaskType(JOB_TASK_LEDGER_ACCOUNT_REBUILD)
+                .setBizType(bizType)
+                .setBizId(bizId)
+                .setRunKey(runKey)
+                .setIdempotencyKey(idempotencyKey)
+                .setStatus(JOB_STATUS_SUCCESS)
+                .setPlannedTime(plannedTime)
+                .setStartTime(startTime)
+                .setEndTime(LocalDateTime.now())
+                .setTriggerSource(triggerSource != null ? triggerSource : DEFAULT_MANUAL_TRIGGER_SOURCE)
+                .setHandlerUserId(handlerUserId)
+                .setTotalCount(totalCount)
+                .setSuccessCount(successCount)
+                .setSkipCount(0)
+                .setFailedCount(0)
+                .setRetryCount(0)
+                .setResultJson(resultJson)
+                .setManualHandleReason(manualHandleReason);
+    }
+
     private void upsertAccount(ClubPointLedgerCreateReqBO reqBO, ClubPointTransactionDO transaction,
                                ClubPointAccountDO account) {
         if (account == null) {
@@ -395,6 +569,14 @@ public class ClubPointLedgerServiceImpl implements ClubPointLedgerService {
 
     private static String buildAdjustIdempotencyKey(String requestNo) {
         return "LEDGER_ADJUST:" + requestNo;
+    }
+
+    private static String buildUserAccountRebuildIdempotencyKey(Integer businessYear, Long userId, String runKey) {
+        return "LEDGER_ACCOUNT_REBUILD:USER:" + businessYear + ":" + userId + ":" + runKey;
+    }
+
+    private static String buildAllAccountRebuildIdempotencyKey(Integer businessYear, String runKey) {
+        return "LEDGER_ACCOUNT_REBUILD:ALL:" + businessYear + ":" + runKey;
     }
 
 }
