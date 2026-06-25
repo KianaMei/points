@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * 积分规则版本服务
  */
-public interface ClubPointRuleService {
+public interface ClubPointRuleService extends ClubPointRuleResolveService {
 
     Long createDraftVersion(ClubPointRuleVersionSaveReqBO reqBO);
 

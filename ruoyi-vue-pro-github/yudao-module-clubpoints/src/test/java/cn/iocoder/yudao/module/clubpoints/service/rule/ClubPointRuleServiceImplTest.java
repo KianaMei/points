@@ -14,6 +14,7 @@ import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRuleVersionStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.rule.bo.ClubPointRuleItemSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.rule.bo.ClubPointRuleOperationReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.rule.bo.ClubPointRuleSnapshotBO;
 import cn.iocoder.yudao.module.clubpoints.service.rule.bo.ClubPointRuleVersionSaveReqBO;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
@@ -27,10 +28,12 @@ import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConsta
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.RULE_PUBLISH;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_ITEM_CODE_DUPLICATED;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_ITEM_NOT_EXISTS;
+import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_VALUE_OUT_OF_RANGE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_VERSION_NOT_EXISTS;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_VERSION_STATUS_INVALID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Import({ClubPointRuleServiceImpl.class, ClubAuditServiceImpl.class})
 class ClubPointRuleServiceImplTest extends BaseDbUnitTest {
@@ -200,6 +203,52 @@ class ClubPointRuleServiceImplTest extends BaseDbUnitTest {
         insertVersion("V2026.16", STATUS_PUBLISHED, LocalDateTime.now().minusDays(1));
 
         assertServiceException(() -> clubPointRuleService.getRuleItemByCode("ACTIVITY_SMALL_BASE"), CLUB_RULE_ITEM_NOT_EXISTS);
+    }
+
+    @Test
+    void getEffectiveVersionShouldUseOccurredAt() {
+        ClubPointRuleVersionDO oldPublished = insertVersion("V2026.17", STATUS_PUBLISHED, LocalDateTime.now().minusDays(10));
+        insertVersion("V2026.18", STATUS_PUBLISHED, LocalDateTime.now().plusDays(1));
+
+        ClubPointRuleVersionDO effective = clubPointRuleService.getEffectiveVersion(LocalDateTime.now());
+
+        assertEquals(oldPublished.getId(), effective.getId());
+    }
+
+    @Test
+    void getFixedPointsShouldReturnDefaultPoints() {
+        ClubPointRuleVersionDO published = insertVersion("V2026.19", STATUS_PUBLISHED, LocalDateTime.now().minusDays(1));
+        ruleItemMapper.insert(buildRuleItem(published.getId(), "ACTIVITY_SMALL_BASE", 5, 5, 5));
+
+        Integer points = clubPointRuleService.getFixedPoints(published.getId(), "ACTIVITY_SMALL_BASE");
+
+        assertEquals(5, points);
+    }
+
+    @Test
+    void validatePointInRangeShouldRejectOutOfRangePoints() {
+        ClubPointRuleVersionDO published = insertVersion("V2026.20", STATUS_PUBLISHED, LocalDateTime.now().minusDays(1));
+        ruleItemMapper.insert(buildRuleItem(published.getId(), "VIOLATION_DEDUCT_RANGE", 10, 20, 10));
+
+        assertServiceException(() -> clubPointRuleService.validatePointInRange("VIOLATION_DEDUCT_RANGE", 21),
+                CLUB_RULE_VALUE_OUT_OF_RANGE);
+    }
+
+    @Test
+    void buildRuleSnapshotShouldReturnStableSnapshotForCurrentRuleItem() {
+        ClubPointRuleVersionDO published = insertVersion("V2026.21", STATUS_PUBLISHED, LocalDateTime.now().minusDays(1));
+        ClubPointRuleItemDO item = buildRuleItem(published.getId(), "ACTIVITY_SMALL_BASE", 5, 10, 5);
+        ruleItemMapper.insert(item);
+
+        ClubPointRuleSnapshotBO snapshot = clubPointRuleService.buildRuleSnapshot("ACTIVITY_SMALL_BASE", 8);
+
+        assertEquals(published.getId(), snapshot.getRuleVersionId());
+        assertEquals("V2026.21", snapshot.getRuleVersionNo());
+        assertEquals(item.getId(), snapshot.getRuleItemId());
+        assertEquals("ACTIVITY_SMALL_BASE", snapshot.getRuleItemCode());
+        assertEquals(8, snapshot.getPointsSnapshot());
+        assertTrue(snapshot.getRuleSnapshotJson().contains("\"ruleItemCode\":\"ACTIVITY_SMALL_BASE\""));
+        assertTrue(snapshot.getRuleSnapshotJson().contains("\"pointsSnapshot\":8"));
     }
 
     private static ClubPointRuleVersionSaveReqBO buildVersionSaveReq(String versionNo) {

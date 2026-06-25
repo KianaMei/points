@@ -1,6 +1,6 @@
 # M3 规则版本和配置后台 Implementation Plan
 
-**Status:** `[~]` M3.1-M3.4 已完成并有 RED/GREEN 与质量门禁证据；当前入口是 M3.5 业务读取封装。
+**Status:** `[x]` M3 已放行。规则版本、规则项、Admin API、业务读取封装和测试收口均有 RED/GREEN、组合测试与质量门禁证据。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -168,42 +168,67 @@
 
 ## 任务 M3.5 业务读取封装
 
-- [ ] 提供 `getCurrentRuleVersion()`。
-- [ ] 提供 `getRuleItemByCode(String code)`。
-- [ ] 提供 `validatePointInRange(String code, Integer points)`。
-- [ ] 提供 `buildRuleSnapshot(...)`。
-- [ ] 对不存在规则项抛业务错误。
+- [x] 提供 `getCurrentRuleVersion()`。
+- [x] 提供 `getRuleItemByCode(String code)`。
+- [x] 提供 `validatePointInRange(String code, Integer points)`。
+- [x] 提供 `buildRuleSnapshot(...)`。
+- [x] 对不存在规则项抛业务错误。
 
 验收：
 
-- [ ] M4-M10 可以统一读取规则。
-- [ ] 业务记录能保存规则快照 JSON。
+- [x] M4-M10 可以统一读取规则。
+- [x] 业务记录能保存规则快照 JSON。
+
+证据：
+
+- RED：新增 `ClubPointRuleServiceImplTest` 的 M3.5 用例后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointRuleSnapshotBO` 不存在。
+- GREEN：新增 `ClubPointRuleResolveService`、`ClubPointRuleSnapshotBO`，并扩展 `ClubPointRuleServiceImpl`，提供 `getEffectiveVersion(LocalDateTime occurredAt)`、`getItem(Long ruleVersionId, String itemCode)`、`getFixedPoints(Long ruleVersionId, String itemCode)`、`validatePointsInRange(Long ruleVersionId, String itemCode, Integer points)`、`validatePointInRange(String itemCode, Integer points)`、`snapshotRuleItem(...)` 和 `buildRuleSnapshot(...)`。
+- M3.5 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointRuleServiceImplTest` 运行 `15` 个测试，失败 `0`，错误 `0`。
+- 业务读取边界：按 `occurredAt` 读取 `effective_time <= occurredAt` 的已发布版本；按版本和规则项编码读取启用规则项；固定分值读取 `default_points`；区间分值按 `min_points/max_points` 校验；不存在版本或规则项继续抛 M3 统一业务错误。
+- 快照证据：`buildRuleSnapshot(...)` 返回 `ruleVersionId`、`ruleVersionNo`、`ruleItemId`、`ruleItemCode`、`minPoints`、`maxPoints`、`defaultPoints`、`pointsSnapshot` 和 `ruleSnapshotJson`，满足业务记录保存规则快照 JSON 的要求。
 
 ## 任务 M3.6 测试
 
-- [ ] 测试草稿创建。
-- [ ] 测试发布成功。
-- [ ] 测试已发布版本不可修改。
-- [ ] 测试停用成功。
-- [ ] 测试分值越界失败。
-- [ ] 测试固定分值规则。
-- [ ] 测试无已发布版本时业务读取失败。
+- [x] 测试草稿创建。
+- [x] 测试发布成功。
+- [x] 测试已发布版本不可修改。
+- [x] 测试停用成功。
+- [x] 测试分值越界失败。
+- [x] 测试固定分值规则。
+- [x] 测试无已发布版本时业务读取失败。
 
 验收：
 
-- [ ] 规则状态机测试通过。
-- [ ] 规则值边界测试通过。
+- [x] 规则状态机测试通过。
+- [x] 规则值边界测试通过。
+
+证据：
+
+- 状态机测试覆盖：`createDraftVersionShouldPersistDraftVersion`、`publishVersionShouldPublishDraftDisableOldPublishedAndWriteAudit`、`updateDraftRuleItemShouldRejectPublishedVersion`、`disableVersionShouldDisablePublishedVersionAndWriteAudit`。
+- 业务读取测试覆盖：`getCurrentRuleVersionShouldReadPublishedVersionOnly`、`getCurrentRuleVersionShouldFailWithoutPublishedVersion`、`getRuleItemByCodeShouldReadFromCurrentPublishedVersion`、`getRuleItemByCodeShouldFailWhenCurrentVersionDoesNotContainItem`、`getEffectiveVersionShouldUseOccurredAt`。
+- 规则值边界测试覆盖：`getFixedPointsShouldReturnDefaultPoints`、`validatePointInRangeShouldRejectOutOfRangePoints`、`buildRuleSnapshotShouldReturnStableSnapshotForCurrentRuleItem`。
+- M3 组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRuleMapperTest,ClubPointRuleEnumTest,ClubPointRuleServiceImplTest,ClubPointRuleAdminControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `27` 个测试，失败 `0`，错误 `0`。
 
 ## M3 放行标准
 
-- [ ] 规则版本可发布。
-- [ ] 规则项可配置。
-- [ ] 已发布规则可被业务读取。
-- [ ] 发布和停用写强审计。
-- [ ] 没有制度分值硬编码。
+- [x] 规则版本可发布。
+- [x] 规则项可配置。
+- [x] 已发布规则可被业务读取。
+- [x] 发布和停用写强审计。
+- [x] 没有制度分值硬编码。
+
+放行证据：
+
+- 规则版本和规则项：M3.1-M3.4 已完成 DO/Mapper、枚举、错误码、Service、Admin API，并通过 RED/GREEN 和接口/组合测试。
+- 已发布规则读取：M3.5 提供业务读侧接口，M3.5 单测验证当前发布版本、按发生时间取版本、按编码取规则项、固定分值、区间校验和快照构建。
+- 强审计：发布、撤回、停用仍由 `ClubPointRuleServiceImpl` 写 `ClubAuditService` 和 `club_points_rule_publish_record`。
+- 组合测试：M3 当前组合测试合计 `27` 个测试全部通过。
+- 质量门禁：`git diff --check` exit `0`，仅 CRLF 提示；源码和测试内租户字段、租户基类、AI 元数据模式均无命中；精确搜索 22 个规则项编码在 main `service` 包内无命中。
 
 ## M3 不通过时禁止
 
-- [ ] 禁止写账本发分逻辑。
-- [ ] 禁止写活动结算。
-- [ ] 禁止写非签到积分和兑换资格规则。
+M3 已放行，以下禁止项解除。若后续回退为不通过，仍禁止：
+
+- 禁止写账本发分逻辑。
+- 禁止写活动结算。
+- 禁止写非签到积分和兑换资格规则。

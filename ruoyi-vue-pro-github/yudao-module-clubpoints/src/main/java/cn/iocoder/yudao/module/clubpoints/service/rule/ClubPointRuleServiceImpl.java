@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.clubpoints.service.rule;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRuleItemDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRulePublishRecordDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRuleVersionDO;
@@ -13,13 +14,16 @@ import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditService;
 import cn.iocoder.yudao.module.clubpoints.service.audit.bo.ClubAuditCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.rule.bo.ClubPointRuleItemSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.rule.bo.ClubPointRuleOperationReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.rule.bo.ClubPointRuleSnapshotBO;
 import cn.iocoder.yudao.module.clubpoints.service.rule.bo.ClubPointRuleVersionSaveReqBO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.RULE_DISABLE;
@@ -27,6 +31,7 @@ import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConsta
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.RULE_WITHDRAW;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_ITEM_CODE_DUPLICATED;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_ITEM_NOT_EXISTS;
+import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_VALUE_OUT_OF_RANGE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_VERSION_NOT_EXISTS;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_VERSION_STATUS_INVALID;
 
@@ -164,8 +169,14 @@ public class ClubPointRuleServiceImpl implements ClubPointRuleService {
 
     @Override
     public ClubPointRuleVersionDO getCurrentRuleVersion() {
+        return getEffectiveVersion(LocalDateTime.now());
+    }
+
+    @Override
+    public ClubPointRuleVersionDO getEffectiveVersion(LocalDateTime occurredAt) {
+        LocalDateTime effectiveAt = occurredAt == null ? LocalDateTime.now() : occurredAt;
         ClubPointRuleVersionDO version = ruleVersionMapper.selectCurrentPublished(
-                ClubPointRuleVersionStatusEnum.PUBLISHED.getStatus(), LocalDateTime.now());
+                ClubPointRuleVersionStatusEnum.PUBLISHED.getStatus(), effectiveAt);
         if (version == null) {
             throw exception(CLUB_RULE_VERSION_NOT_EXISTS);
         }
@@ -181,12 +192,92 @@ public class ClubPointRuleServiceImpl implements ClubPointRuleService {
     @Override
     public ClubPointRuleItemDO getRuleItemByCode(String code) {
         ClubPointRuleVersionDO version = getCurrentRuleVersion();
+        return getItem(version.getId(), code);
+    }
+
+    @Override
+    public ClubPointRuleItemDO getItem(Long ruleVersionId, String itemCode) {
+        validateRuleVersionExists(ruleVersionId);
         ClubPointRuleItemDO ruleItem = ruleItemMapper.selectByRuleVersionIdAndItemCodeAndStatus(
-                version.getId(), code, ITEM_STATUS_ENABLED);
+                ruleVersionId, itemCode, ITEM_STATUS_ENABLED);
         if (ruleItem == null) {
             throw exception(CLUB_RULE_ITEM_NOT_EXISTS);
         }
         return ruleItem;
+    }
+
+    @Override
+    public Integer getFixedPoints(Long ruleVersionId, String itemCode) {
+        ClubPointRuleItemDO ruleItem = getItem(ruleVersionId, itemCode);
+        validatePointRange(ruleItem, ruleItem.getDefaultPoints());
+        return ruleItem.getDefaultPoints();
+    }
+
+    @Override
+    public void validatePointsInRange(Long ruleVersionId, String itemCode, Integer points) {
+        validatePointRange(getItem(ruleVersionId, itemCode), points);
+    }
+
+    @Override
+    public void validatePointInRange(String itemCode, Integer points) {
+        validatePointRange(getRuleItemByCode(itemCode), points);
+    }
+
+    @Override
+    public ClubPointRuleSnapshotBO snapshotRuleItem(Long ruleVersionId, String itemCode) {
+        return snapshotRuleItem(ruleVersionId, itemCode, getFixedPoints(ruleVersionId, itemCode));
+    }
+
+    @Override
+    public ClubPointRuleSnapshotBO snapshotRuleItem(Long ruleVersionId, String itemCode, Integer points) {
+        ClubPointRuleVersionDO version = validateRuleVersionExists(ruleVersionId);
+        ClubPointRuleItemDO ruleItem = getItem(ruleVersionId, itemCode);
+        validatePointRange(ruleItem, points);
+        return buildRuleSnapshot(version, ruleItem, points);
+    }
+
+    @Override
+    public ClubPointRuleSnapshotBO buildRuleSnapshot(String itemCode, Integer points) {
+        ClubPointRuleVersionDO version = getCurrentRuleVersion();
+        ClubPointRuleItemDO ruleItem = getItem(version.getId(), itemCode);
+        validatePointRange(ruleItem, points);
+        return buildRuleSnapshot(version, ruleItem, points);
+    }
+
+    private static void validatePointRange(ClubPointRuleItemDO ruleItem, Integer points) {
+        if (points == null || points < ruleItem.getMinPoints() || points > ruleItem.getMaxPoints()) {
+            throw exception(CLUB_RULE_VALUE_OUT_OF_RANGE);
+        }
+    }
+
+    private static ClubPointRuleSnapshotBO buildRuleSnapshot(ClubPointRuleVersionDO version,
+                                                             ClubPointRuleItemDO ruleItem,
+                                                             Integer points) {
+        ClubPointRuleSnapshotBO snapshot = new ClubPointRuleSnapshotBO()
+                .setRuleVersionId(version.getId())
+                .setRuleVersionNo(version.getVersionNo())
+                .setRuleItemId(ruleItem.getId())
+                .setRuleItemCode(ruleItem.getItemCode())
+                .setRuleItemName(ruleItem.getItemName())
+                .setMinPoints(ruleItem.getMinPoints())
+                .setMaxPoints(ruleItem.getMaxPoints())
+                .setDefaultPoints(ruleItem.getDefaultPoints())
+                .setPointsSnapshot(points);
+        return snapshot.setRuleSnapshotJson(JsonUtils.toJsonString(toRuleSnapshotMap(snapshot)));
+    }
+
+    private static Map<String, Object> toRuleSnapshotMap(ClubPointRuleSnapshotBO snapshot) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("ruleVersionId", snapshot.getRuleVersionId());
+        map.put("ruleVersionNo", snapshot.getRuleVersionNo());
+        map.put("ruleItemId", snapshot.getRuleItemId());
+        map.put("ruleItemCode", snapshot.getRuleItemCode());
+        map.put("ruleItemName", snapshot.getRuleItemName());
+        map.put("minPoints", snapshot.getMinPoints());
+        map.put("maxPoints", snapshot.getMaxPoints());
+        map.put("defaultPoints", snapshot.getDefaultPoints());
+        map.put("pointsSnapshot", snapshot.getPointsSnapshot());
+        return map;
     }
 
     private void disableOtherPublishedVersions(Long currentVersionId, ClubPointRuleOperationReqBO reqBO,
