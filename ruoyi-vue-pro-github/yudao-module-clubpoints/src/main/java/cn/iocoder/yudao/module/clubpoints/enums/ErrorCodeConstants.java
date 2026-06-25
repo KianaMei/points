@@ -48,5 +48,8 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_ACTIVITY_CANCEL_WINDOW_CLOSED = new ErrorCode(1_300_000_036, "活动取消报名窗口已关闭");
     ErrorCode CLUB_ACTIVITY_REGISTRATION_DUPLICATED = new ErrorCode(1_300_000_037, "活动报名重复");
     ErrorCode CLUB_ACTIVITY_REGISTRATION_NOT_FOUND = new ErrorCode(1_300_000_038, "活动报名记录不存在");
+    ErrorCode CLUB_ATTENDANCE_WINDOW_CLOSED = new ErrorCode(1_300_000_039, "签到签退不在允许窗口内");
+    ErrorCode CLUB_ATTENDANCE_ALREADY_EXISTS = new ErrorCode(1_300_000_040, "签到签退记录已存在");
+    ErrorCode CLUB_ATTENDANCE_CHECKIN_REQUIRED = new ErrorCode(1_300_000_041, "请先完成签到");
 
 }

@@ -1,6 +1,6 @@
 # M6 活动、报名、签到签退 Implementation Plan
 
-**Status:** `[~]` M6.1-M6.4 已完成并有 RED/GREEN 证据；当前入口是 M6.5 签到签退 Service。
+**Status:** `[~]` M6.1-M6.5 已完成并有 RED/GREEN 证据；当前入口是 M6.6 修正和特殊缺席。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -158,20 +158,28 @@
 
 ## 任务 M6.5 签到签退 Service
 
-- [ ] 员工签到。
-- [ ] 员工签退。
-- [ ] 记录签到时间、签退时间、定位或方式字段。
-- [ ] 校验签到窗口。
-- [ ] 校验签退窗口。
-- [ ] 防重复签到。
-- [ ] 防重复签退。
-- [ ] 不在此阶段生成积分流水。
+- [x] 员工签到。
+- [x] 员工签退。
+- [x] 记录签到时间、签退时间、定位或方式字段。
+- [x] 校验签到窗口。
+- [x] 校验签退窗口。
+- [x] 防重复签到。
+- [x] 防重复签退。
+- [x] 不在此阶段生成积分流水。
 
 验收：
 
-- [ ] 签到事实可查询。
-- [ ] 签退事实可查询。
-- [ ] 重复签到签退被拦截。
+- [x] 签到事实可查询。
+- [x] 签退事实可查询。
+- [x] 重复签到签退被拦截。
+
+证据：
+
+- RED：新增 `ClubPointAttendanceServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAttendanceServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointAttendanceService`、`ClubPointAttendanceServiceImpl`、自助签到 BO、签到目标/来源枚举和签到错误码不存在，符合 M6.5 RED 预期。
+- GREEN：新增 `ClubPointAttendanceService` / `ClubPointAttendanceServiceImpl` 和 `ClubPointAttendanceSelfReqBO`；新增签到目标类型枚举和签到来源类型枚举；补签到窗口关闭、重复签到签退、签退前必须签到错误码；签到 Mapper 增加按报名和目标类型查询。
+- 实现边界：员工从本人有效报名记录签到或签退；活动必须处于已发布且允许签到状态；签到按 `checkinStartTime` 到 `checkinEndTime` 校验窗口；签退要求已有签到事实，再按 `checkoutStartTime` 到 `checkoutEndTime` 校验窗口；自助记录写 `sourceType=SELF`、操作人、记录时间、IP 和备注；重复签到/签退先业务校验，再由 `registration_id,target_type` 唯一键兜底；M6.5 不生成积分流水。
+- M6.5 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAttendanceServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointAttendanceServiceImplTest` 运行 `6` 个测试，失败 `0`，错误 `0`。
+- M6 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivityMapperTest,ClubPointActivityEnumTest,ClubPointActivityServiceImplTest,ClubPointRegistrationServiceImplTest,ClubPointAttendanceServiceImplTest,ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubPointClubQueryControllerTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `67` 个测试，失败 `0`，错误 `0`。
 
 ## 任务 M6.6 修正和特殊缺席
 
