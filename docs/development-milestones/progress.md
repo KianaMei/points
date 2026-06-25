@@ -88,3 +88,12 @@
 - 2026-06-25：M2.7 放行测试：`mvn -pl yudao-module-clubpoints -am "-Dtest=DictTypeConstantsTest,ClubNotifyTemplateConstantsTest,ClubScopeServiceImplTest,ClubAuditServiceImplTest,ClubAttachmentServiceImplTest,ClubNotifyServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `29` 个测试，失败 `0`，错误 `0`。
 - 2026-06-25：M2.7 覆盖映射：员工越权访问他人数据、负责人越权访问其他俱乐部、管理员全局访问、强审计失败回滚、通知失败不回滚、附件锁定后不可删除均已有测试覆盖。
 - 2026-06-25：M2 放行：权限 seed、字典 seed、`ClubScopeService`、`ClubAuditService`、`ClubAttachmentService`、`ClubNotifyService` 和横切测试全部有验证证据；`00-index.md` 当前入口切换到 M3。
+
+## M3 规则版本和配置后台
+
+- 2026-06-25：读取 `M3-rule-config.md`、共享执行规则、后端规则、数据库规则和数据流文档；确认 M3.1 只处理规则三张表 DO/Mapper，不进入状态机、Service、Admin API 和业务分值读取。
+- 2026-06-25：M3.1 RED：新增 `ClubPointRuleMapperTest`，覆盖规则版本、规则项、发布记录三张表的业务字段落库与基础查询；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `dal.dataobject.rule` 包和三个 Rule Mapper 不存在。
+- 2026-06-25：M3.1 GREEN：新增 `ClubPointRuleVersionDO`、`ClubPointRuleItemDO`、`ClubPointRulePublishRecordDO`、`ClubPointRuleVersionMapper`、`ClubPointRuleItemMapper`、`ClubPointRulePublishRecordMapper`；DO 字段按 M1 DDL 映射，JSON 字段按字符串承载，Mapper 提供按版本号、规则版本 ID、规则项编码、发布记录版本 ID 的基础查询。
+- 2026-06-25：M3.1 单测验证：同一 Maven 命令返回 `BUILD SUCCESS`；`ClubPointRuleMapperTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
+- 2026-06-25：M3.1 质量验证：`git diff --check` 无输出；规则 DO/Mapper/Test 包内租户字段、租户基类和 AI 元数据模式检查均无命中；继承检查命中 3 个 `BaseDO` 和 3 个 `BaseMapperX<T>`。
+- 2026-06-25：M3.1 文档同步：`M3-rule-config.md` 勾选 M3.1 并补证据，`00-index.md` 将 M3 标为进行中并把下一入口切换到 M3.2 枚举和错误码。

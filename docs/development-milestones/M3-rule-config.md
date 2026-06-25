@@ -1,5 +1,7 @@
 # M3 规则版本和配置后台 Implementation Plan
 
+**Status:** `[~]` M3.1 已完成并有 RED/GREEN 与质量门禁证据；当前入口是 M3.2 枚举和错误码。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 实现规则版本、规则项、发布、停用和业务读取接口，确保所有分值、阈值、区间来自已发布规则。
@@ -57,19 +59,27 @@
 
 ## 任务 M3.1 DO 和 Mapper
 
-- [ ] 创建 `dal/dataobject/rule/ClubPointRuleVersionDO.java`。
-- [ ] 创建 `dal/dataobject/rule/ClubPointRuleItemDO.java`。
-- [ ] 创建 `dal/dataobject/rule/ClubPointRulePublishRecordDO.java`。
-- [ ] 创建 `dal/mysql/rule/ClubPointRuleVersionMapper.java`。
-- [ ] 创建 `dal/mysql/rule/ClubPointRuleItemMapper.java`。
-- [ ] 创建 `dal/mysql/rule/ClubPointRulePublishRecordMapper.java`。
-- [ ] DO 继承 `BaseDO`。
-- [ ] Mapper 继承 `BaseMapperX<T>`。
+- [x] 创建 `dal/dataobject/rule/ClubPointRuleVersionDO.java`。
+- [x] 创建 `dal/dataobject/rule/ClubPointRuleItemDO.java`。
+- [x] 创建 `dal/dataobject/rule/ClubPointRulePublishRecordDO.java`。
+- [x] 创建 `dal/mysql/rule/ClubPointRuleVersionMapper.java`。
+- [x] 创建 `dal/mysql/rule/ClubPointRuleItemMapper.java`。
+- [x] 创建 `dal/mysql/rule/ClubPointRulePublishRecordMapper.java`。
+- [x] DO 继承 `BaseDO`。
+- [x] Mapper 继承 `BaseMapperX<T>`。
 
 验收：
 
-- [ ] DO 字段和 M1 DDL 一致。
-- [ ] 不出现 `TenantBaseDO`。
+- [x] DO 字段和 M1 DDL 一致。
+- [x] 不出现 `TenantBaseDO`。
+
+证据：
+
+- RED：新增 `ClubPointRuleMapperTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRuleMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `dal.dataobject.rule` 包和三个 Rule Mapper 不存在。
+- GREEN：创建三张规则表对应 DO、三个 Mapper 和基础查询后，同一命令返回 `BUILD SUCCESS`；`ClubPointRuleMapperTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
+- 字段对齐：测试覆盖 `club_points_rule_version`、`club_points_rule_item`、`club_points_rule_publish_record` 除通用字段外的全部业务字段落库与读取。
+- 质量门禁：`git diff --check` 无输出；规则包内租户字段、租户基类和 AI 元数据模式检查均无命中。
+- 继承检查：`rg -n "extends BaseDO|extends BaseMapperX<" .../rule` 命中 3 个 DO 继承 `BaseDO`、3 个 Mapper 继承 `BaseMapperX<T>`。
 
 ## 任务 M3.2 枚举和错误码
 

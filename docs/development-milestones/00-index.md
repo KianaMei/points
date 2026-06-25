@@ -41,7 +41,7 @@
 | `[x]` | M0 | `M0-engineering-foundation.md` | `clubpoints` 空模块被 `yudao-server` 扫描，底座能轻量验证 |
 | `[x]` | M1 | `M1-database-and-seed.md` | 正式 schema、seed、测试 DDL 一致 |
 | `[x]` | M2 | `M2-permission-crosscutting.md` | 权限、范围、审计、附件、通知横切能力可复用 |
-| `[ ]` | M3 | `M3-rule-config.md` | 规则版本和规则项可发布、停用、读取 |
+| `[~]` | M3 | `M3-rule-config.md` | 规则版本和规则项可发布、停用、读取 |
 | `[ ]` | M4 | `M4-ledger.md` | 积分流水、冻结、余额缓存形成账本脊柱 |
 | `[ ]` | M5 | `M5-club-member-leader.md` | 俱乐部、成员、负责人闭环可用 |
 | `[ ]` | M6 | `M6-activity-registration-attendance.md` | 活动、报名、签到签退、特殊缺席闭环可用 |
@@ -97,4 +97,5 @@ M0 空模块
 - M2.5 已完成 `ClubAttachmentService`、附件绑定 DO 与 Mapper、infra 文件复用、附件锁定、删除前校验和软删除，并通过 M2 组合验证。
 - M2.6 已完成 `ClubNotifyService`、通知模板常量、活动审核/积分变动/兑换审核/异议回复通知封装、通知失败不回滚业务测试，并通过 M2 组合验证。
 - M2.7 已完成员工越权、负责人越权、管理员全局访问、强审计失败回滚、通知失败不回滚、附件锁定不可删除横切测试，并通过 M2 放行组合验证。
-- M3 下一步入口是 M3.1 规则版本 DO/Mapper/基础查询。
+- M3.1 已完成规则版本、规则项、发布记录 DO 与 Mapper，并通过 RED/GREEN 映射测试和规则包质量门禁。
+- M3 下一步入口是 M3.2 枚举和错误码。
