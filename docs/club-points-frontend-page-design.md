@@ -322,8 +322,8 @@ src/views/clubpoints/
 | --- | --- |
 | 路由 | `/clubpoints/admin/club` |
 | 组件 | `views/clubpoints/admin/club/index.vue` |
-| API | `GET /clubpoints/club/page`、`GET /clubpoints/club/get`、`POST /clubpoints/club/create`、`PUT /clubpoints/club/update`、`POST /clubpoints/club/disable`、`DELETE /clubpoints/club/delete`、`POST /clubpoints/club-leader/assign`、`POST /clubpoints/club-member/remove` |
-| 权限 | `clubpoints:club:query`、`clubpoints:club:create`、`clubpoints:club:update`、`clubpoints:club:disable`、`clubpoints:club:delete`、`clubpoints:club-leader:update`、`clubpoints:club-member:remove` |
+| API | `GET /clubpoints/club/page`、`GET /clubpoints/club/get`、`POST /clubpoints/club/create`、`PUT /clubpoints/club/update`、`POST /clubpoints/club/disable`、`DELETE /clubpoints/club/delete`、`POST /clubpoints/club-leader/assign`、`POST /clubpoints/club-member/add`、`POST /clubpoints/club-member/remove` |
+| 权限 | `clubpoints:club:query`、`clubpoints:club:create`、`clubpoints:club:update`、`clubpoints:club:disable`、`clubpoints:club:delete`、`clubpoints:club-leader:update`、`clubpoints:club-member:add`、`clubpoints:club-member:remove` |
 
 强确认只出现在物理删除俱乐部：
 

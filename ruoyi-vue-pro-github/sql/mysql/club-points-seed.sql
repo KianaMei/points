@@ -119,6 +119,7 @@ INSERT INTO `system_menu` (`id`, `name`, `permission`, `type`, `sort`, `parent_i
 (1300012021, '加入俱乐部', 'clubpoints:club-member:join', 3, 21, 1300010130, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012022, '查询成员', 'clubpoints:club-member:query', 3, 22, 1300010130, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012023, '移除成员', 'clubpoints:club-member:remove', 3, 23, 1300010320, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300012055, '添加成员', 'clubpoints:club-member:add', 3, 24, 1300010320, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012024, '创建俱乐部', 'clubpoints:club:create', 3, 24, 1300010320, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012025, '删除俱乐部', 'clubpoints:club:delete', 3, 25, 1300010320, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012026, '停用俱乐部', 'clubpoints:club:disable', 3, 26, 1300010320, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),

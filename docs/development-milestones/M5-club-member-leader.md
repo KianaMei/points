@@ -1,6 +1,6 @@
 # M5 俱乐部、成员、负责人 Implementation Plan
 
-**Status:** `[~]` M5.1-M5.3 已完成并有 RED/GREEN 证据；当前入口是 M5.4 MemberService。
+**Status:** `[~]` M5.1-M5.4 已完成并有 RED/GREEN 证据；当前入口是 M5.5 LeaderService。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -154,18 +154,28 @@
 
 ## 任务 M5.4 MemberService
 
-- [ ] 员工申请加入俱乐部。
-- [ ] 管理员添加成员。
-- [ ] 管理员移除成员。
-- [ ] 员工退出俱乐部。
-- [ ] 成员状态变更写审计。
-- [ ] 成员变更刷新负责人数据范围查询基础。
+- [x] 员工申请加入俱乐部。
+- [x] 管理员添加成员。
+- [x] 管理员移除成员。
+- [x] 员工退出俱乐部。
+- [x] 成员状态变更写审计。
+- [x] 成员变更刷新数据范围查询基础。
 
 验收：
 
-- [ ] 同一用户不能重复成为同一俱乐部有效成员。
-- [ ] 退出后不能继续报名仅限成员的活动。
-- [ ] 移除成员不删除历史活动和流水。
+- [x] 同一用户不能重复成为同一俱乐部有效成员。
+- [x] 退出后不能继续报名仅限成员的活动。
+- [x] 移除成员不删除历史活动和流水。
+
+证据：
+
+- RED：新增 `ClubPointMemberServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointMemberServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `ClubPointMemberService`、成员服务 BO、`ClubPointMemberServiceImpl` 和成员审计动作常量不存在，符合 M5.4 RED 预期。
+- GREEN：新增 `ClubPointMemberService` / `ClubPointMemberServiceImpl` 和加入、管理员添加、员工退出、管理员移除 BO；`ClubMemberMapper` 增加按成员变更取消当前有效报名 SQL；补 `CLUB_MEMBER_JOIN`、`CLUB_MEMBER_ADD`、`CLUB_MEMBER_EXIT`、`CLUB_MEMBER_REMOVE` 审计动作；同步管理员添加成员权限码和前端/API 文档。
+- 实现边界：加入和管理员添加只允许启用俱乐部；同一用户同一俱乐部最多一条有效成员关系，依赖 `active_unique_key = clubId:userId` 和后端重复校验；退出/移除将成员状态改为非有效并清空 `active_unique_key`；退出/移除自动取消该俱乐部该用户当前有效报名，原因分别为退出俱乐部自动和管理员移除，且 `no_absence_deduct = true`；不删除历史活动和积分流水。
+- M5.4 单测验证：同一命令返回 `BUILD SUCCESS`；`ClubPointMemberServiceImplTest` 运行 `8` 个测试，失败 `0`，错误 `0`。
+- M5 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `32` 个测试，失败 `0`，错误 `0`。
+- 权限 seed 验证：临时 MySQL 库 `club_points_m5_member_seed` 导入基线 SQL、clubpoints schema、clubpoints seed 成功，重复导入 seed 后 `clubpoints:club-member:add` 为 `1` 条，本模块权限码 `55` 个，管理员角色拥有该按钮，员工和负责人角色未授权。
+- 质量验证：`git diff --check` exit `0`，仅 CRLF 提示；源码范围 `tenant_id|TenantBaseDO` 无命中；源码和本次文档范围 AI/co-author 元数据模式无命中。
 
 ## 任务 M5.5 LeaderService
 
