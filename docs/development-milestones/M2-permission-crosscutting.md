@@ -1,6 +1,6 @@
 # M2 权限范围和横切能力 Implementation Plan
 
-**Status:** `[~]` M2 进行中。M2.1 权限码、菜单、三类角色建议授权已完成；M2.2 字典常量和 seed 字典已完成；M2.3 数据范围服务已完成；M2.4 强审计服务已完成；M2.5 附件绑定服务已完成；M2.6 通知封装服务已完成；M2.7 尚未完成。
+**Status:** `[x]` M2 已放行。M2.1 权限码、菜单、三类角色建议授权已完成；M2.2 字典常量和 seed 字典已完成；M2.3 数据范围服务已完成；M2.4 强审计服务已完成；M2.5 附件绑定服务已完成；M2.6 通知封装服务已完成；M2.7 横切测试已完成。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -233,17 +233,28 @@
 
 ## 任务 M2.7 横切测试
 
-- [ ] 写员工越权访问他人数据测试。
-- [ ] 写负责人越权访问其他俱乐部测试。
-- [ ] 写管理员全局访问测试。
-- [ ] 写强审计失败回滚测试。
-- [ ] 写通知失败不回滚测试。
-- [ ] 写附件锁定后不可删除测试。
+- [x] 写员工越权访问他人数据测试。
+- [x] 写负责人越权访问其他俱乐部测试。
+- [x] 写管理员全局访问测试。
+- [x] 写强审计失败回滚测试。
+- [x] 写通知失败不回滚测试。
+- [x] 写附件锁定后不可删除测试。
 
 验收：
 
-- [ ] M2 横切能力可被 M3-M10 复用。
-- [ ] 每个高风险能力至少有一个失败路径测试。
+- [x] M2 横切能力可被 M3-M10 复用。
+- [x] 每个高风险能力至少有一个失败路径测试。
+
+证据：
+
+- 员工越权访问他人数据：`ClubScopeServiceImplTest.validateSelfShouldRejectOtherUser` 覆盖。
+- 负责人越权访问其他俱乐部：`ClubScopeServiceImplTest.validateManagedClubShouldRejectOtherClub` 覆盖。
+- 管理员全局访问：`ClubScopeServiceImplTest.validateGlobalShouldAllowGlobalScope` 覆盖。
+- 强审计失败回滚：`ClubAuditServiceImplTest.auditFailureShouldRollbackBusinessChangeInSameTransaction` 覆盖。
+- 通知失败不回滚：`ClubNotifyServiceImplTest.notifyFailureShouldNotRollbackBusinessTransaction` 覆盖。
+- 附件锁定后不可删除：`ClubAttachmentServiceImplTest.validateCanDeleteShouldRejectLockedAttachment` 覆盖。
+- 放行验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=DictTypeConstantsTest,ClubNotifyTemplateConstantsTest,ClubScopeServiceImplTest,ClubAuditServiceImplTest,ClubAttachmentServiceImplTest,ClubNotifyServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `29` 个测试，失败 `0`，错误 `0`。
+- 复用边界：M2 产出 `ClubScopeService`、`ClubAuditService`、`ClubAttachmentService`、`ClubNotifyService` 四个横切 Service，后续 M3-M10 不需要直接散落实现数据范围、强审计、附件绑定和通知发送。
 
 ## M2 放行标准
 
@@ -253,7 +264,7 @@
 - [x] `ClubAuditService` 可用。
 - [x] `ClubAttachmentService` 可用。
 - [x] `ClubNotifyService` 可用。
-- [ ] 横切测试通过。
+- [x] 横切测试通过。
 
 ## M2 不通过时禁止
 
