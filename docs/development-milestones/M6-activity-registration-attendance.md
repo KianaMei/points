@@ -1,6 +1,6 @@
 # M6 活动、报名、签到签退 Implementation Plan
 
-**Status:** `[~]` M6.1-M6.7 已完成并有 RED/GREEN 证据；当前入口是 M6.8 测试。
+**Status:** `[x]` M6.1-M6.8 已完成并有 RED/GREEN 与收口验证证据；M6 已放行，下一步入口是 M7 活动结算。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -233,28 +233,52 @@
 
 ## 任务 M6.8 测试
 
-- [ ] 测试活动状态跳转。
-- [ ] 测试负责人越权创建失败。
-- [ ] 测试报名重复失败。
-- [ ] 测试报名时间窗口。
-- [ ] 测试签到时间窗口。
-- [ ] 测试补录强审计。
-- [ ] 测试特殊缺席保存。
+- [x] 测试活动状态跳转。
+- [x] 测试负责人越权创建失败。
+- [x] 测试报名重复失败。
+- [x] 测试报名时间窗口。
+- [x] 测试签到时间窗口。
+- [x] 测试补录强审计。
+- [x] 测试特殊缺席保存。
 
 验收：
 
-- [ ] 活动事实链测试通过。
-- [ ] 还没有积分流水生成。
+- [x] 活动事实链测试通过。
+- [x] 还没有积分流水生成。
+
+证据：
+
+- 活动状态跳转由 `ClubPointActivityEnumTest#activityStatusEnumShouldEnforceAllowedTransitions` 覆盖，报名、签到、关键字段修改 guard 由 `ClubPointActivityEnumTest#activityStatusGuardsShouldMatchM6Acceptance` 覆盖。
+- 负责人越权创建失败由 `ClubPointActivityServiceImplTest#leaderCreateDraftShouldPersistActivitySnapshotsAndRejectUnmanagedClub` 和 `ClubPointActivityControllerTest#leaderActivityManagementEndpointsShouldUseManagedClubScope` 覆盖。
+- 报名重复失败由 `ClubPointRegistrationServiceImplTest#createRegistrationShouldRejectDuplicateActiveRegistration` 覆盖，并断言重复后报名记录仍为 `1` 条。
+- 报名时间窗口由 `ClubPointRegistrationServiceImplTest#createRegistrationShouldRejectNonMemberClosedWindowAndUnpublishedActivity` 覆盖，超出 `registrationDeadline` 返回报名关闭错误。
+- 签到时间窗口由 `ClubPointAttendanceServiceImplTest#checkInShouldRejectInvalidRegistrationOwnerActivityStatusAndWindow` 和 `ClubPointAttendanceServiceImplTest#checkOutShouldRejectWhenCheckInMissingOrWindowClosed` 覆盖。
+- 补录强审计由 `ClubPointAttendanceCorrectionServiceImplTest#supplementAttendanceShouldPersistEffectiveRecordCorrectionAndAudit` 覆盖，强审计失败回滚由 `ClubPointAttendanceCorrectionServiceImplTest#supplementShouldRejectNonGlobalDuplicateAndRollbackWhenAuditFails` 覆盖。
+- 特殊缺席保存由 `ClubPointAttendanceCorrectionServiceImplTest#markSpecialAbsenceShouldUpdateRegistrationOnlyAndWriteAudit` 覆盖，断言只更新报名事实、不写修正表并写强审计。
+- 活动事实链由 `ClubPointActivityMapperTest`、`ClubPointActivityServiceImplTest`、`ClubPointRegistrationServiceImplTest`、`ClubPointAttendanceServiceImplTest`、`ClubPointAttendanceCorrectionServiceImplTest` 和 `ClubPointActivityControllerTest` 共同覆盖，从活动创建、审核、报名、签到签退、补录修正到特殊缺席均可落库。
+- 不生成积分流水由 `ClubPointActivityServiceImplTest#approveReviewShouldPublishCreateConfigVersionLockAttachmentsAndReviewRecord`、`ClubPointActivityServiceImplTest#cancelPublishedActivityShouldWriteAuditAndNotCreateTransactions` 和 `ClubPointAttendanceServiceImplTest#checkInShouldPersistSelfAttendanceWithinWindowAndNotGenerateLedgerTransaction` 断言 `ClubPointTransactionMapper.selectCount() == 0`；activity Service 与 Controller 主代码范围没有 `ClubPointLedgerService` 或流水创建引用。
+- M6.8 收口组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivityMapperTest,ClubPointActivityEnumTest,ClubPointActivityServiceImplTest,ClubPointRegistrationServiceImplTest,ClubPointAttendanceServiceImplTest,ClubPointAttendanceCorrectionServiceImplTest,ClubPointActivityControllerTest,ClubPointClubMapperTest,ClubPointClubEnumTest,ClubPointClubServiceImplTest,ClubPointMemberServiceImplTest,ClubPointLeaderServiceImplTest,ClubPointClubQueryControllerTest,ClubScopeServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `77` 个测试，失败 `0`，错误 `0`。
 
 ## M6 放行标准
 
-- [ ] 活动管理闭环可用。
-- [ ] 报名闭环可用。
-- [ ] 签到签退闭环可用。
-- [ ] 修正和特殊缺席可用。
-- [ ] 不生成积分流水。
+- [x] 活动管理闭环可用。
+- [x] 报名闭环可用。
+- [x] 签到签退闭环可用。
+- [x] 修正和特殊缺席可用。
+- [x] 不生成积分流水。
+
+放行证据：
+
+- `ClubPointActivityServiceImplTest` 验证负责人创建、提交审核、管理员审核通过/驳回、未发布修改、已发布关键字段修改强审计、取消强审计、附件锁定和不生成积分流水。
+- `ClubPointRegistrationServiceImplTest` 验证员工报名、员工取消、成员范围、报名截止、重复报名唯一键兜底、负责人负责俱乐部分页和管理员全局分页。
+- `ClubPointAttendanceServiceImplTest` 验证员工签到、签退、本人有效报名范围、活动状态、签到/签退窗口、重复签到签退唯一键兜底、签退必须先签到和不生成积分流水。
+- `ClubPointAttendanceCorrectionServiceImplTest` 验证管理员补录、修正、特殊缺席、非全局操作者拒绝、重复补录拒绝、强审计失败回滚和缺失签到记录失败。
+- `ClubPointActivityControllerTest` 验证员工、负责人、管理员三端活动、报名、签到和修正 API 的写穿 Service 行为、数据范围和 `@PreAuthorize` 权限声明。
+- M6 收口组合验证已通过；未跑 full build；M6 未进入 M7 自动结算和缺席扣分实现。
 
 ## M6 不通过时禁止
 
-- [ ] 禁止写活动自动结算。
-- [ ] 禁止写无故缺席扣分。
+- [x] 禁止写活动自动结算。
+- [x] 禁止写无故缺席扣分。
+
+执行记录：M6 放行前未进入 M7 自动结算、无故缺席扣分或月度累计缺席扣分实现；本次只完成 M6 测试收口、文档同步和放行记录。
