@@ -13,6 +13,10 @@ import java.util.Collection;
 @Mapper
 public interface ClubPointActivityMapper extends BaseMapperX<ClubPointActivityDO> {
 
+    default ClubPointActivityDO selectByIdForUpdate(Long id) {
+        return selectOneForUpdate(ClubPointActivityDO::getId, id);
+    }
+
     default PageResult<ClubPointActivityDO> selectPage(PageParam pageParam, Collection<Long> clubIds,
                                                        Long clubId, String keyword, Integer status,
                                                        Collection<Integer> statuses,

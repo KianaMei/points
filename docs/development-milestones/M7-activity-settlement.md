@@ -82,23 +82,33 @@
 
 ## 任务 M7.2 SettlementService
 
-- [ ] 创建 `service/settlement/ClubPointActivitySettlementService.java`。
-- [ ] 创建 `service/settlement/ClubPointActivitySettlementServiceImpl.java`。
-- [ ] 读取已结束未结算活动。
-- [ ] 读取活动报名记录。
-- [ ] 读取签到签退记录。
-- [ ] 读取特殊缺席标记。
-- [ ] 读取活动积分配置版本。
-- [ ] 计算应得活动积分。
-- [ ] 计算无故缺席扣分。
-- [ ] 调用 LedgerService 写流水。
-- [ ] 写结算运行记录。
+- [x] 创建 `service/settlement/ClubPointActivitySettlementService.java`。
+- [x] 创建 `service/settlement/ClubPointActivitySettlementServiceImpl.java`。
+- [x] 读取已结束未结算活动。
+- [x] 读取活动报名记录。
+- [x] 读取签到签退记录。
+- [x] 读取特殊缺席标记。
+- [x] 读取活动积分配置版本。
+- [x] 计算应得活动积分。
+- [x] 计算无故缺席扣分。
+- [x] 调用 LedgerService 写流水。
+- [x] 写结算运行记录。
 
 验收：
 
-- [ ] 活动积分用规则配置，不硬编码。
-- [ ] 缺席扣分用规则配置，不硬编码。
-- [ ] 结算结果和运行记录一致。
+- [x] 活动积分用规则配置，不硬编码。
+- [x] 缺席扣分用规则配置，不硬编码。
+- [x] 结算结果和运行记录一致。
+
+证据：
+
+- RED：新增 `ClubPointActivitySettlementServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivitySettlementServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败，原因是 `cn.iocoder.yudao.module.clubpoints.dal.dataobject.settlement`、`cn.iocoder.yudao.module.clubpoints.dal.mysql.settlement`、`ClubPointActivitySettlementRunReqBO`、`ClubPointActivitySettlementService`、`ClubPointActivitySettlementRunMapper` 和 `ClubPointActivitySettlementServiceImpl` 不存在，符合 M7.2 RED 预期。
+- GREEN：新增 `ClubPointActivitySettlementRunDO`、`ClubPointActivitySettlementRunMapper`、`ClubPointActivitySettlementRunReqBO`、`ClubPointActivitySettlementService` 和 `ClubPointActivitySettlementServiceImpl`；活动结算读取 `ENDED` 活动、当前活动积分配置版本、报名、签到、签退和特殊缺席标记，通过 `ClubPointLedgerService.createTransaction(...)` 生成活动基础分、全程额外分和单次无故缺席扣分流水。
+- 实现边界：M7.2 不直接写 `club_points_transaction`，不实现月度累计缺席扣分，不写 Job Handler，不写管理员接口；特殊缺席、取消报名和 `noAbsenceDeduct=true` 报名只跳过，不发分不扣分；成功结算后活动状态更新为 `SETTLED(7)`。
+- 规则边界：活动基础分和全程额外分使用活动积分配置版本中的 `basePoints`、`fullExtraPoints` 和 `ruleVersionId`；单次无故缺席扣分通过 `ClubPointRuleResolveService.getFixedPoints(ruleVersionId, ABSENCE_SINGLE_DEDUCT)` 读取规则默认分，不硬编码。
+- M7.2 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivitySettlementServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointActivitySettlementServiceImplTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
+- M7 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivitySettlementEnumTest,ClubPointActivitySettlementServiceImplTest,ClubPointLedgerServiceImplTest,ClubPointActivityServiceImplTest,ClubPointRegistrationServiceImplTest,ClubPointAttendanceServiceImplTest,ClubPointAttendanceCorrectionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `35` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
 
 ## 任务 M7.3 结算幂等
 

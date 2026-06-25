@@ -7,8 +7,16 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActivityRegistrationDO;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 @Mapper
 public interface ClubPointActivityRegistrationMapper extends BaseMapperX<ClubPointActivityRegistrationDO> {
+
+    default List<ClubPointActivityRegistrationDO> selectListByActivityId(Long activityId) {
+        return selectList(new LambdaQueryWrapperX<ClubPointActivityRegistrationDO>()
+                .eq(ClubPointActivityRegistrationDO::getActivityId, activityId)
+                .orderByAsc(ClubPointActivityRegistrationDO::getId));
+    }
 
     default ClubPointActivityRegistrationDO selectByActivityIdAndUserIdAndStatus(Long activityId,
                                                                                  Long userId,
