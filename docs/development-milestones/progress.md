@@ -580,3 +580,9 @@
 - 2026-06-26：M11.12 接口验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointAnnualOperationControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；年度运营 Controller 6 个测试，失败 0，错误 0。
 - 2026-06-26：M11.12 前端验证：5 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
 - 2026-06-26：M11.12 质量验证：页面范围 `request.get|post|put|delete` 无命中；精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；年度清零提示扫描命中 `年度清零只清未冻结可用积分` 和 `冻结中的兑换申请`。
+- 2026-06-26：M11.13 RED：运行 `Test-Path` 检查管理员报表、审计、任务运行 3 个页面文件，全部返回 `False`；扫描后端 `/clubpoints/audit/page` 无 Controller；新增 `ClubPointAuditAdminControllerTest` 后运行审计 Controller 测试返回 `BUILD FAILURE`，失败原因是审计 Controller 和 VO 包不存在。
+- 2026-06-26：M11.13 GREEN：新增后端审计分页接口 `GET /clubpoints/audit/page`，权限 `clubpoints:audit:query`，支持动作类型、业务类型、业务 ID、操作人、结果和操作时间筛选；新增管理员报表、审计、任务运行页面，并在 `operation.ts` 增加审计 API 封装。
+- 2026-06-26：M11.13 交互口径：报表中心五类报表查询和导出都走后端封装，导出按钮只在管理员报表页并提示后端写 `REPORT_EXPORT` 强审计；审计页只读查看 JSON 快照；任务页失败任务可查看错误、`resultJson` 和人工处理原因，重试 / 人工处理必须填写原因。
+- 2026-06-26：M11.13 接口验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointReportControllerTest,ClubPointReportServiceImplTest,ClubJobRunAdminControllerTest,ClubJobRunAdminServiceImplTest,ClubPointAuditAdminControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 16 个测试，失败 0，错误 0。
+- 2026-06-26：M11.13 前端验证：3 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
+- 2026-06-26：M11.13 质量验证：`git diff --check` 只有 LF/CRLF 提示；页面范围 `request.get|post|put|delete` 和 `url:` 无命中；精确元数据模式、`tenant_id|TenantBaseDO` 和 Redis 模式无命中；权限扫描只命中预期的导出、审计查询和任务处理入口，没有强确认、负责人任免或移除成员入口。

@@ -1265,6 +1265,8 @@ M11.11 已落地管理员兑换管理页面：`/clubpoints/admin/redemption-batc
 
 M11.12 已落地管理员运营页面：`/clubpoints/admin/dispute`、`/clubpoints/admin/annual-clearing`、`/clubpoints/admin/annual-ranking`、`/clubpoints/admin/budget`、`/clubpoints/admin/dashboard`。年度清零页面明确提示只清未冻结可用积分，冻结中的兑换申请后续审核拒绝时释放回账户；管理员工作台按后端聚合待办跳转对应列表。
 
+M11.13 已落地管理员报表、审计、任务页面：`/clubpoints/admin/report`、`/clubpoints/admin/audit`、`/clubpoints/admin/job-run`。报表中心支持五类报表查询和导出，导出按钮只在管理员页出现并提交筛选条件到后端强审计导出接口；审计页只读追溯强审计动作和 JSON 快照；任务页支持失败任务详情、原因查看、重试 / 人工处理并要求填写原因。后端同步补齐 `GET /clubpoints/audit/page` 审计分页接口，权限为 `clubpoints:audit:query`。
+
 ### 16.3 前端
 
 前端从独立仓库 `github.com/yudaocode/yudao-ui-admin-vue3` 克隆完整工程，当前已落到 `C:\jobs\pointsmall\ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3`。后续 clubpoints 前端直接在这个工程内开发。页面、字段、按钮权限、接口映射和强确认口径以 `docs/club-points-frontend-page-design.md` 为准。

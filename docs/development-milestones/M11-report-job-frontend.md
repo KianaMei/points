@@ -344,15 +344,24 @@ M11.12 证据：
 
 ## 任务 M11.13 管理员报表、审计、任务页
 
-- [ ] 报表中心 `/clubpoints/admin/report`，支持积分明细、兑换记录、总台账查询和导出，俱乐部排名和预算查询。
-- [ ] 审计日志 `/clubpoints/admin/audit`，支持强审计动作查询追溯。
-- [ ] 任务运行 `/clubpoints/admin/job-run`，支持任务列表、详情、重试、人工处理，人工处理填原因。
-- [ ] 员工和负责人菜单不出现导出按钮，导出带筛选条件并触发强审计。
+- [x] 报表中心 `/clubpoints/admin/report`，支持积分明细、兑换记录、总台账查询和导出，俱乐部排名和预算查询。
+- [x] 审计日志 `/clubpoints/admin/audit`，支持强审计动作查询追溯。
+- [x] 任务运行 `/clubpoints/admin/job-run`，支持任务列表、详情、重试、人工处理，人工处理填原因。
+- [x] 员工和负责人菜单不出现导出按钮，导出带筛选条件并触发强审计。
 
 验收：
 
-- [ ] 只有管理员有导出按钮，导出触发审计。
-- [ ] 失败任务能查看原因、重试或人工处理。
+- [x] 只有管理员有导出按钮，导出触发审计。
+- [x] 失败任务能查看原因、重试或人工处理。
+
+M11.13 证据：
+
+- RED：运行 `Test-Path` 检查 `views/clubpoints/admin/report/index.vue`、`audit/index.vue`、`job-run/index.vue`，全部返回 `False`；扫描后端 `/clubpoints/audit/page` 无 Controller；新增 `ClubPointAuditAdminControllerTest` 后运行审计 Controller 测试返回 `BUILD FAILURE`，失败原因是 `controller.admin.audit` Controller 和 VO 包不存在。
+- GREEN：新增 `ClubPointAuditAdminController`、审计分页 VO / BO、`ClubAuditLogMapper.selectPage` 和 `ClubAuditServiceImpl.getAuditPage`；`ClubAuditService` 查询方法使用默认实现，避免破坏仅写审计的测试桩。新增管理员报表、审计、任务运行 3 个页面，并在 `api/clubpoints/admin/operation.ts` 增加 `getAuditPage` 和审计响应类型。
+- 页面口径：报表页按积分明细、兑换记录、总台账、俱乐部排名、预算统计五类 tab 查询和导出，导出按钮只在管理员页并绑定 `clubpoints:report:export`，提示后端导出写 `REPORT_EXPORT` 强审计；审计页只读查询动作、业务、操作人、结果和 JSON 快照；任务页可查看详情、失败原因、`resultJson`，失败状态任务重试 / 人工处理必须填原因并调用后端处理接口。
+- 接口验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointReportControllerTest,ClubPointReportServiceImplTest,ClubJobRunAdminControllerTest,ClubJobRunAdminServiceImplTest,ClubPointAuditAdminControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；报表 Controller 2 个测试、报表 Service 7 个测试、任务 Controller 1 个测试、任务 Service 4 个测试、审计 Controller 2 个测试，合计 16 个测试，失败 0，错误 0。
+- 前端验证：3 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
+- 质量门禁：`git diff --check` 只有 LF/CRLF 提示；页面范围 `request.get|post|put|delete` 和 `url:` 无命中；精确元数据模式、`tenant_id|TenantBaseDO` 和 Redis 模式无命中；扫描只命中预期的 `exportReportExcel`、`clubpoints:report:export`、`clubpoints:audit:query`、`clubpoints:job:handle`，没有强确认、负责人任免或移除成员入口。
 
 ## 任务 M11.14 前端验证
 

@@ -93,10 +93,29 @@ export interface AdminJobRunHandleReqVO {
   reason: string
 }
 
+export interface AdminAuditRespVO extends ClubPointBaseRespVO {
+  actionType?: string
+  bizType?: string
+  bizId?: number
+  operatorUserId?: number
+  operatorNameSnapshot?: string
+  operatorRoleSnapshot?: string
+  operationTime?: string | Date
+  clientIp?: string
+  userAgent?: string
+  reason?: string
+  beforeJson?: string
+  afterJson?: string
+  targetSnapshotJson?: string
+  success?: boolean
+  errorMessage?: string
+}
+
 const DISPUTE_PREFIX = '/clubpoints/dispute'
 const ANNUAL_PREFIX = '/clubpoints/annual'
 const BUDGET_PREFIX = '/clubpoints/budget'
 const REPORT_PREFIX = '/clubpoints/report'
+const AUDIT_PREFIX = '/clubpoints/audit'
 const JOB_RUN_PREFIX = '/clubpoints/job-run'
 
 export const getAdminDisputePage = async (
@@ -175,6 +194,12 @@ export const getReportBudgetPage = async (params: ClubPointPageParam) => {
 
 export const exportReportExcel = async (params: ClubPointPageParam & { reportType: number }) => {
   return await request.download({ url: `${REPORT_PREFIX}/export-excel`, params })
+}
+
+export const getAuditPage = async (
+  params: ClubPointPageParam
+): Promise<ClubPointPageResult<AdminAuditRespVO>> => {
+  return await request.get({ url: `${AUDIT_PREFIX}/page`, params })
 }
 
 export const getJobRunPage = async (

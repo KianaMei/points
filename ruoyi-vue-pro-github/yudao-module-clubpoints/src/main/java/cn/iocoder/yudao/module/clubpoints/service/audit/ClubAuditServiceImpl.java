@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.clubpoints.service.audit;
 
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.audit.ClubAuditLogDO;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.audit.ClubAuditLogMapper;
 import cn.iocoder.yudao.module.clubpoints.service.audit.bo.ClubAuditCreateReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.audit.bo.ClubAuditPageReqBO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -38,6 +40,12 @@ public class ClubAuditServiceImpl implements ClubAuditService {
             throw exception(CLUB_AUDIT_WRITE_FAILED);
         }
         return auditLog.getId();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResult<ClubAuditLogDO> getAuditPage(ClubAuditPageReqBO reqBO) {
+        return clubAuditLogMapper.selectPage(reqBO);
     }
 
     private static void validateCreateReq(ClubAuditCreateReqBO reqBO) {
