@@ -1,5 +1,7 @@
 # M8 非签到积分、违规扣分、弄虚作假 Implementation Plan
 
+**Status:** `[~]` M8.1 已完成并有 RED/GREEN 证据；当前入口是 M8.2 状态机和错误码。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 实现负责人提交非签到材料、管理员审核发分、管理员代录、违规扣分、严重违规和弄虚作假处理。
@@ -58,18 +60,26 @@
 
 ## 任务 M8.1 DO 和 Mapper
 
-- [ ] 创建 `ClubPointContributionMaterialDO`。
-- [ ] 创建 `ClubPointContributionItemDO`。
-- [ ] 创建 `ClubPointContributionReviewRecordDO`。
-- [ ] 创建对应 Mapper。
-- [ ] 字段和 M1 DDL 一致。
-- [ ] 材料和明细分开保存。
+- [x] 创建 `ClubPointContributionMaterialDO`。
+- [x] 创建 `ClubPointContributionItemDO`。
+- [x] 创建 `ClubPointContributionReviewRecordDO`。
+- [x] 创建对应 Mapper。
+- [x] 字段和 M1 DDL 一致。
+- [x] 材料和明细分开保存。
 
 验收：
 
-- [ ] 一个材料支持多条积分明细。
-- [ ] 审核记录可追溯。
-- [ ] 附件绑定可追溯。
+- [x] 一个材料支持多条积分明细。
+- [x] 审核记录可追溯。
+- [x] 附件绑定可追溯。
+
+证据：
+
+- RED：新增 `ClubPointContributionMapperTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `cn.iocoder.yudao.module.clubpoints.dal.dataobject.contribution` 包、`ClubPointContributionMaterialMapper`、`ClubPointContributionItemMapper` 和 `ClubPointContributionReviewRecordMapper` 不存在，符合 M8.1 RED 预期。
+- GREEN：新增非签到材料、材料明细和材料审核记录 3 个 DO；新增对应 Mapper，并提供按 `requestNo`、`materialId`、`idempotencyKey`、`effectiveUniqueKey` 查询方法；字段按 M1 DDL 映射，DO 继承 `BaseDO`，未新增 `tenant_id` 或 `TenantBaseDO`。
+- 实现边界：M8.1 只落 DO/Mapper，不实现状态机、Service、Ledger 发分扣分、审核逻辑或 API；附件实际绑定继续复用 M2 `club_points_attachment_ref`，本次测试用 `BIZ_TYPE_CONTRIBUTION_MATERIAL + materialId` 验证附件可追溯。
+- M8.1 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointContributionMapperTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
 
 ## 任务 M8.2 状态机和错误码
 
