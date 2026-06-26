@@ -1,6 +1,6 @@
 # M9 兑换闭环 Implementation Plan
 
-**Status:** `[~]` M9.4 已完成并有 RED/GREEN 证据；当前入口是 M9.5 申请 Service。
+**Status:** `[~]` M9.5 已完成并有 RED/GREEN 证据；当前入口是 M9.6 审核 Service。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -165,22 +165,33 @@
 
 ## 任务 M9.5 申请 Service
 
-- [ ] 员工查看可兑换礼品。
-- [ ] 员工提交兑换申请。
-- [ ] 校验批次状态。
-- [ ] 校验资格快照。
-- [ ] 校验礼品状态。
-- [ ] 校验可用积分。
-- [ ] 同事务冻结积分。
-- [ ] 同事务锁定库存。
-- [ ] 同事务创建申请。
-- [ ] 使用 requestNo 或 idempotency key 防重复提交。
+- [x] 员工查看可兑换礼品。
+- [x] 员工提交兑换申请。
+- [x] 校验批次状态。
+- [x] 校验资格快照。
+- [x] 校验礼品状态。
+- [x] 校验可用积分。
+- [x] 同事务冻结积分。
+- [x] 同事务锁定库存。
+- [x] 同事务创建申请。
+- [x] 使用 requestNo 或 idempotency key 防重复提交。
 
 验收：
 
-- [ ] 申请成功后可用积分减少，冻结积分增加。
-- [ ] 礼品已锁库存增加。
-- [ ] 重复提交返回同一结果或被幂等拦截。
+- [x] 申请成功后可用积分减少，冻结积分增加。
+- [x] 礼品已锁库存增加。
+- [x] 重复提交返回同一结果或被幂等拦截。
+
+证据：
+
+- RED：新增 `ClubPointRedemptionApplicationServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionApplicationServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `ClubPointRedemptionApplicationStatusEnum`、`ClubPointStockLockStatusEnum`、`ClubPointRedemptionApplyReqBO`、`ClubPointRedemptionApplicationService` 和 `ClubPointRedemptionApplicationServiceImpl` 不存在，符合 M9.5 RED 预期。
+- GREEN：新增兑换申请 Service/BO、兑换申请状态枚举、库存锁状态枚举，并给礼品 Mapper 增加按批次和状态查询；员工可兑换列表先按批次开放状态和本人资格快照校验，再只返回本批次上架礼品。
+- 申请事务：`apply(...)` 同事务创建 `PENDING_REVIEW(1)` 申请、调用 `ClubPointFreezeService.freezePoints(...)` 冻结积分、调用礼品 Service 的数据库条件库存更新锁库存、创建 `LOCKED(1)` 库存锁并回填申请 `freeze_id` 和 `stock_lock_id`；申请前账户值、资格排名、批次快照和礼品快照写入申请。
+- 幂等与回滚：申请幂等键为 `REDEMPTION_APPLY:{batchId}:{giftId}:{userId}:{requestNo}`，重复提交直接返回既有申请 ID，不重复冻结或锁库存；库存不足会回滚申请、冻结、账户冻结积分和库存计数；可用积分不足不创建申请、不锁库存、不创建库存锁。
+- 实现边界：M9.5 只实现员工查看可兑换礼品和提交申请 Service，不做审核通过扣分、不做拒绝/取消释放、不做超时处理、不做 API；冻结由 M4 冻结服务持账户行锁完成，不直接改积分余额；库存事实源仍是数据库条件更新，未引入 Redis；redemption 主实现未调用 LedgerService 创建或撤销流水。
+- M9.5 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionApplicationServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRedemptionApplicationServiceImplTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
+- M9 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRedemptionMapperTest,ClubPointRedemptionBatchServiceImplTest,ClubPointRedemptionGiftServiceImplTest,ClubPointRedemptionEligibilityServiceImplTest,ClubPointRedemptionApplicationServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `20` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；clubpoints 主代码 Redis 库存事实源模式无命中；redemption 主实现范围无直接写账本或调用账本命中，M9.5 测试中的 `createTransaction(...)` / `reverseTransaction(...)` 仅为空实现测试替身方法签名。
 
 ## 任务 M9.6 审核 Service
 

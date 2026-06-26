@@ -18,6 +18,14 @@ public interface ClubPointRedemptionGiftMapper extends BaseMapperX<ClubPointRede
                 .orderByAsc(ClubPointRedemptionGiftDO::getId));
     }
 
+    default List<ClubPointRedemptionGiftDO> selectListByBatchIdAndStatus(Long batchId, Integer status) {
+        return selectList(new LambdaQueryWrapperX<ClubPointRedemptionGiftDO>()
+                .eq(ClubPointRedemptionGiftDO::getBatchId, batchId)
+                .eq(ClubPointRedemptionGiftDO::getStatus, status)
+                .orderByAsc(ClubPointRedemptionGiftDO::getSort)
+                .orderByAsc(ClubPointRedemptionGiftDO::getId));
+    }
+
     default ClubPointRedemptionGiftDO selectByIdForUpdate(Long id) {
         return selectOneForUpdate(ClubPointRedemptionGiftDO::getId, id);
     }
