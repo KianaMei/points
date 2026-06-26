@@ -86,6 +86,7 @@ const getSummary = async () => {
   loading.value = true
   try {
     Object.assign(summary, await DashboardApi.getAppDashboardSummary())
+  } catch {
   } finally {
     loading.value = false
   }

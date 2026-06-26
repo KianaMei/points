@@ -37,7 +37,7 @@
         />
       </el-form-item>
       <el-form-item>
-        <el-button v-hasPermi="['clubpoints:job:query']" @click="handleQuery">
+        <el-button @click="handleQuery">
           <Icon class="mr-5px" icon="ep:search" />搜索
         </el-button>
         <el-button @click="resetQuery">
@@ -174,6 +174,9 @@ const getList = async () => {
     const data = await OperationApi.getJobRunPage(buildQueryParams())
     list.value = data.list || []
     total.value = data.total || 0
+  } catch {
+    list.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -201,8 +204,10 @@ const resetQuery = () => {
 }
 
 const openDetail = async (row: OperationApi.AdminJobRunRespVO) => {
-  Object.assign(detail, await OperationApi.getJobRunDetail(row.id))
-  detailVisible.value = true
+  try {
+    Object.assign(detail, await OperationApi.getJobRunDetail(row.id))
+    detailVisible.value = true
+  } catch {}
 }
 
 const isFailed = (row: Partial<OperationApi.AdminJobRunRespVO>) => FAILED_STATUSES.includes(Number(row.status))

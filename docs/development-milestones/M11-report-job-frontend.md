@@ -365,18 +365,30 @@ M11.13 证据：
 
 ## 任务 M11.14 前端验证
 
-- [ ] 验证 `pnpm install`。
-- [ ] 验证 `pnpm dev` 端口 `8889`。
-- [ ] 验证关键页面能打开。
-- [ ] 验证登录后菜单来自后端 seed。
-- [ ] 验证按钮权限隐藏。
-- [ ] 验证接口错误提示。
-- [ ] 不把上游 TypeScript 存量债误判为 clubpoints 完成阻塞，除非影响新增页面。
+- [x] 验证 `pnpm install`。
+- [x] 验证 `pnpm dev` 端口 `8889`。
+- [x] 验证关键页面能打开。
+- [x] 验证登录后菜单来自后端 seed。
+- [x] 验证按钮权限隐藏。
+- [x] 验证接口错误提示。
+- [x] 不把上游 TypeScript 存量债误判为 clubpoints 完成阻塞，除非影响新增页面。
 
 验收：
 
-- [ ] 三类角色页面都能访问对应入口。
-- [ ] 新增页面没有明显运行时错误。
+- [x] 三类角色页面都能访问对应入口。
+- [x] 新增页面没有明显运行时错误。
+
+M11.14 证据：
+
+- 依赖验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 install --frozen-lockfile` 返回 `Lockfile is up to date`、`Already up to date`、`Done in 945ms using pnpm v10.20.0`；仅有 pnpm ignored build scripts 提示，属于当前前端依赖安装策略。
+- 端口和路由验证：`Invoke-WebRequest http://127.0.0.1:8889` 返回 HTTP `200`；`/clubpoints/app/dashboard`、`/clubpoints/leader/dashboard`、`/clubpoints/admin/dashboard`、`/clubpoints/admin/report`、`/clubpoints/admin/audit`、`/clubpoints/admin/job-run` 均返回 HTTP `200`，内容长度 `150397`。
+- 登录菜单验证：后端登录 `admin/admin123` 后调用 `/admin-api/system/menu/list`，菜单组件包含 `clubpoints/app/dashboard/index`、`clubpoints/leader/dashboard/index`、`clubpoints/admin/dashboard/index`、`clubpoints/admin/report/index`、`clubpoints/admin/audit/index`、`clubpoints/admin/job-run/index`；确认路由来自后端 seed。
+- 按钮权限验证：当前管理员权限包含 `clubpoints:report:export=True`、`clubpoints:job:handle=True`，但 `clubpoints:report:query=False`；旧提交中三个搜索按钮曾绑定 `clubpoints:report:query`、`clubpoints:audit:query`、`clubpoints:job:query`，当前页面查询按钮权限命中 `0`，只保留报表导出和任务处理动作权限。
+- 接口错误提示验证：当前 live 后端进程为 `java @C:\jobs\pointsmall\.tmp\run-logs\backend-java-args.txt` 启动的旧进程，新接口带 token 访问返回 HTTP `404`；浏览器实际打开员工 / 负责人 / 管理员工作台和管理员报表 / 审计 / 任务页时，axios 全局错误提示链路生效，页面保留默认 0 值或空表，不再抛 `Unhandled error during execution of mounted hook`。
+- 浏览器验证：Playwright 打开 `/clubpoints/app/dashboard`、`/clubpoints/leader/dashboard`、`/clubpoints/admin/dashboard`、`/clubpoints/admin/report`、`/clubpoints/admin/audit`、`/clubpoints/admin/job-run`，页面标题分别进入员工工作台、负责人首页、管理员工作台、报表中心、审计日志、任务运行；console 只剩 live 旧后端接口 HTTP `404` 资源错误、axios 调试日志和 Vue Router 存量 `next()` deprecated warning，没有新增页面未处理运行时错误。
+- 接口代码验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointDashboardControllerTest,ClubPointReportControllerTest,ClubPointReportServiceImplTest,ClubJobRunAdminControllerTest,ClubJobRunAdminServiceImplTest,ClubPointAuditAdminControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；Dashboard Controller 4 个测试、报表 Controller 2 个测试、报表 Service 7 个测试、任务 Controller 1 个测试、任务 Service 4 个测试、审计 Controller 2 个测试，合计 20 个测试，失败 0，错误 0。
+- 前端类型验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，仍属于前端工程上游 TypeScript 存量债。
+- 质量门禁：6 个验证修正页面范围 `request.get|post|put|delete` 和 `url:` 命中 `0`；`tenant_id|TenantBaseDO|Redis|redisTemplate|StringRedisTemplate|Redisson` 命中 `0`；精确禁用元数据模式命中 `0`；查询按钮权限命中 `0`，动作权限保留 `clubpoints:report:export` 和 `clubpoints:job:handle`。
 
 ## M11 放行标准
 
@@ -384,7 +396,7 @@ M11.13 证据：
 - [x] 导出写强审计。
 - [x] 任务监控可用。
 - [x] 通知待办可用。
-- [ ] 员工、负责人、管理员前端闭环可用。
+- [x] 员工、负责人、管理员前端闭环可用。
 
 ## M11 不通过时禁止
 

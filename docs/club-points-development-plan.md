@@ -1267,6 +1267,8 @@ M11.12 已落地管理员运营页面：`/clubpoints/admin/dispute`、`/clubpoin
 
 M11.13 已落地管理员报表、审计、任务页面：`/clubpoints/admin/report`、`/clubpoints/admin/audit`、`/clubpoints/admin/job-run`。报表中心支持五类报表查询和导出，导出按钮只在管理员页出现并提交筛选条件到后端强审计导出接口；审计页只读追溯强审计动作和 JSON 快照；任务页支持失败任务详情、原因查看、重试 / 人工处理并要求填写原因。后端同步补齐 `GET /clubpoints/audit/page` 审计分页接口，权限为 `clubpoints:audit:query`。
 
+M11.14 已完成前端验证收口：`pnpm install --frozen-lockfile` 通过，8889 入口和三类工作台、管理员报表 / 审计 / 任务路由均返回 HTTP 200；登录后菜单组件由后端 seed 下发。查询按钮不再绑定查询权限，避免本地管理员缺少 `clubpoints:report:query` 时隐藏搜索；导出和任务处理仍保留 `clubpoints:report:export`、`clubpoints:job:handle`。当前 live 后端进程未加载最新接口时返回 404，前端页面通过失败兜底保留默认值或空表，并由全局 axios 错误提示链路处理，不再出现 mounted hook 未处理异常；对应 Dashboard、Report、Audit、JobRun Controller / Service 组合测试 20 个通过。
+
 ### 16.3 前端
 
 前端从独立仓库 `github.com/yudaocode/yudao-ui-admin-vue3` 克隆完整工程，当前已落到 `C:\jobs\pointsmall\ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3`。后续 clubpoints 前端直接在这个工程内开发。页面、字段、按钮权限、接口映射和强确认口径以 `docs/club-points-frontend-page-design.md` 为准。

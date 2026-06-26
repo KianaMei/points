@@ -40,7 +40,7 @@
         />
       </el-form-item>
       <el-form-item>
-        <el-button v-hasPermi="['clubpoints:audit:query']" @click="handleQuery">
+        <el-button @click="handleQuery">
           <Icon class="mr-5px" icon="ep:search" />搜索
         </el-button>
         <el-button @click="resetQuery">
@@ -161,6 +161,9 @@ const getList = async () => {
     const data = await OperationApi.getAuditPage(buildQueryParams())
     list.value = data.list || []
     total.value = data.total || 0
+  } catch {
+    list.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
