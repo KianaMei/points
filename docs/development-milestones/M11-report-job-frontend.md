@@ -93,17 +93,27 @@ M11.1 证据：
 
 ## 任务 M11.2 前端 API 模块
 
-- [ ] 建 `api/clubpoints/app/` 下 dashboard、ledger、club、activity、redemption、dispute、notify 模块。
-- [ ] 建 `api/clubpoints/leader/` 下 club、activity、attendance、contribution 模块。
-- [ ] 建 `api/clubpoints/admin/` 下 club、activity、settlement、ledger、rule、contribution、redemption、operation 模块。
-- [ ] 请求封装复用 `@/config/axios`，类型定义和后端 VO 一致。
-- [ ] 兑换申请、管理员代录、积分调整提交前生成并复用 `requestNo`。
-- [ ] 页面不散写 URL，所有请求经 API 模块函数。
+- [x] 建 `api/clubpoints/app/` 下 dashboard、ledger、club、activity、redemption、dispute、notify 模块。
+- [x] 建 `api/clubpoints/leader/` 下 club、activity、attendance、contribution 模块。
+- [x] 建 `api/clubpoints/admin/` 下 club、activity、settlement、ledger、rule、contribution、redemption、operation 模块。
+- [x] 请求封装复用 `@/config/axios`，类型定义和后端 VO 一致。
+- [x] 兑换申请、管理员代录、积分调整提交前生成并复用 `requestNo`。
+- [x] 页面不散写 URL，所有请求经 API 模块函数。
 
 验收：
 
-- [ ] API 文件按角色和领域分组，路径和 `club-points-api-design.md` 一致。
-- [ ] 不在页面里散写 URL。
+- [x] API 文件按角色和领域分组，路径和 `club-points-api-design.md` 一致。
+- [x] 不在页面里散写 URL。
+
+M11.2 证据：
+
+- RED：运行 `Test-Path` 检查 19 个 API 模块文件，全部返回 `False`。
+- GREEN：新增 app 7 个模块、leader 4 个模块、admin 8 个模块，并扩展 `shared/types.ts` 的分页、基础响应、原因请求和强确认请求类型；复核 19 个 API 文件全部返回 `True`。
+- 请求封装验证：扫描 19 个业务 API 文件，`MissingAxiosImport=0`，全部复用 `@/config/axios`。
+- 请求号验证：`app/redemption.ts` 暴露 `getRedemptionApplyRequestNo/resetRedemptionApplyRequestNo`；`admin/contribution.ts` 暴露 `getDirectContributionRequestNo/resetDirectContributionRequestNo`；`admin/ledger.ts` 暴露 `getLedgerAdjustRequestNo/resetLedgerAdjustRequestNo`。
+- 前端类型验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，输出为前端工程存量 TypeScript 债；二次过滤 `clubpoints` 路径命中 `0` 行。
+- 质量门禁：`git diff --check` 无空白错误，仅 CRLF 提示；M11.2 API 范围精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；`views/clubpoints` 直接 `request` 调用和散写业务 URL 无命中。
+- 边界说明：`dashboard`、`notify` 等 M11 后续能力按 `club-points-api-design.md` 预封装路径，后端实现与接口功能验证归 M11.6 / M11.12 / M11.13，不在 M11.2 冒充已完成后端能力。
 
 ## 任务 M11.3 报表查询
 

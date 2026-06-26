@@ -55,3 +55,35 @@ export interface ClubPointClubOption {
   code?: string
   status?: number
 }
+
+export type ClubPointDateTime = string | Date
+
+export interface ClubPointPageParam {
+  pageNo: number
+  pageSize: number
+  [key: string]: any
+}
+
+export interface ClubPointPageResult<T> {
+  list: T[]
+  total: number
+}
+
+export interface ClubPointIdReqVO {
+  id: number
+}
+
+export interface ClubPointReasonReqVO extends ClubPointIdReqVO {
+  reason?: string
+}
+
+export interface ClubPointStrongConfirmReqVO extends ClubPointReasonReqVO {
+  strongConfirm: StrongConfirmPayload
+}
+
+export interface ClubPointBaseRespVO {
+  id: number
+  createTime?: ClubPointDateTime
+  updateTime?: ClubPointDateTime
+  [key: string]: any
+}

@@ -521,3 +521,9 @@
 - 2026-06-26：M11.1 前端验证：`Test-Path` 复核 M11.1 目录和文件全部为 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，二次过滤 `clubpoints` 路径命中 `0` 行，失败属于前端工程存量 TypeScript 债；临时启动 `pnpm dev` 后 `Invoke-WebRequest http://127.0.0.1:8889` 返回 HTTP `200`。
 - 2026-06-26：M11.1 质量验证：`git diff --check` 无输出；M11.1 前端范围精确元数据模式无命中；`tenant_id|TenantBaseDO`、Redis 模式、views 直接 `request` 调用和静态 `/clubpoints/...` 业务路由扫描无命中；新增 24 个 Club Points 字典常量全部能在 seed 中找到，`MissingInSeed=0`。
 - 2026-06-26：M11.1 文档同步：`M11-report-job-frontend.md` 勾选 M11.1 和验收项并补 RED/GREEN/验证/质量证据；`00-index.md` 将 M11 标为 `[~]`，当前下一入口切换到 M11.2 前端 API 模块；`club-points-development-plan.md` 同步前端基建事实。
+- 2026-06-26：M11.2 RED：运行 `Test-Path` 检查 app dashboard / ledger / club / activity / redemption / dispute / notify、leader club / activity / attendance / contribution、admin club / activity / settlement / ledger / rule / contribution / redemption / operation 共 19 个 API 模块文件，全部返回 `False`。
+- 2026-06-26：M11.2 GREEN：新增 19 个按角色和领域分组的 API 模块，并扩展 `shared/types.ts` 的分页、基础响应、原因请求和强确认请求类型；接口路径按 `club-points-api-design.md` 和现有 Controller 分组落到 `src/api/clubpoints/*`，页面不直接写业务 URL。
+- 2026-06-26：M11.2 请求号和封装验证：扫描 19 个业务 API 文件，`MissingAxiosImport=0`，全部复用 `@/config/axios`；兑换申请、管理员代录、积分调整分别暴露 get/reset 请求号 helper。
+- 2026-06-26：M11.2 前端验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，二次过滤 `clubpoints` 路径命中 `0` 行，失败仍属于前端工程存量 TypeScript 债。
+- 2026-06-26：M11.2 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；M11.2 API 范围精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；`views/clubpoints` 直接 `request` 调用和散写业务 URL 无命中。
+- 2026-06-26：M11.2 文档同步：`M11-report-job-frontend.md` 勾选 M11.2 和验收项并补证据；`00-index.md` 记录 M11.2 完成并将下一入口切换到 M11.3 报表查询；`club-points-development-plan.md` 同步 API 模块事实。

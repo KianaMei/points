@@ -1257,6 +1257,7 @@ Lock4j 可以减少并发冲突，但数据库条件更新才是最终事实。
 4. `pnpm install` 可通过，`pnpm dev` 可启动 Vite，`http://localhost:8889` 入口 HTTP 200。
 5. `pnpm ts:check` 还有上游 TS 严格类型债，需要在进入 clubpoints 前端页面开发前单独收敛，不能和业务页面缺口混在一起。
 6. M11.1 已建立 `src/api/clubpoints/{app,leader,admin,shared}`、`src/views/clubpoints/{app,leader,admin,components}`、`shared/requestNo.ts` 和共用组件；组件只做薄封装，不写静态业务路由，不把 `v-hasPermi` 当安全边界。
+7. M11.2 已建立 app / leader / admin 三类角色 API 模块；页面后续不得散写业务 URL，必须经 `src/api/clubpoints/*` 调用。
 
 新增路径建议：
 
