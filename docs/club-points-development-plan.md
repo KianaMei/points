@@ -1350,6 +1350,9 @@ src/views/clubpoints/
 7. M12.3 验证命令 `mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivitySettlementServiceImplTest,ClubPointContributionServiceImplTest,ClubPointRedemptionApplicationServiceImplTest,ClubPointRedemptionGiftServiceImplTest,ClubPointRedemptionReviewServiceImplTest,ClubPointAnnualClearingServiceImplTest,ClubPointLedgerServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；7 个服务测试类合计运行 54 个测试，失败 0，错误 0。
 8. M12.4 已完成事务边界复查，覆盖强审计失败回滚、通知失败不回滚、流水与账户缓存同事务、冻结失败不创建兑换申请、锁库存失败事务回滚、兑换审核通过时冻结 / 库存 / 流水一致性。
 9. M12.4 验证命令 `mvn -pl yudao-module-clubpoints -am "-Dtest=ClubAuditServiceImplTest,ClubNotifyServiceImplTest,ClubPointLedgerServiceImplTest,ClubPointLedgerAdjustmentServiceImplTest,ClubPointFreezeServiceImplTest,ClubPointContributionServiceImplTest,ClubPointRedemptionApplicationServiceImplTest,ClubPointRedemptionReviewServiceImplTest,ClubPointRedemptionBatchServiceImplTest,ClubPointAnnualClearingServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；10 个服务测试类合计运行 70 个测试，失败 0，错误 0。
+10. M12.5 已完成年度和跨年测试，新增 `ClubPointAnnualCrossYearHardeningTest`，覆盖北京时间 1 月 1 日清零、只清可用分、冻结不清、清零后历史流水仍可查、跨年兑换拒绝释放回账户且不追加过期清零流水、年度排名不受兑换扣分和年度清零影响。
+11. M12.5 为固定跨年审核拒绝时间，给 `ClubPointRedemptionReviewReqBO` 增加内部可选 `reviewTime`；管理员审核请求 VO 不新增该字段，前端和 API 不暴露测试控制字段。
+12. M12.5 验证命令 `mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointAnnualCrossYearHardeningTest,ClubPointAnnualClearingModelTest,ClubPointAnnualClearingServiceImplTest,ClubPointRedemptionReviewServiceImplTest,ClubPointRedemptionCancelServiceImplTest,ClubPointAnnualRankingServiceImplTest,ClubPointAnnualOperationControllerTest,ClubPointRedemptionControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；8 个测试类合计运行 34 个测试，失败 0，错误 0。
 
 ### 17.1 必跑测试矩阵
 

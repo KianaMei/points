@@ -178,7 +178,7 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
         }
         validateReviewable(application);
         ClubPointStockLockDO stockLock = validateStockLockForReview(application);
-        LocalDateTime reviewTime = LocalDateTime.now();
+        LocalDateTime reviewTime = reqBO.getReviewTime() != null ? reqBO.getReviewTime() : LocalDateTime.now();
         String beforeJson = applicationSnapshot(application);
         Long auditLogId = createReviewAudit(reqBO, application, result, beforeJson, reviewTime);
 

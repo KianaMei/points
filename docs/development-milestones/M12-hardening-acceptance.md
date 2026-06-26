@@ -148,18 +148,27 @@
 
 ## 任务 M12.5 年度和跨年测试
 
-- [ ] 1 月 1 日年度清零。
-- [ ] 清零只清可用积分。
-- [ ] 冻结积分不清零。
-- [ ] 跨年兑换拒绝释放回账户。
-- [ ] 释放回账户不追加过期清零。
-- [ ] 年度排名不受兑换扣分影响。
-- [ ] 年度清零后历史流水仍可查。
+- [x] 1 月 1 日年度清零。
+- [x] 清零只清可用积分。
+- [x] 冻结积分不清零。
+- [x] 跨年兑换拒绝释放回账户。
+- [x] 释放回账户不追加过期清零。
+- [x] 年度排名不受兑换扣分影响。
+- [x] 年度清零后历史流水仍可查。
 
 验收：
 
-- [ ] 年度口径和文档一致。
-- [ ] 跨年冻结口径和测试一致。
+- [x] 年度口径和文档一致。
+- [x] 跨年冻结口径和测试一致。
+
+证据：
+
+- RED：`Test-Path ruoyi-vue-pro-github\yudao-module-clubpoints\src\test\java\cn\iocoder\yudao\module\clubpoints\hardening\ClubPointAnnualCrossYearHardeningTest.java` 返回 `False`，确认 M12.5 缺少集中年度和跨年硬化测试入口。
+- RED：新增 `ClubPointAnnualCrossYearHardeningTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAnnualCrossYearHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`，失败点为 `ClubPointRedemptionReviewReqBO#setReviewTime(LocalDateTime)` 不存在，证明兑换审核拒绝路径无法固定跨年审核时间。
+- GREEN：新增 `ClubPointAnnualCrossYearHardeningTest`，集中验证年度清零默认北京时间 `2026-01-01 00:00`、只清未冻结可用分、冻结积分不清零、年度清零后历史流水仍保留、跨年兑换拒绝释放回账户且不追加过期清零流水、年度排名忽略兑换扣分和年度清零扣分。
+- GREEN：`ClubPointRedemptionReviewReqBO` 增加内部可选 `reviewTime`，`ClubPointRedemptionApplicationServiceImpl.review(...)` 优先使用该时间，否则仍使用 `LocalDateTime.now()`；管理员审核请求 VO 不新增 `reviewTime` 字段，前端和 API 不暴露该测试控制字段。
+- Verify：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAnnualCrossYearHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；新增 hardening 测试运行 3 个测试，失败 0，错误 0。
+- Verify：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointAnnualCrossYearHardeningTest,ClubPointAnnualClearingModelTest,ClubPointAnnualClearingServiceImplTest,ClubPointRedemptionReviewServiceImplTest,ClubPointRedemptionCancelServiceImplTest,ClubPointAnnualRankingServiceImplTest,ClubPointAnnualOperationControllerTest,ClubPointRedemptionControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；8 个测试类合计运行 34 个测试，失败 0，错误 0。
 
 ## 任务 M12.6 前端回归
 
