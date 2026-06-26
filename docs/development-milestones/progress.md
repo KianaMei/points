@@ -562,3 +562,9 @@
 - 2026-06-26：M11.9 交互口径：工作台待办按 `path/queryJson` 跳转；负责俱乐部页只允许查看成员和修改基础信息，不提供创建、停用、删除、设置负责人或移除成员；活动页只选择自己负责俱乐部，取消和删除只用普通确认；签到页提示结算后修正不能改原流水；材料页只能提交、撤回、删除草稿，不提供审核入口。
 - 2026-06-26：M11.9 前端验证：5 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
 - 2026-06-26：M11.9 质量验证：负责人页面范围 `request.get|post|put|delete` 无命中；精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；禁止入口扫描未发现兑换审核、报表导出、规则配置、负责人任免、移除成员或强确认入口，`ruleVersionId` / 表单 `rules` 命中仅为活动和材料的规则版本字段。
+- 2026-06-26：M11.10 RED：运行 `Test-Path` 检查管理员活动、材料审核、管理员代录 3 个页面文件，全部返回 `False`，确认 M11.10 页面尚未落地。
+- 2026-06-26：M11.10 GREEN：新增 `views/clubpoints/admin/activity/index.vue`、`contribution-review/index.vue`、`contribution-direct/index.vue`；页面全部复用 `api/clubpoints/admin/activity.ts` 和 `api/clubpoints/admin/contribution.ts` 请求封装，不在页面散写请求封装。
+- 2026-06-26：M11.10 交互口径：活动页支持管理员创建、修改、直接发布、审核、取消和删除；活动审核和材料审核都使用 `ReviewDialog`，驳回必须填原因；材料详情只读；管理员代录提交 `requestNo`、员工、积分、规则版本、原因和附件，失败重试保留同号，重开代录生成新号。
+- 2026-06-26：M11.10 接口验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointActivityControllerTest,ClubPointContributionControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；活动 Controller 5 个测试、材料 Controller 3 个测试，合计 8 个测试，失败 0，错误 0。
+- 2026-06-26：M11.10 前端验证：3 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
+- 2026-06-26：M11.10 质量验证：页面范围 `request.get|post|put|delete` 无命中；精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；扫描只命中预期审核按钮 / 方法和代录 `requestNo`，没有强确认、导出、负责人任免或移除成员入口。

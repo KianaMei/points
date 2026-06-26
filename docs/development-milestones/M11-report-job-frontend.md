@@ -282,14 +282,23 @@ M11.9 证据：
 
 ## 任务 M11.10 管理员活动和材料审核页
 
-- [ ] 活动审核和全局活动 `/clubpoints/admin/activity`，支持直接发布或审核负责人活动，审核只通过或驳回，驳回填原因。
-- [ ] 材料审核 `/clubpoints/admin/contribution-review`，审核通过锁定附件，通过后不能改材料内容。
-- [ ] 管理员代录 `/clubpoints/admin/contribution-direct`，代录直接生效，带 `requestNo`、员工、积分、规则版本、原因、附件。
+- [x] 活动审核和全局活动 `/clubpoints/admin/activity`，支持直接发布或审核负责人活动，审核只通过或驳回，驳回填原因。
+- [x] 材料审核 `/clubpoints/admin/contribution-review`，审核通过锁定附件，通过后不能改材料内容。
+- [x] 管理员代录 `/clubpoints/admin/contribution-direct`，代录直接生效，带 `requestNo`、员工、积分、规则版本、原因、附件。
 
 验收：
 
-- [ ] 审核通过按明细发分，重复审核不重复发分。
-- [ ] 代录带请求号落幂等。
+- [x] 审核通过按明细发分，重复审核不重复发分。
+- [x] 代录带请求号落幂等。
+
+M11.10 证据：
+
+- RED：运行 `Test-Path` 检查 `views/clubpoints/admin/activity/index.vue`、`contribution-review/index.vue`、`contribution-direct/index.vue`，全部返回 `False`。
+- GREEN：新增 3 个管理员页面；活动页复用 `api/clubpoints/admin/activity.ts`，材料审核和代录页复用 `api/clubpoints/admin/contribution.ts`，不在页面散写后端业务 URL。
+- 页面口径：活动审核使用 `ReviewDialog`，驳回原因由组件强制；材料审核详情只读，不允许审核时修改材料内容；管理员代录提交前展示并提交 `requestNo`，失败重试保留同号，重开代录才生成新号，附件或外部链接必填。
+- 接口验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointActivityControllerTest,ClubPointContributionControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointActivityControllerTest` 5 个测试、`ClubPointContributionControllerTest` 3 个测试，合计 8 个测试，失败 0，错误 0。
+- 前端类型验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，二次过滤 `clubpoints` 路径命中 `0` 行，仍为前端工程存量 TypeScript 债。
+- 质量门禁：页面范围 `request.get|post|put|delete` 无命中；精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；扫描只命中预期的审核按钮 / 方法和代录 `requestNo`，没有强确认、导出、负责人任免或移除成员入口。
 
 ## 任务 M11.11 管理员兑换管理页
 
