@@ -1,6 +1,6 @@
 # M7 活动自动结算 Implementation Plan
 
-**Status:** `[~]` M7.1-M7.4 已完成并有 RED/GREEN 证据；当前入口是 M7.5 Job Handler。
+**Status:** `[~]` M7.1-M7.5 已完成并有 RED/GREEN 证据；当前入口是 M7.6 管理员接口。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -159,17 +159,26 @@
 
 ## 任务 M7.5 Job Handler
 
-- [ ] 创建活动结算 Job Handler。
-- [ ] Job 只调 Service，不写业务逻辑。
-- [ ] 写 `club_points_job_run` 记录。
-- [ ] 支持失败重试。
-- [ ] 失败记录错误摘要。
+- [x] 创建活动结算 Job Handler。
+- [x] Job 只调 Service，不写业务逻辑。
+- [x] 写 `club_points_job_run` 记录。
+- [x] 支持失败重试。
+- [x] 失败记录错误摘要。
 
 验收：
 
-- [ ] Job 可手动触发。
-- [ ] Job 重试不重复发分。
-- [ ] Job 失败能在任务运行记录中追踪。
+- [x] Job 可手动触发。
+- [x] Job 重试不重复发分。
+- [x] Job 失败能在任务运行记录中追踪。
+
+证据：
+
+- RED：新增 `ClubPointActivitySettlementJobTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivitySettlementJobTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `ClubPointActivitySettlementJobService`、`ClubPointActivitySettlementJobReqBO` 和 `ClubPointActivitySettlementJob` 不存在，符合 M7.5 RED 预期。
+- GREEN：新增 `ClubPointActivitySettlementJobReqBO`、`ClubPointActivitySettlementJobService` 和 `ClubPointActivitySettlementJob`；Job Handler 只解析 JSON 参数并调用 Job Service；Job Service 写入 `club_points_job_run`，以 `ACTIVITY_SETTLEMENT_JOB:{runKey}:{retryCount}` 作为任务幂等键，并以 `ACTIVITY_SETTLEMENT_JOB:{runKey}:{retryCount}:{activityId}` 作为结算运行键调用 `settleActivity(...)`。
+- 实现边界：M7.5 不新增表，不直接写 `club_points_transaction`，不写管理员接口；结算流水仍只通过 `ClubPointLedgerService.createTransaction(...)` 写入；`club_points_activity_settlement_run.job_run_id` 由结算请求透传并落库，任务失败时 `club_points_job_run` 记录 `RETRYABLE_FAILED(4)`、错误类型、错误摘要和下次重试时间，然后继续向外抛异常给调度框架。
+- M7.5 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivitySettlementJobTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointActivitySettlementJobTest` 运行 `3` 个测试，失败 `0`，错误 `0`。
+- M7 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivitySettlementEnumTest,ClubPointActivitySettlementServiceImplTest,ClubPointActivitySettlementJobTest,ClubPointLedgerServiceImplTest,ClubPointActivityServiceImplTest,ClubPointRegistrationServiceImplTest,ClubPointAttendanceServiceImplTest,ClubPointAttendanceCorrectionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `42` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
 
 ## 任务 M7.6 管理员接口
 

@@ -6,17 +6,18 @@ import lombok.experimental.Accessors;
 import java.time.LocalDateTime;
 
 /**
- * 活动结算运行请求
+ * 活动结算 Job 请求
  */
 @Data
 @Accessors(chain = true)
-public class ClubPointActivitySettlementRunReqBO {
+public class ClubPointActivitySettlementJobReqBO {
 
-    private Long activityId;
-    private Long jobRunId;
     private String runKey;
+    private Long activityId;
     private Integer triggerSource;
-    private Long operatorUserId;
+    private Integer retryCount;
+    private Long handlerUserId;
+    private LocalDateTime plannedTime;
     private LocalDateTime settlementTime;
 
 }

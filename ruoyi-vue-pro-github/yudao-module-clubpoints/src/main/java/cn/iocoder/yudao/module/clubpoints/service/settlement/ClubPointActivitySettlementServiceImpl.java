@@ -251,6 +251,7 @@ public class ClubPointActivitySettlementServiceImpl implements ClubPointActivity
                                                              int skipCount) {
         return new ClubPointActivitySettlementRunDO()
                 .setActivityId(activity.getId())
+                .setJobRunId(reqBO.getJobRunId())
                 .setRunKey(reqBO.getRunKey())
                 .setStatus(ClubPointSettlementRunStatusEnum.SUCCESS.getStatus())
                 .setSettlementTime(reqBO.getSettlementTime() != null ? reqBO.getSettlementTime() : LocalDateTime.now())
