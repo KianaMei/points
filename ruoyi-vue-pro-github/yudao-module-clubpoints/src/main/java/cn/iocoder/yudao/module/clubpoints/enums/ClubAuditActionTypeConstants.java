@@ -38,5 +38,8 @@ public interface ClubAuditActionTypeConstants {
     String DISPUTE_HANDLE = "DISPUTE_HANDLE";
     String INCENTIVE_CONFIRM = "INCENTIVE_CONFIRM";
     String INCENTIVE_CANCEL = "INCENTIVE_CANCEL";
+    String BUDGET_CREATE = "BUDGET_CREATE";
+    String BUDGET_UPDATE = "BUDGET_UPDATE";
+    String BUDGET_DISABLE = "BUDGET_DISABLE";
 
 }

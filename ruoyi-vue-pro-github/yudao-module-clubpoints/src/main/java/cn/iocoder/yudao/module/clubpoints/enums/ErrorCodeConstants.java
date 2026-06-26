@@ -80,5 +80,8 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_INCENTIVE_NOT_EXISTS = new ErrorCode(1_300_000_068, "激励记录不存在");
     ErrorCode CLUB_INCENTIVE_STATUS_INVALID = new ErrorCode(1_300_000_069, "激励记录状态不允许当前操作");
     ErrorCode CLUB_INCENTIVE_INVALID = new ErrorCode(1_300_000_070, "激励记录参数无效");
+    ErrorCode CLUB_BUDGET_NOT_EXISTS = new ErrorCode(1_300_000_071, "预算记录不存在");
+    ErrorCode CLUB_BUDGET_INVALID = new ErrorCode(1_300_000_072, "预算记录参数无效");
+    ErrorCode CLUB_BUDGET_SOURCE_INVALID = new ErrorCode(1_300_000_073, "预算记录来源无效");
 
 }

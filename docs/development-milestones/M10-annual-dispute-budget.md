@@ -250,18 +250,35 @@
 
 ## 任务 M10.7 预算记录
 
-- [ ] 创建 `ClubPointBudgetRecordDO`。
-- [ ] 创建对应 Mapper。
-- [ ] 管理员新增预算记录。
-- [ ] 管理员修改预算记录。
-- [ ] 管理员停用预算记录。
-- [ ] 预算记录关联年度、俱乐部或全局范围。
-- [ ] 修改预算写强审计。
+- [x] 创建 `ClubPointBudgetRecordDO`。
+- [x] 创建对应 Mapper。
+- [x] 管理员新增预算记录。
+- [x] 管理员修改预算记录。
+- [x] 管理员停用预算记录。
+- [x] 预算记录关联年度、俱乐部或全局范围。
+- [x] 修改预算写强审计。
 
 验收：
 
-- [ ] 预算记录可查询。
-- [ ] 激励和兑换可引用预算统计。
+- [x] 预算记录可查询。
+- [x] 激励和兑换可引用预算统计。
+
+验证记录：
+
+- RED：新增 `ClubPointBudgetServiceImplTest`，运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointBudgetServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`，失败原因为预算 DO、Mapper、分类 / 来源枚举、保存 / 操作 / 查询 BO、Service / 实现、`BUDGET_CREATE`、`BUDGET_UPDATE`、`BUDGET_DISABLE` 和预算错误码缺失。
+- GREEN：新增 `ClubPointBudgetRecordDO`、`ClubPointBudgetRecordMapper`、预算分类 / 来源枚举、`ClubPointBudgetSaveReqBO`、`ClubPointBudgetOperationReqBO`、`ClubPointBudgetQueryReqBO`、`ClubPointBudgetService` / `ClubPointBudgetServiceImpl`；补预算创建 / 修改 / 停用强审计动作和预算错误码；同一命令返回 `BUILD SUCCESS`，`ClubPointBudgetServiceImplTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- 边界补强：新增非法 `source_type` 更新拒绝测试；初次运行失败为数据库 `tinyint` 溢出，修复后由业务校验返回 `CLUB_BUDGET_INVALID`，并断言原预算来源不变。
+- 组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointBudgetServiceImplTest,ClubPointIncentiveServiceImplTest,ClubPointAnnualRankingServiceImplTest,ClubPointRedemptionReviewServiceImplTest,ClubAuditServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `21` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅常量文件有 CRLF/LF 提示；M10.7 源码和测试范围 `tenant_id|TenantBaseDO` 无命中；精确元数据模式无命中；Redis 模式无命中；预算 Service 范围无账本 Service、流水 Mapper、账户 Mapper、流水表或账户表绕行命中。
+
+实现边界：
+
+- M10.7 只实现预算记录 DO、Mapper 和 Service，不实现 Controller、前端页面或报表导出；管理员预算管理 API 进入 M10.8，报表统计进入 M11。
+- 数据库设计中的 `club_points_budget_record` 没有独立 `year`、`club_id` 或 `status` 字段；M10.7 不擅自改表。年度统计按 `occur_date` 年份过滤；全局手工记录用 `source_type=MANUAL` 且 `source_id=null` 表达；俱乐部排名激励预算通过 `source_type=RANKING_INCENTIVE`、`source_id=incentive.id` 追溯到激励记录里的俱乐部和年度快照。
+- 停用预算记录使用 `BaseDO.deleted` 逻辑删除表达，不新增状态字段；停用后常规查询不再返回该预算记录。
+- 预算创建、修改和停用都要求管理员全局范围并写强审计，动作分别为 `BUDGET_CREATE`、`BUDGET_UPDATE`、`BUDGET_DISABLE`；审计失败时同事务回滚预算变更。
+- 预算来源类型包含手工、排名激励、创新奖和积分兑换；排名激励来源只允许引用已确认激励，创建预算后回写激励记录 `budget_record_id`，防止激励建议被重复登记为经费记录。
+- M10.7 不生成员工积分流水、不更新积分账户、不写兑换申请；兑换预算统计通过预算记录 `source_type=REDEMPTION` 和 `source_id` 预留追溯能力。
 
 ## 任务 M10.8 API
 
