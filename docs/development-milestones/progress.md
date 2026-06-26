@@ -552,3 +552,8 @@
 - 2026-06-26：M11.7 交互口径：规则版本发布 / 撤回 / 停用必须填原因；俱乐部物理删除才使用 `StrongConfirmDialog`，停用、移除成员、设置负责人只用普通原因确认；积分调整使用 `resetLedgerAdjustRequestNo('admin-ledger-adjust')` 生成请求号，失败重试保留同号；撤销必须从原流水操作并填写原因；结算页提示重复发分由后端幂等兜底。
 - 2026-06-26：M11.7 前端验证：5 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
 - 2026-06-26：M11.7 质量验证：强确认扫描只命中管理员俱乐部删除页；`requestNo` 扫描命中积分调整页；页面范围 `request.get|post|put|delete` 无命中；新增页面没有后端事实源、租户字段或 Redis 改动。
+- 2026-06-26：M11.8 RED：运行 `Test-Path` 检查员工工作台、我的积分、我的俱乐部、活动报名签到、兑换、我的异议、我的通知 7 个页面文件，全部返回 `False`，确认员工页面尚未落地。
+- 2026-06-26：M11.8 GREEN：新增 `views/clubpoints/app/dashboard/index.vue`、`ledger/index.vue`、`club/index.vue`、`activity/index.vue`、`redemption/index.vue`、`dispute/index.vue`、`notify/index.vue`；页面全部复用 `api/clubpoints/app/*` 本人接口，不提供 userId 输入，不在页面散写请求封装。
+- 2026-06-26：M11.8 交互口径：工作台卡片和待办按 `path/queryJson` 跳转；积分页展示来源统计提示；退出俱乐部提示会自动取消可取消报名；签到签退提交 `registrationId` 和 `clientTime` 并提示以后端北京时间为准；兑换申请生成 `requestNo`，失败重试不换号；异议不直接改积分；通知只标记已读不删除。
+- 2026-06-26：M11.8 前端验证：7 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
+- 2026-06-26：M11.8 质量验证：员工页面范围 `request.get|post|put|delete` 无命中；权限按钮覆盖加入 / 退出 / 报名 / 取消报名 / 签到 / 签退 / 兑换申请 / 取消兑换；`requestNo` 只在兑换申请页出现；新增页面没有后端事实源、租户字段或 Redis 改动。

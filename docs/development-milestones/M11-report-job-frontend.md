@@ -237,19 +237,27 @@ M11.7 证据：
 
 ## 任务 M11.8 员工前端页面
 
-- [ ] 员工工作台 `/clubpoints/app/dashboard`，展示积分、俱乐部、活动、兑换、通知卡片，卡片跳转对应页面。
-- [ ] 我的积分 `/clubpoints/app/ledger`，展示账户概览和流水筛选分页，展示来源统计不代表当前余额构成的文案。
-- [ ] 我的俱乐部 `/clubpoints/app/club`，展示我的俱乐部、可加入俱乐部、成员名单，退出提示自动取消可取消报名。
-- [ ] 活动报名签到 `/clubpoints/app/activity`，展示活动列表、详情、我的报名，支持报名、取消、签到、签退，提交带 `registrationId` 和 `clientTime`。
-- [ ] 兑换 `/clubpoints/app/redemption`，展示批次、礼品、我的兑换，申请生成 `requestNo`，资格、库存、积分不足按后端错误码展示。
-- [ ] 我的异议 `/clubpoints/app/dispute`，支持异议提交和记录，展示管理员回复和关联流水。
-- [ ] 我的通知 `/clubpoints/app/notify`，支持已读未读切换，不提供删除。
+- [x] 员工工作台 `/clubpoints/app/dashboard`，展示积分、俱乐部、活动、兑换、通知卡片，卡片跳转对应页面。
+- [x] 我的积分 `/clubpoints/app/ledger`，展示账户概览和流水筛选分页，展示来源统计不代表当前余额构成的文案。
+- [x] 我的俱乐部 `/clubpoints/app/club`，展示我的俱乐部、可加入俱乐部、成员名单，退出提示自动取消可取消报名。
+- [x] 活动报名签到 `/clubpoints/app/activity`，展示活动列表、详情、我的报名，支持报名、取消、签到、签退，提交带 `registrationId` 和 `clientTime`。
+- [x] 兑换 `/clubpoints/app/redemption`，展示批次、礼品、我的兑换，申请生成 `requestNo`，资格、库存、积分不足按后端错误码展示。
+- [x] 我的异议 `/clubpoints/app/dispute`，支持异议提交和记录，展示管理员回复和关联流水。
+- [x] 我的通知 `/clubpoints/app/notify`，支持已读未读切换，不提供删除。
 
 验收：
 
-- [ ] 员工只看到本人数据。
-- [ ] 重试提交不重新生成 requestNo。
-- [ ] 页面按钮和权限一致。
+- [x] 员工只看到本人数据。
+- [x] 重试提交不重新生成 requestNo。
+- [x] 页面按钮和权限一致。
+
+M11.8 证据：
+
+- RED：运行 `Test-Path` 检查 `views/clubpoints/app/dashboard/index.vue`、`ledger/index.vue`、`club/index.vue`、`activity/index.vue`、`redemption/index.vue`、`dispute/index.vue`、`notify/index.vue`，全部返回 `False`。
+- GREEN：新增 7 个员工页面；页面全部调用 `api/clubpoints/app/*` 本人接口，不提供 userId 输入，不在页面直连请求封装。
+- 页面口径：工作台卡片和待办跳转；积分页展示“来源统计不代表当前可用积分余额构成”提示；俱乐部退出提示会自动取消可取消报名；活动签到签退提交 `registrationId` 和 `clientTime`，并提示最终按后端服务器北京时间判断；兑换申请用 `resetRedemptionApplyRequestNo` 生成 `requestNo`，失败重试保留同一弹窗同一请求号；异议页不直接改积分；通知页只标记已读，不提供删除。
+- 前端类型验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，二次过滤 `clubpoints` 路径命中 `0` 行，仍为前端工程存量 TypeScript 债。
+- 质量门禁：员工页面范围 `request.get|post|put|delete` 无命中；权限按钮覆盖加入 / 退出 / 报名 / 取消报名 / 签到 / 签退 / 兑换申请 / 取消兑换；`requestNo` 只在兑换申请页出现；新增页面没有后端事实源、租户字段或 Redis 改动。
 
 ## 任务 M11.9 负责人前端页面
 
