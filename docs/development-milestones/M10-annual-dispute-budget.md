@@ -126,20 +126,35 @@
 
 ## 任务 M10.3 年度清零 Service
 
-- [ ] 扫描指定年度用户账户。
-- [ ] 只清未冻结可用积分。
-- [ ] 生成年度清零负向流水。
-- [ ] 写年度清零记录。
-- [ ] 更新账户缓存。
-- [ ] 支持单用户重试。
-- [ ] 支持全量重跑。
-- [ ] 使用数据库唯一键防重复。
+- [x] 扫描指定年度用户账户。
+- [x] 只清未冻结可用积分。
+- [x] 生成年度清零负向流水。
+- [x] 写年度清零记录。
+- [x] 更新账户缓存。
+- [x] 支持单用户重试。
+- [x] 支持全量重跑。
+- [x] 使用数据库唯一键防重复。
 
 验收：
 
-- [ ] 同一年同一用户只清零一次。
-- [ ] 已冻结积分不被清零。
-- [ ] 清零不删除历史流水。
+- [x] 同一年同一用户只清零一次。
+- [x] 已冻结积分不被清零。
+- [x] 清零不删除历史流水。
+
+验证记录：
+
+- RED：新增 `ClubPointAnnualClearingServiceImplTest`，运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAnnualClearingServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`，失败原因为 `ClubPointAnnualClearingService`、实现类和清零请求 / 结果 BO 缺失。
+- GREEN：新增 `ClubPointAnnualClearingService` / `ClubPointAnnualClearingServiceImpl`、`ClubPointAnnualClearUserReqBO`、`ClubPointAnnualClearAllReqBO`、`ClubPointAnnualClearResultBO`；补 `ClubPointAccountMapper.selectListForAnnualClearing()`，并在账本服务中为年度清零来源生成非规则项快照；同一命令返回 `BUILD SUCCESS`，`ClubPointAnnualClearingServiceImplTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- 组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointAnnualClearingServiceImplTest,ClubPointAnnualClearingModelTest,ClubPointLedgerServiceImplTest,ClubPointLedgerMapperTest,ClubPointFreezeServiceImplTest,ClubPointRedemptionCancelServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `25` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；年度清零 Service / 测试、账户 Mapper 和账本适配范围 `tenant_id|TenantBaseDO` 无命中；精确元数据模式无命中；Redis 模式无命中；年度清零 Service 范围无 `transactionMapper`、账户直接更新或删除历史流水命中。
+
+实现边界：
+
+- M10.3 只实现年度清零 Service，不实现 Job 或 API；Job 进入 M10.4，接口进入 M10.8。
+- 单用户清零先按 `year,user_id` 行锁读取年度清零记录，已 `SUCCESS` 或 `SKIPPED` 时直接返回既有记录；新增记录和流水幂等键共同兜底重复请求。
+- 清零金额只取账户当前 `availablePoints`，冻结积分只写入清零前快照，不参与扣减；无可用积分写 `SKIPPED` 记录且不创建流水。
+- 积分扣减只通过 `ClubPointLedgerService.createTransaction(...)` 生成年度清零负向流水，由账本同事务更新账户缓存；年度清零 Service 不直接写 `club_points_transaction`，不直接更新 `club_points_point_account`，不删除历史流水。
+- 年度清零不是分值规则项，但 `club_points_transaction.rule_version_id` 必填；账本服务仅在 `sourceType=ANNUAL_CLEARING` 时用当前生效规则版本生成 `ANNUAL_CLEARING` 非规则项快照，其他来源仍走规则项快照和分值区间校验。
 
 ## 任务 M10.4 年度清零 Job
 
