@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.clubpoints.service.redemption;
 
+import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointFreezeDO;
@@ -38,7 +39,15 @@ import org.springframework.context.annotation.Import;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_LEDGER_AVAILABLE_POINTS_NOT_ENOUGH;
@@ -197,6 +206,69 @@ class ClubPointRedemptionApplicationServiceImplTest extends BaseDbUnitTest {
         ClubPointAccountDO account = accountMapper.selectByUserId(USER_ID);
         assertEquals(0, account.getFrozenPoints());
         assertEquals(50, account.getAvailablePoints());
+    }
+
+    @Test
+    void concurrentApplyShouldNotOversellAndRollbackFailedApplicant() throws Exception {
+        Long competitorUserId = USER_ID + 1;
+        ClubPointRedemptionBatchDO batch = insertBatch(ClubPointRedemptionBatchStatusEnum.OPENED.getStatus());
+        insertEligibility(batch.getId(), USER_ID, true, 1);
+        insertEligibility(batch.getId(), competitorUserId, true, 2);
+        ClubPointRedemptionGiftDO gift = insertGift(batch.getId(),
+                ClubPointRedemptionGiftStatusEnum.ON_SHELF.getStatus(), 60, 1, 0, 0, 1);
+        insertAccount(USER_ID, 100, 0);
+        insertAccount(competitorUserId, 100, 0);
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        AtomicInteger successCount = new AtomicInteger();
+        AtomicInteger stockNotEnoughCount = new AtomicInteger();
+        Queue<Throwable> unexpectedErrors = new ConcurrentLinkedQueue<>();
+
+        executorService.submit(() -> applyConcurrently(startLatch, successCount, stockNotEnoughCount,
+                unexpectedErrors, batch.getId(), gift.getId(), USER_ID, "REQ-M9-5005-A"));
+        executorService.submit(() -> applyConcurrently(startLatch, successCount, stockNotEnoughCount,
+                unexpectedErrors, batch.getId(), gift.getId(), competitorUserId, "REQ-M9-5005-B"));
+
+        startLatch.countDown();
+        executorService.shutdown();
+        assertTrue(executorService.awaitTermination(10, TimeUnit.SECONDS));
+        assertTrue(unexpectedErrors.isEmpty(), unexpectedErrors.toString());
+
+        ClubPointRedemptionGiftDO giftAfterApply = giftMapper.selectById(gift.getId());
+        List<ClubPointAccountDO> accounts = Arrays.asList(accountMapper.selectByUserId(USER_ID),
+                accountMapper.selectByUserId(competitorUserId));
+        assertEquals(1, successCount.get());
+        assertEquals(1, stockNotEnoughCount.get());
+        assertEquals(1L, applicationMapper.selectCount());
+        assertEquals(1L, freezeMapper.selectCount());
+        assertEquals(1L, stockLockMapper.selectCount());
+        assertEquals(1, giftAfterApply.getStockLocked());
+        assertEquals(0, giftAfterApply.getStockUsed());
+        assertEquals(1, accounts.stream()
+                .filter(account -> account.getFrozenPoints() == 60 && account.getAvailablePoints() == 40)
+                .count());
+        assertEquals(1, accounts.stream()
+                .filter(account -> account.getFrozenPoints() == 0 && account.getAvailablePoints() == 100)
+                .count());
+    }
+
+    private void applyConcurrently(CountDownLatch startLatch, AtomicInteger successCount,
+                                   AtomicInteger stockNotEnoughCount, Queue<Throwable> unexpectedErrors,
+                                   Long batchId, Long giftId, Long userId, String requestNo) {
+        try {
+            startLatch.await(5, TimeUnit.SECONDS);
+            redemptionApplicationService.apply(buildApplyReq(batchId, giftId, requestNo)
+                    .setUserId(userId));
+            successCount.incrementAndGet();
+        } catch (ServiceException ex) {
+            if (CLUB_REDEMPTION_GIFT_STOCK_NOT_ENOUGH.getCode() == ex.getCode()) {
+                stockNotEnoughCount.incrementAndGet();
+            } else {
+                unexpectedErrors.add(ex);
+            }
+        } catch (Throwable ex) {
+            unexpectedErrors.add(ex);
+        }
     }
 
     private ClubPointRedemptionBatchDO insertBatch(Integer status) {

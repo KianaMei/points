@@ -107,6 +107,39 @@ class ClubPointRedemptionCancelServiceImplTest extends BaseDbUnitTest {
     }
 
     @Test
+    void cancelCrossYearFrozenApplicationShouldReleaseBackWithoutExpiredClearing() {
+        LocalDateTime frozenAt = LocalDateTime.of(2026, 12, 30, 10, 0);
+        LocalDateTime releasedAt = LocalDateTime.of(2027, 1, 3, 9, 0);
+        RedemptionFixture fixture = insertPendingApplication(USER_ID, "REQ-M9-7006", frozenAt);
+        ClubPointAccountDO accountAfterAnnualClearing = accountMapper.selectByUserId(USER_ID)
+                .setTotalNegativePoints(40)
+                .setNetPoints(60)
+                .setFrozenPoints(60)
+                .setAvailablePoints(0)
+                .setAnnualEarnedPoints(100);
+        accountMapper.updateById(accountAfterAnnualClearing);
+
+        redemptionApplicationService.cancelOwnApplication(new ClubPointRedemptionCancelReqBO()
+                .setId(fixture.application.getId())
+                .setUserId(USER_ID)
+                .setReason("跨年取消释放")
+                .setCancelTime(releasedAt));
+
+        ClubPointAccountDO account = accountMapper.selectByUserId(USER_ID);
+        assertEquals(60, account.getNetPoints());
+        assertEquals(0, account.getFrozenPoints());
+        assertEquals(60, account.getAvailablePoints());
+        assertEquals(0L, transactionMapper.selectCount());
+        ClubPointFreezeDO freeze = freezeMapper.selectById(fixture.freeze.getId());
+        assertEquals(ClubPointFreezeStatusEnum.RELEASED.getStatus(), freeze.getStatus());
+        assertEquals(releasedAt, freeze.getReleasedAt());
+        assertEquals("跨年取消释放", freeze.getReleaseReason());
+        ClubPointStockLockDO stockLock = stockLockMapper.selectById(fixture.stockLock.getId());
+        assertEquals(ClubPointStockLockStatusEnum.RELEASED.getStatus(), stockLock.getStatus());
+        assertEquals(0, giftMapper.selectById(fixture.gift.getId()).getStockLocked());
+    }
+
+    @Test
     void cancelOwnApplicationShouldBeIdempotentForSameUser() {
         RedemptionFixture fixture = insertPendingApplication(USER_ID, "REQ-M9-7002", BASE_TIME);
         ClubPointRedemptionCancelReqBO reqBO = new ClubPointRedemptionCancelReqBO()

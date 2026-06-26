@@ -1,6 +1,6 @@
 # M9 兑换闭环 Implementation Plan
 
-**Status:** `[~]` M9.8 已完成并有 RED/GREEN 证据；当前入口是 M9.9 测试收口。
+**Status:** `[x]` M9 已完成并有 RED/GREEN、组合测试和质量门禁证据；下一步入口是 M10 异议、年度清零、排名、激励、预算闭环。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -277,32 +277,41 @@
 
 ## 任务 M9.9 测试
 
-- [ ] 测试批次状态机。
-- [ ] 测试资格快照生成。
-- [ ] 测试库存不足失败。
-- [ ] 测试积分不足失败。
-- [ ] 测试并发申请不超兑。
-- [ ] 测试重复申请幂等。
-- [ ] 测试审核通过扣分。
-- [ ] 测试审核拒绝释放。
-- [ ] 测试取消释放。
-- [ ] 测试跨年冻结释放口径。
+- [x] 测试批次状态机。
+- [x] 测试资格快照生成。
+- [x] 测试库存不足失败。
+- [x] 测试积分不足失败。
+- [x] 测试并发申请不超兑。
+- [x] 测试重复申请幂等。
+- [x] 测试审核通过扣分。
+- [x] 测试审核拒绝释放。
+- [x] 测试取消释放。
+- [x] 测试跨年冻结释放口径。
 
 验收：
 
-- [ ] 并发测试通过。
-- [ ] 冻结、库存、申请、流水一致。
+- [x] 并发测试通过。
+- [x] 冻结、库存、申请、流水一致。
+
+证据：
+
+- RED：运行 `mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRedemptionApplicationServiceImplTest#concurrentApplyShouldNotOversellAndRollbackFailedApplicant,ClubPointRedemptionCancelServiceImplTest#cancelCrossYearFrozenApplicationShouldReleaseBackWithoutExpiredClearing" "-Dsurefire.failIfNoSpecifiedTests=true" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `No tests matching pattern`，说明 M9.9 的并发申请入口和跨年冻结释放收口测试尚不存在。
+- GREEN：在 `ClubPointRedemptionApplicationServiceImplTest` 增加 `concurrentApplyShouldNotOversellAndRollbackFailedApplicant`，两个合格员工并发申请库存为 1 的同一礼品，断言只有 1 个申请成功、1 个库存不足失败，最终只存在 1 条申请、1 条冻结、1 条库存锁，成功员工冻结 60 分，失败员工账户回滚为可用 100 分。
+- GREEN：在 `ClubPointRedemptionCancelServiceImplTest` 增加 `cancelCrossYearFrozenApplicationShouldReleaseBackWithoutExpiredClearing`，模拟 2026-12-30 冻结、2027-01-01 年度清零后账户为 `net=60/frozen=60/available=0`，2027-01-03 取消释放后账户变为 `net=60/frozen=0/available=60`，不生成兑换扣减或过期清零流水。
+- 收口复核：批次状态机和资格快照生成由 `ClubPointRedemptionBatchServiceImplTest` 覆盖；库存不足、积分不足、重复申请幂等和申请事务一致性由 `ClubPointRedemptionApplicationServiceImplTest` 覆盖；审核通过扣分和审核拒绝释放由 `ClubPointRedemptionReviewServiceImplTest` 覆盖；取消释放和超时释放由 `ClubPointRedemptionCancelServiceImplTest` 覆盖；礼品库存条件更新和礼品层并发不超兑由 `ClubPointRedemptionGiftServiceImplTest` 覆盖。
+- M9.9 新增测试验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRedemptionApplicationServiceImplTest#concurrentApplyShouldNotOversellAndRollbackFailedApplicant,ClubPointRedemptionCancelServiceImplTest#cancelCrossYearFrozenApplicationShouldReleaseBackWithoutExpiredClearing" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；新增 2 个测试，失败 `0`，错误 `0`。
+- M9 收口组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRedemptionControllerTest,ClubPointRedemptionCancelServiceImplTest,ClubPointRedemptionMapperTest,ClubPointRedemptionBatchServiceImplTest,ClubPointRedemptionGiftServiceImplTest,ClubPointRedemptionEligibilityServiceImplTest,ClubPointRedemptionApplicationServiceImplTest,ClubPointRedemptionReviewServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `38` 个测试，失败 `0`，错误 `0`。
 
 ## M9 放行标准
 
-- [ ] 批次可用。
-- [ ] 礼品可用。
-- [ ] 资格快照可用。
-- [ ] 申请冻结库存闭环可用。
-- [ ] 审核扣分和释放闭环可用。
-- [ ] 并发不超兑。
+- [x] 批次可用。
+- [x] 礼品可用。
+- [x] 资格快照可用。
+- [x] 申请冻结库存闭环可用。
+- [x] 审核扣分和释放闭环可用。
+- [x] 并发不超兑。
 
 ## M9 不通过时禁止
 
-- [ ] 禁止做兑换前端验收。
-- [ ] 禁止做 MVP 闭环演示。
+- [x] 禁止做兑换前端验收。
+- [x] 禁止做 MVP 闭环演示。
