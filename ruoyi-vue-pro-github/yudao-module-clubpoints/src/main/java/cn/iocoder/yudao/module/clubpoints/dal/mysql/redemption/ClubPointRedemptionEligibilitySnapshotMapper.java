@@ -18,6 +18,15 @@ public interface ClubPointRedemptionEligibilitySnapshotMapper
                 .orderByAsc(ClubPointRedemptionEligibilitySnapshotDO::getUserId));
     }
 
+    default List<ClubPointRedemptionEligibilitySnapshotDO> selectListByBatchIdAndQualified(Long batchId,
+                                                                                           Boolean qualified) {
+        return selectList(new LambdaQueryWrapperX<ClubPointRedemptionEligibilitySnapshotDO>()
+                .eq(ClubPointRedemptionEligibilitySnapshotDO::getBatchId, batchId)
+                .eqIfPresent(ClubPointRedemptionEligibilitySnapshotDO::getQualified, qualified)
+                .orderByAsc(ClubPointRedemptionEligibilitySnapshotDO::getRankNo)
+                .orderByAsc(ClubPointRedemptionEligibilitySnapshotDO::getUserId));
+    }
+
     default Long selectCountByBatchId(Long batchId) {
         return selectCount(new LambdaQueryWrapperX<ClubPointRedemptionEligibilitySnapshotDO>()
                 .eq(ClubPointRedemptionEligibilitySnapshotDO::getBatchId, batchId));

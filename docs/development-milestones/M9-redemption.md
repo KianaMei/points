@@ -1,6 +1,6 @@
 # M9 兑换闭环 Implementation Plan
 
-**Status:** `[~]` M9.3 已完成并有 RED/GREEN 证据；当前入口是 M9.4 资格快照。
+**Status:** `[~]` M9.4 已完成并有 RED/GREEN 证据；当前入口是 M9.5 申请 Service。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -142,16 +142,26 @@
 
 ## 任务 M9.4 资格快照
 
-- [ ] 按批次生成人员资格快照。
-- [ ] 保存用户、部门、积分、排名、规则快照。
-- [ ] 员工申请时读取快照。
-- [ ] 批次内资格不受后续积分变化影响，除非设计明确允许刷新。
-- [ ] 支持管理员查看资格快照。
+- [x] 按批次生成人员资格快照。
+- [x] 保存用户、部门、积分、排名、规则快照。
+- [x] 员工申请时读取快照。
+- [x] 批次内资格不受后续积分变化影响，除非设计明确允许刷新。
+- [x] 支持管理员查看资格快照。
 
 验收：
 
-- [ ] 资格判断有历史依据。
-- [ ] 申请时不重新临时拼规则。
+- [x] 资格判断有历史依据。
+- [x] 申请时不重新临时拼规则。
+
+证据：
+
+- RED：新增 `ClubPointRedemptionEligibilityServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionEligibilityServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `ClubPointRedemptionEligibilityService`、`ClubPointRedemptionEligibilityServiceImpl`、资格不存在和资格不合格错误码不存在，符合 M9.4 RED 预期。
+- GREEN：新增兑换资格快照 Service 和实现，补资格不存在/不合格错误码，并给资格快照 Mapper 增加按批次和资格结果筛选查询；管理员查看资格快照要求全局范围，员工申请前通过 `validateUserQualifiedForApply(...)` 读取本人快照并校验 `qualified=true`。
+- 快照事实源：资格快照生成仍由 M9.2 的 `openBatch(...)` 完成，M9.4 不复制生成逻辑；申请前资格判断只读取 `club_points_redemption_eligibility_snapshot`，不读取实时账户、不重新拼规则，后续积分变化不会改写批次内资格结论。
+- 实现边界：M9.4 只补资格快照读侧和申请前资格校验服务，不创建申请、不冻结积分、不锁库存、不审核扣分、不实现 API；没有引入 Redis 库存事实源，也没有调用 LedgerService 或直接写积分流水。
+- M9.4 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionEligibilityServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRedemptionEligibilityServiceImplTest` 运行 `3` 个测试，失败 `0`，错误 `0`。
+- M9 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRedemptionMapperTest,ClubPointRedemptionBatchServiceImplTest,ClubPointRedemptionGiftServiceImplTest,ClubPointRedemptionEligibilityServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `15` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；clubpoints 主代码 Redis 库存事实源模式无命中；redemption Service 范围无 `transactionMapper.insert`、`club_points_transaction`、`createTransaction(...)` 或 `reverseTransaction(...)` 命中。
 
 ## 任务 M9.5 申请 Service
 
