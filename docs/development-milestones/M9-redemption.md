@@ -1,6 +1,6 @@
 # M9 兑换闭环 Implementation Plan
 
-**Status:** `[~]` M9.2 已完成并有 RED/GREEN 证据；当前入口是 M9.3 礼品 Service。
+**Status:** `[~]` M9.3 已完成并有 RED/GREEN 证据；当前入口是 M9.4 资格快照。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -115,20 +115,30 @@
 
 ## 任务 M9.3 礼品 Service
 
-- [ ] 新增礼品。
-- [ ] 修改礼品。
-- [ ] 上架礼品。
-- [ ] 下架礼品。
-- [ ] 设置积分价格。
-- [ ] 设置库存。
-- [ ] 使用数据库条件更新锁库存。
-- [ ] 不用 Redis 当库存事实源。
+- [x] 新增礼品。
+- [x] 修改礼品。
+- [x] 上架礼品。
+- [x] 下架礼品。
+- [x] 设置积分价格。
+- [x] 设置库存。
+- [x] 使用数据库条件更新锁库存。
+- [x] 不用 Redis 当库存事实源。
 
 验收：
 
-- [ ] 已锁库存和已兑库存字段准确。
-- [ ] 库存不足时申请失败。
-- [ ] 并发申请不会超兑。
+- [x] 已锁库存和已兑库存字段准确。
+- [x] 库存不足时申请失败。
+- [x] 并发申请不会超兑。
+
+证据：
+
+- RED：新增 `ClubPointRedemptionGiftServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionGiftServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `ClubPointRedemptionGiftService`、`ClubPointRedemptionGiftServiceImpl`、礼品 BO、`ClubPointRedemptionGiftStatusEnum` 和礼品库存错误码不存在，符合 M9.3 RED 预期。
+- GREEN：新增兑换礼品 Service/BO、礼品状态枚举、礼品错误码，并补礼品 Mapper 条件更新方法；创建礼品默认下架且 `stock_locked=0`、`stock_used=0`，修改礼品可维护积分价格、库存、档位、图片和排序，上架/下架只允许有效状态。
+- 库存事实源：`lockStock(...)` 使用数据库条件更新，要求礼品上架且 `stock_total - stock_locked - stock_used >= quantity`；`releaseLockedStock(...)` 条件减少已锁库存，`useLockedStock(...)` 条件减少已锁库存并增加已兑库存；库存不足会抛礼品库存不足错误，作为 M9.5 申请失败入口。
+- 实现边界：M9.3 只实现礼品 Service 和库存计数能力，不创建员工兑换申请、不冻结积分、不创建库存锁记录、不审核扣分、不释放冻结、不实现 API；没有引入 Redis 库存事实源，也没有调用 LedgerService 或直接写积分流水。
+- M9.3 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionGiftServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRedemptionGiftServiceImplTest` 运行 `6` 个测试，失败 `0`，错误 `0`。
+- M9 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRedemptionMapperTest,ClubPointRedemptionBatchServiceImplTest,ClubPointRedemptionGiftServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `12` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；clubpoints 主代码 Redis 库存事实源模式无命中；redemption Service 范围无 `transactionMapper.insert`、`club_points_transaction`、`createTransaction(...)` 或 `reverseTransaction(...)` 命中。
 
 ## 任务 M9.4 资格快照
 

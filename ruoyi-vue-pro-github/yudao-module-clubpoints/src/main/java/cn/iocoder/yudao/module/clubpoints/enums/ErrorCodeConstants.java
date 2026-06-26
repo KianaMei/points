@@ -65,5 +65,10 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_REDEMPTION_BATCH_RULE_INVALID = new ErrorCode(1_300_000_053, "兑换批次资格规则无效");
     ErrorCode CLUB_REDEMPTION_ELIGIBILITY_SNAPSHOT_DUPLICATED = new ErrorCode(1_300_000_054, "兑换资格快照已生成");
     ErrorCode CLUB_REDEMPTION_BATCH_CLOSED = new ErrorCode(1_300_000_055, "兑换批次未开放或已关闭");
+    ErrorCode CLUB_REDEMPTION_GIFT_NOT_EXISTS = new ErrorCode(1_300_000_056, "兑换礼品不存在");
+    ErrorCode CLUB_REDEMPTION_GIFT_INVALID = new ErrorCode(1_300_000_057, "兑换礼品参数无效");
+    ErrorCode CLUB_REDEMPTION_GIFT_STATUS_INVALID = new ErrorCode(1_300_000_058, "兑换礼品状态不允许当前操作");
+    ErrorCode CLUB_REDEMPTION_GIFT_STOCK_INVALID = new ErrorCode(1_300_000_059, "兑换礼品库存状态无效");
+    ErrorCode CLUB_REDEMPTION_GIFT_STOCK_NOT_ENOUGH = new ErrorCode(1_300_000_060, "兑换礼品库存不足");
 
 }

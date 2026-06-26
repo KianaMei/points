@@ -404,3 +404,10 @@
 - 2026-06-26：M9 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRedemptionMapperTest,ClubPointRedemptionBatchServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `6` 个测试，失败 `0`，错误 `0`。
 - 2026-06-26：M9.2 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；clubpoints 主代码 Redis 库存事实源模式无命中；redemption Service 范围无直接写账本或调用账本命中。
 - 2026-06-26：M9.2 文档同步：`M9-redemption.md` 勾选 M9.2 并补 RED/GREEN/组合/质量证据，`00-index.md` 当前入口切换到 M9.3 礼品 Service。
+- 2026-06-26：M9.3 RED：新增 `ClubPointRedemptionGiftServiceImplTest`，覆盖新增礼品、修改价格和库存、上架下架、库存不足失败、释放和转已兑、并发锁库存不超兑；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionGiftServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`，原因是礼品 Service、实现、BO、状态枚举和礼品库存错误码不存在。
+- 2026-06-26：M9.3 GREEN：新增 `ClubPointRedemptionGiftService` / `ClubPointRedemptionGiftServiceImpl`、礼品保存和操作 BO、`ClubPointRedemptionGiftStatusEnum`、礼品错误码，并给礼品 Mapper 补行锁读取、条件增加已锁库存、条件减少已锁库存、已锁转已兑方法。
+- 2026-06-26：M9.3 实现边界：创建礼品默认下架且库存计数归零；修改礼品校验 `stock_total >= stock_locked + stock_used`；锁库存使用数据库条件更新，要求上架且剩余库存足够；释放和已锁转已兑都用数据库条件更新。M9.3 未创建兑换申请、未冻结积分、未创建库存锁记录、未审核扣分、未实现 API，未引入 Redis 库存事实源，也未调用 LedgerService。
+- 2026-06-26：M9.3 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionGiftServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRedemptionGiftServiceImplTest` 运行 `6` 个测试，失败 `0`，错误 `0`。
+- 2026-06-26：M9 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRedemptionMapperTest,ClubPointRedemptionBatchServiceImplTest,ClubPointRedemptionGiftServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `12` 个测试，失败 `0`，错误 `0`。
+- 2026-06-26：M9.3 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；clubpoints 主代码 Redis 库存事实源模式无命中；redemption Service 范围无直接写账本或调用账本命中。
+- 2026-06-26：M9.3 文档同步：`M9-redemption.md` 勾选 M9.3 并补 RED/GREEN/组合/质量证据，`00-index.md` 当前入口切换到 M9.4 资格快照。
