@@ -59,5 +59,11 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_CONTRIBUTION_ATTACHMENT_REQUIRED = new ErrorCode(1_300_000_047, "非签到材料附件缺失");
     ErrorCode CLUB_CONTRIBUTION_SUBMIT_DUPLICATED = new ErrorCode(1_300_000_048, "非签到材料重复提交");
     ErrorCode CLUB_CONTRIBUTION_REVIEW_DENIED = new ErrorCode(1_300_000_049, "无权审核非签到材料");
+    ErrorCode CLUB_REDEMPTION_BATCH_NOT_EXISTS = new ErrorCode(1_300_000_050, "兑换批次不存在");
+    ErrorCode CLUB_REDEMPTION_BATCH_STATUS_INVALID = new ErrorCode(1_300_000_051, "兑换批次状态不允许当前操作");
+    ErrorCode CLUB_REDEMPTION_BATCH_TIME_INVALID = new ErrorCode(1_300_000_052, "兑换批次时间配置无效");
+    ErrorCode CLUB_REDEMPTION_BATCH_RULE_INVALID = new ErrorCode(1_300_000_053, "兑换批次资格规则无效");
+    ErrorCode CLUB_REDEMPTION_ELIGIBILITY_SNAPSHOT_DUPLICATED = new ErrorCode(1_300_000_054, "兑换资格快照已生成");
+    ErrorCode CLUB_REDEMPTION_BATCH_CLOSED = new ErrorCode(1_300_000_055, "兑换批次未开放或已关闭");
 
 }

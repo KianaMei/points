@@ -6,4 +6,9 @@ import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
 public interface ClubPointRedemptionBatchMapper extends BaseMapperX<ClubPointRedemptionBatchDO> {
+
+    default ClubPointRedemptionBatchDO selectByIdForUpdate(Long id) {
+        return selectOneForUpdate(ClubPointRedemptionBatchDO::getId, id);
+    }
+
 }

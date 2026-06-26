@@ -17,6 +17,12 @@ public interface ClubPointAccountMapper extends BaseMapperX<ClubPointAccountDO> 
                 .orderByAsc(ClubPointAccountDO::getUserId));
     }
 
+    default List<ClubPointAccountDO> selectListForEligibilitySnapshot() {
+        return selectList(new LambdaQueryWrapperX<ClubPointAccountDO>()
+                .orderByDesc(ClubPointAccountDO::getAvailablePoints)
+                .orderByAsc(ClubPointAccountDO::getUserId));
+    }
+
     default ClubPointAccountDO selectByUserId(Long userId) {
         return selectOne(new LambdaQueryWrapperX<ClubPointAccountDO>()
                 .eq(ClubPointAccountDO::getUserId, userId));

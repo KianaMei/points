@@ -1,6 +1,6 @@
 # M9 兑换闭环 Implementation Plan
 
-**Status:** `[~]` M9.1 已完成并有 RED/GREEN 证据；当前入口是 M9.2 批次 Service。
+**Status:** `[~]` M9.2 已完成并有 RED/GREEN 证据；当前入口是 M9.3 礼品 Service。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -88,19 +88,30 @@
 
 ## 任务 M9.2 批次 Service
 
-- [ ] 创建兑换批次。
-- [ ] 修改未开启批次。
-- [ ] 开启批次。
-- [ ] 关闭批次。
-- [ ] 生成资格快照。
-- [ ] 修改资格规则写强审计。
-- [ ] 批次开启后关键规则不可随意变更。
+- [x] 创建兑换批次。
+- [x] 修改未开启批次。
+- [x] 开启批次。
+- [x] 关闭批次。
+- [x] 生成资格快照。
+- [x] 修改资格规则写强审计。
+- [x] 批次开启后关键规则不可随意变更。
 
 验收：
 
-- [ ] 批次状态机受控。
-- [ ] 资格快照可追溯。
-- [ ] 批次关闭后不能新增申请。
+- [x] 批次状态机受控。
+- [x] 资格快照可追溯。
+- [x] 批次关闭后不能新增申请。
+
+证据：
+
+- RED：新增 `ClubPointRedemptionBatchServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionBatchServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `ClubPointRedemptionBatchService`、`ClubPointRedemptionBatchServiceImpl`、批次 BO、`ClubPointRedemptionBatchStatusEnum`、批次错误码、`REDEMPTION_BATCH_RULE_UPDATE` 和快照 mapper 查询方法不存在，符合 M9.2 RED 预期。
+- GREEN：新增兑换批次 Service/BO、批次状态枚举、批次错误码和 `REDEMPTION_BATCH_RULE_UPDATE` 强审计动作；批次创建默认为草稿，草稿可修改，开启批次同事务生成账户资格快照，关闭后 `validateBatchOpenForApply(...)` 拒绝后续申请入口。
+- 资格快照口径：按账户缓存 `available_points` 降序、`user_id` 升序生成快照，保存用户、部门、净积分、冻结积分、可用积分、年度获取积分、排名、资格结果和 cutoff 同分标记；资格快照只作为申请资格事实源，M9.2 不做申请实时余额校验。
+- 强审计与事务边界：修改最低可用积分、资格人数、并列规则、资格规则 JSON、规则版本或规则快照会写强审计；审计失败会回滚批次规则修改。
+- 实现边界：M9.2 只实现批次 Service，不实现礼品 Service、库存条件更新、员工申请、积分冻结、库存锁、审核扣分、释放或 API；没有引入 Redis 库存事实源，也没有调用 LedgerService 或直接写积分流水。
+- M9.2 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionBatchServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRedemptionBatchServiceImplTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
+- M9 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRedemptionMapperTest,ClubPointRedemptionBatchServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `6` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；clubpoints 主代码 Redis 库存事实源模式无命中；redemption Service 范围无 `transactionMapper.insert`、`club_points_transaction`、`createTransaction(...)` 或 `reverseTransaction(...)` 命中。
 
 ## 任务 M9.3 礼品 Service
 
