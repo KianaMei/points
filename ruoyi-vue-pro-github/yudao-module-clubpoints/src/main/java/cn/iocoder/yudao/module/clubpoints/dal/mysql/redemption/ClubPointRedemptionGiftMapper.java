@@ -1,15 +1,29 @@
 package cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption;
 
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionGiftDO;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.Collection;
 import java.util.List;
 
 @Mapper
 public interface ClubPointRedemptionGiftMapper extends BaseMapperX<ClubPointRedemptionGiftDO> {
+
+    default PageResult<ClubPointRedemptionGiftDO> selectPage(PageParam pageParam, Long batchId, Integer status,
+                                                            String keyword, Collection<Integer> statuses) {
+        return selectPage(pageParam, new LambdaQueryWrapperX<ClubPointRedemptionGiftDO>()
+                .eqIfPresent(ClubPointRedemptionGiftDO::getBatchId, batchId)
+                .eqIfPresent(ClubPointRedemptionGiftDO::getStatus, status)
+                .inIfPresent(ClubPointRedemptionGiftDO::getStatus, statuses)
+                .likeIfPresent(ClubPointRedemptionGiftDO::getName, keyword)
+                .orderByAsc(ClubPointRedemptionGiftDO::getSort)
+                .orderByAsc(ClubPointRedemptionGiftDO::getId));
+    }
 
     default List<ClubPointRedemptionGiftDO> selectListByBatchId(Long batchId) {
         return selectList(new LambdaQueryWrapperX<ClubPointRedemptionGiftDO>()

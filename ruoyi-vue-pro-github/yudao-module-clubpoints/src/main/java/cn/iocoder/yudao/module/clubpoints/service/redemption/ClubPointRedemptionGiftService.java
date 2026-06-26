@@ -1,12 +1,18 @@
 package cn.iocoder.yudao.module.clubpoints.service.redemption;
 
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionGiftDO;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionGiftOperationReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionGiftPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionGiftSaveReqBO;
 
 /**
  * 兑换礼品服务
  */
 public interface ClubPointRedemptionGiftService {
+
+    PageResult<ClubPointRedemptionGiftDO> getAdminGiftPage(boolean operatorGlobalScope,
+                                                           ClubPointRedemptionGiftPageReqBO reqBO);
 
     Long createGift(ClubPointRedemptionGiftSaveReqBO reqBO);
 

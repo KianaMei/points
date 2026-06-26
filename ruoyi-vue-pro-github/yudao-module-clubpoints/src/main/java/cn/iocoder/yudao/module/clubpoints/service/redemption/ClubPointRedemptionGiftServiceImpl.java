@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.clubpoints.service.redemption;
 
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionBatchDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionGiftDO;
@@ -7,6 +8,7 @@ import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointRedempti
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointRedemptionGiftMapper;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRedemptionGiftStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionGiftOperationReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionGiftPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionGiftSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeService;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,13 @@ public class ClubPointRedemptionGiftServiceImpl implements ClubPointRedemptionGi
     private ClubPointRedemptionGiftMapper giftMapper;
     @Resource
     private ClubScopeService clubScopeService;
+
+    @Override
+    public PageResult<ClubPointRedemptionGiftDO> getAdminGiftPage(boolean operatorGlobalScope,
+                                                                  ClubPointRedemptionGiftPageReqBO reqBO) {
+        clubScopeService.validateGlobal(operatorGlobalScope);
+        return giftMapper.selectPage(reqBO, reqBO.getBatchId(), reqBO.getStatus(), reqBO.getKeyword(), null);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

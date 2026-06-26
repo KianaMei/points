@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.clubpoints.service.redemption;
 
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionApplicationDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionGiftDO;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionApplyReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionApplicationPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionCancelReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionReviewReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionTimeoutReqBO;
@@ -13,6 +15,12 @@ import java.util.List;
  * 兑换申请服务
  */
 public interface ClubPointRedemptionApplicationService {
+
+    PageResult<ClubPointRedemptionApplicationDO> getAdminApplicationPage(
+            boolean operatorGlobalScope, ClubPointRedemptionApplicationPageReqBO reqBO);
+
+    PageResult<ClubPointRedemptionApplicationDO> getUserApplicationPage(Long userId,
+                                                                        ClubPointRedemptionApplicationPageReqBO reqBO);
 
     List<ClubPointRedemptionGiftDO> listAvailableGifts(Long batchId, Long userId);
 

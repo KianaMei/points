@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.clubpoints.service.redemption;
 
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionBatchDO;
@@ -11,6 +12,7 @@ import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRedemptionBatchStatusEn
 import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditService;
 import cn.iocoder.yudao.module.clubpoints.service.audit.bo.ClubAuditCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionBatchOperationReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionBatchPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionBatchSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeService;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
@@ -66,6 +68,19 @@ public class ClubPointRedemptionBatchServiceImpl implements ClubPointRedemptionB
     private AdminUserApi adminUserApi;
     @Resource
     private DeptApi deptApi;
+
+    @Override
+    public PageResult<ClubPointRedemptionBatchDO> getAdminBatchPage(boolean operatorGlobalScope,
+                                                                    ClubPointRedemptionBatchPageReqBO reqBO) {
+        clubScopeService.validateGlobal(operatorGlobalScope);
+        return batchMapper.selectPage(reqBO, reqBO.getYear(), reqBO.getStatus(), reqBO.getKeyword(), null);
+    }
+
+    @Override
+    public PageResult<ClubPointRedemptionBatchDO> getAppOpenBatchPage(ClubPointRedemptionBatchPageReqBO reqBO) {
+        return batchMapper.selectPage(reqBO, reqBO.getYear(),
+                ClubPointRedemptionBatchStatusEnum.OPENED.getStatus(), reqBO.getKeyword(), null);
+    }
 
     @Override
     public Long createBatch(ClubPointRedemptionBatchSaveReqBO reqBO) {

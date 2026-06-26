@@ -1,6 +1,6 @@
 # M9 兑换闭环 Implementation Plan
 
-**Status:** `[~]` M9.7 已完成并有 RED/GREEN 证据；当前入口是 M9.8 API。
+**Status:** `[~]` M9.8 已完成并有 RED/GREEN 证据；当前入口是 M9.9 测试收口。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -250,19 +250,30 @@
 
 ## 任务 M9.8 API
 
-- [ ] 管理员批次管理接口。
-- [ ] 管理员礼品管理接口。
-- [ ] 管理员资格快照接口。
-- [ ] 管理员审核接口。
-- [ ] 员工可兑换列表接口。
-- [ ] 员工提交申请接口。
-- [ ] 员工申请记录接口。
-- [ ] 员工取消申请接口。
+- [x] 管理员批次管理接口。
+- [x] 管理员礼品管理接口。
+- [x] 管理员资格快照接口。
+- [x] 管理员审核接口。
+- [x] 员工可兑换列表接口。
+- [x] 员工提交申请接口。
+- [x] 员工申请记录接口。
+- [x] 员工取消申请接口。
 
 验收：
 
-- [ ] API 路径和 `club-points-api-design.md` 一致。
-- [ ] 负责人不能审核兑换。
+- [x] API 路径和 `club-points-api-design.md` 一致。
+- [x] 负责人不能审核兑换。
+
+证据：
+
+- RED：新增 `ClubPointRedemptionControllerTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `controller.admin.redemption`、`controller.app.redemption` 包、兑换 Controller 和 VO 不存在，符合 M9.8 RED 预期。
+- GREEN：新增员工端 `/clubpoints/app/redemption` Controller 和管理员端 `/clubpoints/redemption-batch`、`/clubpoints/redemption-gift`、`/clubpoints/redemption-application` Controller；补齐 app/admin VO、批次/礼品/资格/申请分页 BO、Mapper 分页查询和 Service 读侧入口。
+- 权限边界：员工开放批次、礼品和我的兑换为登录本人入口；提交兑换使用 `clubpoints:redemption:apply`，取消本人兑换使用 `clubpoints:redemption:cancel-own`；管理员批次和资格快照使用 `clubpoints:redemption-batch:manage`，礼品使用 `clubpoints:redemption-gift:manage`，审核使用 `clubpoints:redemption:review`。未新增负责人兑换审核入口，负责人不能审核兑换。
+- API 文档补齐：`club-points-api-design.md` 原表缺少资格快照路径，M9.8 将管理员资格快照分页明确为 `GET /clubpoints/redemption-batch/eligibility-page`，权限为 `clubpoints:redemption-batch:manage`。
+- 实现边界：Controller 只做登录态、权限注解、VO/BO 转换和响应映射；申请、冻结、库存锁、审核扣分、取消释放仍全部复用 M9.5-M9.7 Service；前端不传当前用户 ID、operator、globalScope、IP 或 UA；库存事实源仍是数据库条件更新，未引入 Redis。
+- M9.8 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRedemptionControllerTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
+- M9 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRedemptionControllerTest,ClubPointRedemptionCancelServiceImplTest,ClubPointRedemptionMapperTest,ClubPointRedemptionBatchServiceImplTest,ClubPointRedemptionGiftServiceImplTest,ClubPointRedemptionEligibilityServiceImplTest,ClubPointRedemptionApplicationServiceImplTest,ClubPointRedemptionReviewServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `36` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；clubpoints 主代码 Redis 库存事实源模式无命中；redemption 生产 Service 范围无直接写账本命中，测试账本命中仅为空实现测试替身方法签名。
 
 ## 任务 M9.9 测试
 

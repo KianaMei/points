@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.clubpoints.service.redemption;
 
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointFreezeDO;
@@ -32,6 +33,7 @@ import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointFreezeCreat
 import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointFreezeReleaseReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.notify.ClubNotifyService;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionApplyReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionApplicationPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionCancelReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionReviewReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionTimeoutReqBO;
@@ -101,6 +103,19 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
     private ClubPointAccountMapper accountMapper;
     @Resource
     private ClubPointFreezeMapper freezeMapper;
+
+    @Override
+    public PageResult<ClubPointRedemptionApplicationDO> getAdminApplicationPage(
+            boolean operatorGlobalScope, ClubPointRedemptionApplicationPageReqBO reqBO) {
+        clubScopeService.validateGlobal(operatorGlobalScope);
+        return applicationMapper.selectPage(reqBO, reqBO.getBatchId(), reqBO.getUserId(), reqBO.getStatus());
+    }
+
+    @Override
+    public PageResult<ClubPointRedemptionApplicationDO> getUserApplicationPage(
+            Long userId, ClubPointRedemptionApplicationPageReqBO reqBO) {
+        return applicationMapper.selectPage(reqBO, reqBO.getBatchId(), userId, reqBO.getStatus());
+    }
 
     @Override
     public List<ClubPointRedemptionGiftDO> listAvailableGifts(Long batchId, Long userId) {

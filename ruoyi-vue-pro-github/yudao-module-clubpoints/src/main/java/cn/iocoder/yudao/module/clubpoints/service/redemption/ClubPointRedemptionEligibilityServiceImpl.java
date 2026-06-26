@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.clubpoints.service.redemption;
 
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionBatchDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionEligibilitySnapshotDO;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointRedemptionBatchMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointRedemptionEligibilitySnapshotMapper;
+import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionEligibilityPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeService;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +29,14 @@ public class ClubPointRedemptionEligibilityServiceImpl implements ClubPointRedem
     private ClubPointRedemptionEligibilitySnapshotMapper eligibilitySnapshotMapper;
     @Resource
     private ClubScopeService clubScopeService;
+
+    @Override
+    public PageResult<ClubPointRedemptionEligibilitySnapshotDO> getAdminSnapshotPage(
+            boolean operatorGlobalScope, ClubPointRedemptionEligibilityPageReqBO reqBO) {
+        clubScopeService.validateGlobal(operatorGlobalScope);
+        validateBatchExists(reqBO.getBatchId());
+        return eligibilitySnapshotMapper.selectPage(reqBO, reqBO.getBatchId(), reqBO.getQualified(), reqBO.getUserId());
+    }
 
     @Override
     public List<ClubPointRedemptionEligibilitySnapshotDO> listBatchSnapshots(Long batchId, Boolean qualified,
