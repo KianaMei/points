@@ -15,6 +15,8 @@ export interface LeaderClubSaveReqVO {
   id: number
   name?: string
   description?: string
+  contactText?: string
+  coverFileId?: number | string
   reason?: string
 }
 

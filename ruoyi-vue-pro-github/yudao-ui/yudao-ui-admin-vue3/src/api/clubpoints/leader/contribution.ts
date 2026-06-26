@@ -12,13 +12,16 @@ export interface LeaderContributionItemReqVO {
   ruleItemCode: string
   points: number
   reason?: string
+  materialSummary?: string
 }
 
 export interface LeaderContributionSaveReqVO {
   id?: number
   clubId: number
+  type?: number
   ruleVersionId: number
   title: string
+  description?: string
   reason?: string
   items: LeaderContributionItemReqVO[]
   attachments?: AttachmentInputVO[]

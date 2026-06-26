@@ -557,3 +557,8 @@
 - 2026-06-26：M11.8 交互口径：工作台卡片和待办按 `path/queryJson` 跳转；积分页展示来源统计提示；退出俱乐部提示会自动取消可取消报名；签到签退提交 `registrationId` 和 `clientTime` 并提示以后端北京时间为准；兑换申请生成 `requestNo`，失败重试不换号；异议不直接改积分；通知只标记已读不删除。
 - 2026-06-26：M11.8 前端验证：7 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
 - 2026-06-26：M11.8 质量验证：员工页面范围 `request.get|post|put|delete` 无命中；权限按钮覆盖加入 / 退出 / 报名 / 取消报名 / 签到 / 签退 / 兑换申请 / 取消兑换；`requestNo` 只在兑换申请页出现；新增页面没有后端事实源、租户字段或 Redis 改动。
+- 2026-06-26：M11.9 RED：运行 `Test-Path` 检查负责人工作台、负责俱乐部、活动管理、报名签到、非签到材料 5 个页面文件，全部返回 `False`，确认负责人页面尚未落地。
+- 2026-06-26：M11.9 GREEN：新增 `views/clubpoints/leader/dashboard/index.vue`、`club/index.vue`、`activity/index.vue`、`attendance/index.vue`、`contribution/index.vue`；页面全部复用 `api/clubpoints/leader/*` 请求封装，不在页面散写请求封装。
+- 2026-06-26：M11.9 交互口径：工作台待办按 `path/queryJson` 跳转；负责俱乐部页只允许查看成员和修改基础信息，不提供创建、停用、删除、设置负责人或移除成员；活动页只选择自己负责俱乐部，取消和删除只用普通确认；签到页提示结算后修正不能改原流水；材料页只能提交、撤回、删除草稿，不提供审核入口。
+- 2026-06-26：M11.9 前端验证：5 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
+- 2026-06-26：M11.9 质量验证：负责人页面范围 `request.get|post|put|delete` 无命中；精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；禁止入口扫描未发现兑换审核、报表导出、规则配置、负责人任免、移除成员或强确认入口，`ruleVersionId` / 表单 `rules` 命中仅为活动和材料的规则版本字段。

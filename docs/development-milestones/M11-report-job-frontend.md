@@ -261,16 +261,24 @@ M11.8 证据：
 
 ## 任务 M11.9 负责人前端页面
 
-- [ ] 负责人工作台 `/clubpoints/leader/dashboard`，展示负责俱乐部、草稿活动、被驳回活动、签到异常、待提交材料、待办，待办带筛选跳转。
-- [ ] 负责俱乐部和成员 `/clubpoints/leader/club`，只能修改自己负责俱乐部基础信息并查看成员，不能创建、停用、删除、设置负责人、移除成员。
-- [ ] 活动管理 `/clubpoints/leader/activity`，支持创建、修改、提交审核、撤回、取消、删除草稿，规则版本必选，时间顺序前端即时校验。
-- [ ] 报名签到和特殊缺席 `/clubpoints/leader/attendance`，展示报名名单和签到签退，支持修正和标记特殊缺席，结算后修正提示走调整流程。
-- [ ] 非签到材料 `/clubpoints/leader/contribution`，支持材料创建、提交、撤回、删除，积分明细至少一条，通过后锁定只读。
+- [x] 负责人工作台 `/clubpoints/leader/dashboard`，展示负责俱乐部、草稿活动、被驳回活动、签到异常、待提交材料、待办，待办带筛选跳转。
+- [x] 负责俱乐部和成员 `/clubpoints/leader/club`，只能修改自己负责俱乐部基础信息并查看成员，不能创建、停用、删除、设置负责人、移除成员。
+- [x] 活动管理 `/clubpoints/leader/activity`，支持创建、修改、提交审核、撤回、取消、删除草稿，规则版本必选，时间顺序前端即时校验。
+- [x] 报名签到和特殊缺席 `/clubpoints/leader/attendance`，展示报名名单和签到签退，支持修正和标记特殊缺席，结算后修正提示走调整流程。
+- [x] 非签到材料 `/clubpoints/leader/contribution`，支持材料创建、提交、撤回、删除，积分明细至少一条，通过后锁定只读。
 
 验收：
 
-- [ ] 负责人不能看到其他俱乐部数据。
-- [ ] 负责人没有兑换审核、报表导出、规则配置入口。
+- [x] 负责人不能看到其他俱乐部数据。
+- [x] 负责人没有兑换审核、报表导出、规则配置入口。
+
+M11.9 证据：
+
+- RED：运行 `Test-Path` 检查 `views/clubpoints/leader/dashboard/index.vue`、`club/index.vue`、`activity/index.vue`、`attendance/index.vue`、`contribution/index.vue`，全部返回 `False`。
+- GREEN：新增 5 个负责人页面；页面复用 `api/clubpoints/leader/*` 请求封装，并补齐负责人俱乐部和材料提交相关前端类型字段。
+- 页面口径：工作台按 `path/queryJson` 跳转待办；俱乐部页只展示和修改本人负责俱乐部基础信息，成员只读；活动页负责俱乐部选项来自 `my-managed-list`，取消和删除只用普通确认；签到页提示结算后修正不能改原流水；材料页只能创建、提交、撤回和删除草稿，不提供审核入口。
+- 前端类型验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，二次过滤 `clubpoints` 路径命中 `0` 行，仍为前端工程存量 TypeScript 债。
+- 质量门禁：负责人页面范围 `request.get|post|put|delete` 无命中；精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；禁止入口扫描未发现兑换审核、报表导出、规则配置、负责人任免、移除成员或强确认入口，`ruleVersionId` / 表单 `rules` 命中仅为活动和材料的规则版本字段。
 
 ## 任务 M11.10 管理员活动和材料审核页
 
