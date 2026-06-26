@@ -19,6 +19,7 @@ import cn.iocoder.yudao.module.clubpoints.service.attachment.ClubAttachmentServi
 import cn.iocoder.yudao.module.clubpoints.service.attachment.bo.ClubAttachmentBindReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditService;
 import cn.iocoder.yudao.module.clubpoints.service.audit.bo.ClubAuditCreateReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionDirectCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionItemSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionMaterialSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionReviewReqBO;
@@ -30,6 +31,7 @@ import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.dao.DuplicateKeyException;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -41,7 +43,9 @@ import java.util.Objects;
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.BIZ_TYPE_CONTRIBUTION_MATERIAL;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.STATUS_EFFECTIVE;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CONTRIBUTION_DIRECT_CREATE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CONTRIBUTION_REVIEW;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionSourceTypeEnum.ADMIN_DIRECT;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionSourceTypeEnum.CONTRIBUTION_MATERIAL;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_CONTRIBUTION_ATTACHMENT_REQUIRED;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_CONTRIBUTION_MATERIAL_NOT_FOUND;
@@ -175,6 +179,40 @@ public class ClubPointContributionServiceImpl implements ClubPointContributionSe
         insertReviewRecord(material, reqBO, reviewTime, createdTransactionCount, auditLogId);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long directCreate(ClubPointContributionDirectCreateReqBO reqBO) {
+        validateDirectCreateReq(reqBO);
+        clubScopeService.validateGlobal(Boolean.TRUE.equals(reqBO.getOperatorGlobalScope()));
+        ClubPointContributionMaterialDO existing = materialMapper.selectByRequestNo(reqBO.getRequestNo());
+        if (existing != null) {
+            return existing.getId();
+        }
+
+        ClubPointContributionMaterialTypeEnum materialType = validateMaterialType(reqBO.getType());
+        ClubPointClubDO club = reqBO.getClubId() == null ? null : validateEnabledClub(reqBO.getClubId());
+        ClubPointRuleItemDO ruleItem = validateDirectRuleAndPoints(reqBO, materialType);
+        LocalDateTime operationTime = LocalDateTime.now();
+        ClubPointContributionMaterialDO material = buildDirectMaterial(reqBO, club, operationTime);
+        Long duplicatedMaterialId = insertDirectMaterial(material, reqBO.getRequestNo());
+        if (duplicatedMaterialId != null) {
+            return duplicatedMaterialId;
+        }
+        ClubPointContributionItemDO item = buildDirectItem(material, reqBO, materialType, ruleItem);
+        itemMapper.insert(item);
+        material.setSnapshotJson(snapshot(material, 1));
+        bindAttachments(material.getId(), reqBO.getOperatorUserId(), reqBO.getAttachments());
+        clubAttachmentService.lockBizAttachments(BIZ_TYPE_CONTRIBUTION_MATERIAL, material.getId());
+        Long auditLogId = createDirectCreateAudit(reqBO, material, item);
+        Long transactionId = ledgerService.createTransaction(buildDirectLedgerCreateReq(
+                material, item, reqBO, operationTime, auditLogId));
+        itemMapper.updateById(new ClubPointContributionItemDO()
+                .setId(item.getId())
+                .setTransactionId(transactionId));
+        materialMapper.updateById(material);
+        return material.getId();
+    }
+
     private ClubPointContributionMaterialDO validateMaterialExists(Long materialId) {
         ClubPointContributionMaterialDO material = materialMapper.selectById(materialId);
         if (material == null) {
@@ -287,6 +325,36 @@ public class ClubPointContributionServiceImpl implements ClubPointContributionSe
         }
     }
 
+    private static void validateDirectCreateReq(ClubPointContributionDirectCreateReqBO reqBO) {
+        if (reqBO == null || !StringUtils.hasText(reqBO.getRequestNo())
+                || reqBO.getType() == null || reqBO.getUserId() == null
+                || !StringUtils.hasText(reqBO.getUserNameSnapshot())
+                || reqBO.getPoints() == null || reqBO.getPoints() <= 0
+                || reqBO.getRuleVersionId() == null || reqBO.getOperatorUserId() == null
+                || !StringUtils.hasText(reqBO.getReason())) {
+            throw exception(CLUB_CONTRIBUTION_STATUS_INVALID);
+        }
+        if (reqBO.getAttachments() == null || reqBO.getAttachments().isEmpty()) {
+            throw exception(CLUB_CONTRIBUTION_ATTACHMENT_REQUIRED);
+        }
+    }
+
+    private ClubPointRuleItemDO validateDirectRuleAndPoints(ClubPointContributionDirectCreateReqBO reqBO,
+                                                            ClubPointContributionMaterialTypeEnum materialType) {
+        ClubPointRuleItemDO ruleItem = ruleResolveService.getItem(reqBO.getRuleVersionId(),
+                materialType.getRuleItemCode());
+        try {
+            ruleResolveService.validatePointsInRange(reqBO.getRuleVersionId(),
+                    materialType.getRuleItemCode(), reqBO.getPoints());
+        } catch (ServiceException ex) {
+            if (Objects.equals(CLUB_RULE_VALUE_OUT_OF_RANGE.getCode(), ex.getCode())) {
+                throw exception(CLUB_CONTRIBUTION_RULE_VALUE_OUT_OF_RANGE);
+            }
+            throw ex;
+        }
+        return ruleItem;
+    }
+
     private void validateAttachmentExists(Long materialId) {
         if (attachmentRefMapper.selectListByBiz(BIZ_TYPE_CONTRIBUTION_MATERIAL,
                 materialId, STATUS_EFFECTIVE).isEmpty()) {
@@ -351,6 +419,60 @@ public class ClubPointContributionServiceImpl implements ClubPointContributionSe
         }
     }
 
+    private static ClubPointContributionMaterialDO buildDirectMaterial(ClubPointContributionDirectCreateReqBO reqBO,
+                                                                       ClubPointClubDO club,
+                                                                       LocalDateTime operationTime) {
+        return new ClubPointContributionMaterialDO()
+                .setClubId(club == null ? null : club.getId())
+                .setClubNameSnapshot(club == null ? null : club.getName())
+                .setType(reqBO.getType())
+                .setTitle("管理员代录积分")
+                .setDescription(reqBO.getReason())
+                .setStatus(ClubPointContributionMaterialStatusEnum.APPROVED.getStatus())
+                .setRuleVersionId(reqBO.getRuleVersionId())
+                .setSubmitterUserId(reqBO.getOperatorUserId())
+                .setSubmitTime(operationTime)
+                .setReviewerUserId(reqBO.getOperatorUserId())
+                .setReviewTime(operationTime)
+                .setReviewReason(reqBO.getReason())
+                .setLocked(true)
+                .setDirectCreated(true)
+                .setRequestNo(reqBO.getRequestNo());
+    }
+
+    private Long insertDirectMaterial(ClubPointContributionMaterialDO material, String requestNo) {
+        try {
+            materialMapper.insert(material);
+            return null;
+        } catch (DuplicateKeyException ex) {
+            ClubPointContributionMaterialDO duplicated = materialMapper.selectByRequestNo(requestNo);
+            if (duplicated != null) {
+                return duplicated.getId();
+            }
+            throw ex;
+        }
+    }
+
+    private static ClubPointContributionItemDO buildDirectItem(ClubPointContributionMaterialDO material,
+                                                               ClubPointContributionDirectCreateReqBO reqBO,
+                                                               ClubPointContributionMaterialTypeEnum materialType,
+                                                               ClubPointRuleItemDO ruleItem) {
+        return new ClubPointContributionItemDO()
+                .setMaterialId(material.getId())
+                .setClubId(material.getClubId())
+                .setUserId(reqBO.getUserId())
+                .setUserNameSnapshot(reqBO.getUserNameSnapshot())
+                .setDeptNameSnapshot(reqBO.getDeptNameSnapshot())
+                .setPointCategory(materialType.getPointCategory())
+                .setRuleItemId(ruleItem.getId())
+                .setRuleItemCode(materialType.getRuleItemCode())
+                .setDirection(materialType.getDirection())
+                .setPoints(reqBO.getPoints())
+                .setReason(reqBO.getReason())
+                .setMaterialSummary(reqBO.getReason())
+                .setIdempotencyKey(directIdempotencyKey(reqBO.getRequestNo()));
+    }
+
     private static void applyReviewResult(ClubPointContributionMaterialDO material,
                                           ClubPointContributionReviewReqBO reqBO,
                                           LocalDateTime reviewTime) {
@@ -413,6 +535,37 @@ public class ClubPointContributionServiceImpl implements ClubPointContributionSe
                 .setSourceSnapshotJson(material.getSnapshotJson());
     }
 
+    private static ClubPointLedgerCreateReqBO buildDirectLedgerCreateReq(ClubPointContributionMaterialDO material,
+                                                                         ClubPointContributionItemDO item,
+                                                                         ClubPointContributionDirectCreateReqBO reqBO,
+                                                                         LocalDateTime operationTime,
+                                                                         Long auditLogId) {
+        return new ClubPointLedgerCreateReqBO()
+                .setTransactionNo(reqBO.getRequestNo())
+                .setUserId(item.getUserId())
+                .setUserNameSnapshot(item.getUserNameSnapshot())
+                .setDeptNameSnapshot(item.getDeptNameSnapshot())
+                .setDirection(item.getDirection())
+                .setPoints(item.getPoints())
+                .setPointCategory(item.getPointCategory())
+                .setPointTypeCode(item.getRuleItemCode())
+                .setSourceType(ADMIN_DIRECT.getType())
+                .setSourceId(material.getId())
+                .setSourceItemId(item.getId())
+                .setSourceTitleSnapshot(material.getTitle())
+                .setIssuingClubId(material.getClubId())
+                .setIssuingClubNameSnapshot(material.getClubNameSnapshot())
+                .setMaterialSummary(item.getMaterialSummary())
+                .setReason(item.getReason())
+                .setOccurredAt(operationTime)
+                .setIdempotencyKey(directIdempotencyKey(reqBO.getRequestNo()))
+                .setOperatorUserId(reqBO.getOperatorUserId())
+                .setAuditLogId(auditLogId)
+                .setRuleItemCode(item.getRuleItemCode())
+                .setRuleVersionId(material.getRuleVersionId())
+                .setSourceSnapshotJson(material.getSnapshotJson());
+    }
+
     private static String buildContributionTransactionNo(Long materialId, Long itemId) {
         return "CONTRIBUTION:" + materialId + ":" + itemId;
     }
@@ -434,6 +587,26 @@ public class ClubPointContributionServiceImpl implements ClubPointContributionSe
                 .setReason(reqBO.getReason())
                 .setBeforeJson(beforeJson)
                 .setAfterJson(afterJson)
+                .setTargetSnapshotJson(material.getSnapshotJson())
+                .setSuccess(true));
+    }
+
+    private Long createDirectCreateAudit(ClubPointContributionDirectCreateReqBO reqBO,
+                                         ClubPointContributionMaterialDO material,
+                                         ClubPointContributionItemDO item) {
+        return clubAuditService.createAuditLog(new ClubAuditCreateReqBO()
+                .setActionType(CONTRIBUTION_DIRECT_CREATE)
+                .setBizType(BIZ_TYPE_CONTRIBUTION_MATERIAL)
+                .setBizId(material.getId())
+                .setOperatorUserId(reqBO.getOperatorUserId())
+                .setOperatorNameSnapshot(reqBO.getOperatorNameSnapshot())
+                .setOperatorRoleSnapshot(reqBO.getOperatorRoleSnapshot())
+                .setOperationTime(material.getReviewTime())
+                .setClientIp(reqBO.getClientIp())
+                .setUserAgent(reqBO.getUserAgent())
+                .setReason(reqBO.getReason())
+                .setBeforeJson(null)
+                .setAfterJson(directCreateAuditSnapshot(material, item, reqBO.getRequestNo()))
                 .setTargetSnapshotJson(material.getSnapshotJson())
                 .setSuccess(true));
     }
@@ -462,6 +635,10 @@ public class ClubPointContributionServiceImpl implements ClubPointContributionSe
         return "CONTRIBUTION:" + materialId + ":" + itemId + ":" + userId;
     }
 
+    private static String directIdempotencyKey(String requestNo) {
+        return "DIRECT_CONTRIBUTION:" + requestNo;
+    }
+
     private static String snapshot(ClubPointContributionMaterialDO material, int itemCount) {
         Map<String, Object> snapshot = new LinkedHashMap<>();
         snapshot.put("id", material.getId());
@@ -479,6 +656,7 @@ public class ClubPointContributionServiceImpl implements ClubPointContributionSe
         snapshot.put("reviewReason", material.getReviewReason());
         snapshot.put("locked", material.getLocked());
         snapshot.put("directCreated", material.getDirectCreated());
+        snapshot.put("requestNo", material.getRequestNo());
         snapshot.put("itemCount", itemCount);
         return JsonUtils.toJsonString(snapshot);
     }
@@ -493,6 +671,20 @@ public class ClubPointContributionServiceImpl implements ClubPointContributionSe
         snapshot.put("reviewReason", material.getReviewReason());
         snapshot.put("locked", material.getLocked());
         snapshot.put("itemCount", itemCount);
+        return JsonUtils.toJsonString(snapshot);
+    }
+
+    private static String directCreateAuditSnapshot(ClubPointContributionMaterialDO material,
+                                                    ClubPointContributionItemDO item,
+                                                    String requestNo) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("id", material.getId());
+        snapshot.put("requestNo", requestNo);
+        snapshot.put("status", material.getStatus());
+        snapshot.put("userId", item.getUserId());
+        snapshot.put("points", item.getPoints());
+        snapshot.put("ruleItemCode", item.getRuleItemCode());
+        snapshot.put("locked", material.getLocked());
         return JsonUtils.toJsonString(snapshot);
     }
 

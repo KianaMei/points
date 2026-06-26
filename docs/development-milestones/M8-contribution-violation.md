@@ -1,6 +1,6 @@
 # M8 非签到积分、违规扣分、弄虚作假 Implementation Plan
 
-**Status:** `[~]` M8.1-M8.4 已完成并有 RED/GREEN 证据；当前入口是 M8.5 管理员代录。
+**Status:** `[~]` M8.1-M8.5 已完成并有 RED/GREEN 证据；当前入口是 M8.6 违规扣分。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -159,19 +159,30 @@
 
 ## 任务 M8.5 管理员代录
 
-- [ ] 管理员创建代录申请。
-- [ ] 管理员选择用户和规则项。
-- [ ] 管理员录入实际分值。
-- [ ] 校验规则区间。
-- [ ] 生成积分流水。
-- [ ] 使用前端 requestNo 或后端请求号做幂等。
-- [ ] 写强审计。
+- [x] 管理员创建代录申请。
+- [x] 管理员选择用户和规则项。
+- [x] 管理员录入实际分值。
+- [x] 校验规则区间。
+- [x] 生成积分流水。
+- [x] 使用前端 requestNo 或后端请求号做幂等。
+- [x] 写强审计。
 
 验收：
 
-- [ ] 重复提交不重复发分。
-- [ ] 代录原因必填。
-- [ ] 代录附件按规则绑定。
+- [x] 重复提交不重复发分。
+- [x] 代录原因必填。
+- [x] 代录附件按规则绑定。
+
+证据：
+
+- RED：在 `ClubPointContributionServiceImplTest` 增加管理员代录用例后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `ClubPointContributionDirectCreateReqBO` 和 `CONTRIBUTION_DIRECT_CREATE` 不存在，符合 M8.5 RED 预期。
+- GREEN：新增 `ClubPointContributionDirectCreateReqBO`，`ClubPointContributionService` 增加 `directCreate(...)`；`ClubAuditActionTypeConstants` 新增 `CONTRIBUTION_DIRECT_CREATE`；管理员代录要求全局范围，使用 `requestNo` 和 `DIRECT_CONTRIBUTION:{requestNo}` 幂等，创建已审核通过并锁定的代录材料、单条材料明细、附件绑定与锁定、强审计和账本流水。
+- 账本边界：代录发分只通过 `ClubPointLedgerService.createTransaction(...)` 创建流水，`sourceType=ADMIN_DIRECT`，`sourceId=materialId`，`sourceItemId=itemId`；实现不直接写 `club_points_transaction`。
+- 事务边界：代录方法使用同一事务，强审计失败会回滚材料、明细、附件、流水和审计；重复 `requestNo` 直接返回既有材料 ID，不重复发分。
+- 实现边界：M8.5 只落 Service 能力，不新增 Controller/API；管理员代录接口进入 M8.8。
+- M8.5 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointContributionServiceImplTest` 运行 `13` 个测试，失败 `0`，错误 `0`。
+- M8 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointContributionMapperTest,ClubPointContributionEnumTest,ClubPointContributionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `18` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
 
 ## 任务 M8.6 违规扣分
 
@@ -239,7 +250,7 @@
 
 - [ ] 非签到材料提交可用。
 - [ ] 非签到审核发分可用。
-- [ ] 管理员代录可用。
+- [x] 管理员代录可用。
 - [ ] 违规扣分可用。
 - [ ] 弄虚作假处理可用。
 

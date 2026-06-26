@@ -359,3 +359,11 @@
 - 2026-06-26：M8 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointContributionMapperTest,ClubPointContributionEnumTest,ClubPointContributionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `14` 个测试，失败 `0`，错误 `0`。
 - 2026-06-26：M8.4 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
 - 2026-06-26：M8.4 文档同步：`M8-contribution-violation.md` 勾选 M8.4 并补 RED/GREEN/组合/质量证据，`00-index.md` 当前入口切换到 M8.5 管理员代录。
+- 2026-06-26：M8.5 RED：在 `ClubPointContributionServiceImplTest` 增加管理员代录测试，覆盖代录创建、幂等、全局范围、原因必填、附件必填、分值越界和审计失败回滚；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`，原因是 `ClubPointContributionDirectCreateReqBO` 和 `CONTRIBUTION_DIRECT_CREATE` 不存在。
+- 2026-06-26：M8.5 GREEN：新增 `ClubPointContributionDirectCreateReqBO`、`ClubPointContributionService#directCreate(...)` 和 `CONTRIBUTION_DIRECT_CREATE` 强审计动作；管理员代录要求全局范围，使用 `requestNo` 和 `DIRECT_CONTRIBUTION:{requestNo}` 幂等，创建已审核通过并锁定的代录材料、单条明细、附件绑定锁定、强审计和 `ADMIN_DIRECT` 账本流水。
+- 2026-06-26：M8.5 实现边界：代录发分只通过 `ClubPointLedgerService.createTransaction(...)` 创建流水，不直接写 `club_points_transaction`；强审计失败会回滚材料、明细、附件、流水和审计；M8.5 只落 Service 能力，管理员代录 API 进入 M8.8。
+- 2026-06-26：M8.5 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointContributionServiceImplTest` 运行 `13` 个测试，失败 `0`，错误 `0`。
+- 2026-06-26：M8 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointContributionMapperTest,ClubPointContributionEnumTest,ClubPointContributionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `18` 个测试，失败 `0`，错误 `0`。
+- 2026-06-26：M8.5 权限冲突复核：`docs/startup/07-permission-audit.md`、`docs/club-points-functions-and-permissions.md`、`docs/club-points-api-design.md` 和 `M4-ledger.md` 已统一为“负责人可看自己负责俱乐部作为发放来源产生的积分流水与成员摘要；成员摘要不是员工全量积分账户；其他/别人指其他俱乐部、无俱乐部来源或全局来源”。
+- 2026-06-26：M8.5 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
+- 2026-06-26：M8.5 文档同步：`M8-contribution-violation.md` 勾选 M8.5 并补 RED/GREEN/组合/质量证据，`00-index.md` 当前入口切换到 M8.6 违规扣分。

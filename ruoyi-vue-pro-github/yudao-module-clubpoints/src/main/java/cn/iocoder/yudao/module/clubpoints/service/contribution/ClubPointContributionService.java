@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.clubpoints.service.contribution;
 
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.contribution.ClubPointContributionMaterialDO;
+import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionDirectCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionMaterialSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionReviewReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionSubmitReqBO;
@@ -21,5 +22,7 @@ public interface ClubPointContributionService {
     List<ClubPointContributionMaterialDO> listPendingReviewMaterials(boolean operatorGlobalScope);
 
     void reviewMaterial(ClubPointContributionReviewReqBO reqBO);
+
+    Long directCreate(ClubPointContributionDirectCreateReqBO reqBO);
 
 }

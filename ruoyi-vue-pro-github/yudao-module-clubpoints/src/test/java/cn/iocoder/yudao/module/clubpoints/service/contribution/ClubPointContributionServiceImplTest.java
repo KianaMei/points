@@ -32,6 +32,7 @@ import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRuleVersionStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.service.attachment.ClubAttachmentServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.attachment.bo.ClubAttachmentBindReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditServiceImpl;
+import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionDirectCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionItemSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionMaterialSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionReviewReqBO;
@@ -53,11 +54,13 @@ import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServic
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.ATTACHMENT_TYPE_URL;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.BIZ_TYPE_CONTRIBUTION_MATERIAL;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.STATUS_EFFECTIVE;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CONTRIBUTION_DIRECT_CREATE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CONTRIBUTION_REVIEW;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointCategoryEnum.ACTIVE_CONTRIBUTION;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointContributionMaterialTypeEnum.PUBLICITY_SUGGESTION;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointContributionMaterialTypeEnum.SPECIAL_CONTRIBUTION;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionDirectionEnum.INCREASE;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionSourceTypeEnum.ADMIN_DIRECT;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionSourceTypeEnum.CONTRIBUTION_MATERIAL;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionStatusEnum.VALID;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_AUDIT_WRITE_FAILED;
@@ -379,6 +382,126 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
                 materialId, STATUS_EFFECTIVE).get(0).getLocked());
     }
 
+    @Test
+    void directCreateShouldCreateApprovedMaterialTransactionAttachmentAuditAndBeIdempotent() {
+        ClubPointClubDO club = insertClub("CLUB-M8-5001", "Direct Create Club");
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-501");
+        insertRuleItem(version.getId(), SPECIAL_CONTRIBUTION, 10, 50, 30);
+
+        Long materialId = contributionService.directCreate(buildDirectCreateReq("REQ-M8-5001",
+                club.getId(), version.getId(), SPECIAL_CONTRIBUTION));
+        Long repeatedMaterialId = contributionService.directCreate(buildDirectCreateReq("REQ-M8-5001",
+                club.getId(), version.getId(), SPECIAL_CONTRIBUTION));
+
+        assertEquals(materialId, repeatedMaterialId);
+        assertEquals(1L, materialMapper.selectCount());
+        ClubPointContributionMaterialDO material = materialMapper.selectById(materialId);
+        assertEquals(club.getId(), material.getClubId());
+        assertEquals(ClubPointContributionMaterialStatusEnum.APPROVED.getStatus(), material.getStatus());
+        assertEquals(version.getId(), material.getRuleVersionId());
+        assertEquals(900L, material.getSubmitterUserId());
+        assertEquals(900L, material.getReviewerUserId());
+        assertEquals("REQ-M8-5001", material.getRequestNo());
+        assertTrue(material.getDirectCreated());
+        assertTrue(material.getLocked());
+        assertNotNull(material.getSubmitTime());
+        assertNotNull(material.getReviewTime());
+
+        List<ClubPointContributionItemDO> items = itemMapper.selectListByMaterialId(materialId);
+        assertEquals(1, items.size());
+        ClubPointContributionItemDO item = items.get(0);
+        assertEquals(9101L, item.getUserId());
+        assertEquals("Direct User", item.getUserNameSnapshot());
+        assertEquals(SPECIAL_CONTRIBUTION.getRuleItemCode(), item.getRuleItemCode());
+        assertEquals(30, item.getPoints());
+        assertEquals("DIRECT_CONTRIBUTION:REQ-M8-5001", item.getIdempotencyKey());
+        assertNotNull(item.getTransactionId());
+
+        ClubPointTransactionDO transaction = transactionMapper.selectById(item.getTransactionId());
+        assertEquals(ADMIN_DIRECT.getType(), transaction.getSourceType());
+        assertEquals(materialId, transaction.getSourceId());
+        assertEquals(item.getId(), transaction.getSourceItemId());
+        assertEquals("DIRECT_CONTRIBUTION:REQ-M8-5001", transaction.getIdempotencyKey());
+        assertEquals(9101L, transaction.getUserId());
+        assertEquals(30, transaction.getPoints());
+        assertEquals(SPECIAL_CONTRIBUTION.getPointCategory(), transaction.getPointCategory());
+        assertEquals(club.getId(), transaction.getIssuingClubId());
+        assertEquals(club.getName(), transaction.getIssuingClubNameSnapshot());
+        assertEquals(900L, transaction.getOperatorUserId());
+        assertNotNull(transaction.getAuditLogId());
+
+        ClubPointAccountDO account = accountMapper.selectByUserId(9101L);
+        assertEquals(30, account.getAvailablePoints());
+
+        List<ClubAttachmentRefDO> attachments = attachmentRefMapper.selectListByBiz(
+                BIZ_TYPE_CONTRIBUTION_MATERIAL, materialId, STATUS_EFFECTIVE);
+        assertEquals(1, attachments.size());
+        assertEquals(900L, attachments.get(0).getUploadedBy());
+        assertTrue(attachments.get(0).getLocked());
+
+        ClubAuditLogDO auditLog = auditLogMapper.selectById(transaction.getAuditLogId());
+        assertEquals(CONTRIBUTION_DIRECT_CREATE, auditLog.getActionType());
+        assertEquals(BIZ_TYPE_CONTRIBUTION_MATERIAL, auditLog.getBizType());
+        assertEquals(materialId, auditLog.getBizId());
+        assertTrue(auditLog.getAfterJson().contains("\"requestNo\":\"REQ-M8-5001\""));
+        assertEquals(1L, auditLogMapper.selectCount());
+        assertEquals(0L, reviewRecordMapper.selectCount());
+        assertEquals(1L, transactionMapper.selectCount());
+    }
+
+    @Test
+    void directCreateShouldRequireGlobalScopeReasonAndAttachment() {
+        ClubPointClubDO club = insertClub("CLUB-M8-5002", "Direct Validate Club");
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-502");
+        insertRuleItem(version.getId(), PUBLICITY_SUGGESTION, 2, 10, 5);
+
+        assertServiceException(() -> contributionService.directCreate(buildDirectCreateReq("REQ-M8-5002-A",
+                club.getId(), version.getId(), PUBLICITY_SUGGESTION).setOperatorGlobalScope(false)), CLUB_SCOPE_DENIED);
+        assertServiceException(() -> contributionService.directCreate(buildDirectCreateReq("REQ-M8-5002-B",
+                club.getId(), version.getId(), PUBLICITY_SUGGESTION).setReason("")), CLUB_CONTRIBUTION_STATUS_INVALID);
+        assertServiceException(() -> contributionService.directCreate(buildDirectCreateReq("REQ-M8-5002-C",
+                club.getId(), version.getId(), PUBLICITY_SUGGESTION).setAttachments(null)),
+                CLUB_CONTRIBUTION_ATTACHMENT_REQUIRED);
+
+        assertEquals(0L, materialMapper.selectCount());
+        assertEquals(0L, itemMapper.selectCount());
+        assertEquals(0L, transactionMapper.selectCount());
+        assertEquals(0L, auditLogMapper.selectCount());
+    }
+
+    @Test
+    void directCreateShouldRejectOutOfRangePointsAndRollback() {
+        ClubPointClubDO club = insertClub("CLUB-M8-5003", "Direct Range Club");
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-503");
+        insertRuleItem(version.getId(), SPECIAL_CONTRIBUTION, 10, 50, 30);
+
+        assertServiceException(() -> contributionService.directCreate(buildDirectCreateReq("REQ-M8-5003",
+                club.getId(), version.getId(), SPECIAL_CONTRIBUTION).setPoints(51)),
+                CLUB_CONTRIBUTION_RULE_VALUE_OUT_OF_RANGE);
+
+        assertEquals(0L, materialMapper.selectCount());
+        assertEquals(0L, itemMapper.selectCount());
+        assertEquals(0L, transactionMapper.selectCount());
+        assertEquals(0L, auditLogMapper.selectCount());
+    }
+
+    @Test
+    void directCreateShouldRollbackWhenAuditFails() {
+        ClubPointClubDO club = insertClub("CLUB-M8-5004", "Direct Audit Rollback Club");
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-504");
+        insertRuleItem(version.getId(), SPECIAL_CONTRIBUTION, 10, 50, 30);
+
+        assertServiceException(() -> contributionService.directCreate(buildDirectCreateReq("REQ-M8-5004",
+                club.getId(), version.getId(), SPECIAL_CONTRIBUTION).setOperatorNameSnapshot(null)),
+                CLUB_AUDIT_WRITE_FAILED);
+
+        assertEquals(0L, materialMapper.selectCount());
+        assertEquals(0L, itemMapper.selectCount());
+        assertEquals(0L, transactionMapper.selectCount());
+        assertEquals(0L, auditLogMapper.selectCount());
+        assertEquals(0L, attachmentRefMapper.selectCount());
+    }
+
     private ClubPointClubDO insertClub(String code, String name) {
         ClubPointClubDO club = new ClubPointClubDO()
                 .setCode(code)
@@ -494,6 +617,28 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
                 .setId(materialId)
                 .setResult(approved ? 1 : 2)
                 .setReason(approved ? "approve contribution" : "reject contribution")
+                .setOperatorGlobalScope(true)
+                .setOperatorUserId(900L)
+                .setOperatorNameSnapshot("Admin")
+                .setOperatorRoleSnapshot("club_points_admin")
+                .setClientIp("127.0.0.1")
+                .setUserAgent("JUnit");
+    }
+
+    private static ClubPointContributionDirectCreateReqBO buildDirectCreateReq(String requestNo, Long clubId,
+                                                                               Long ruleVersionId,
+                                                                               ClubPointContributionMaterialTypeEnum type) {
+        return new ClubPointContributionDirectCreateReqBO()
+                .setRequestNo(requestNo)
+                .setClubId(clubId)
+                .setType(type.getType())
+                .setUserId(9101L)
+                .setUserNameSnapshot("Direct User")
+                .setDeptNameSnapshot("Ops")
+                .setPoints(30)
+                .setRuleVersionId(ruleVersionId)
+                .setReason("direct create contribution")
+                .setAttachments(Arrays.asList(buildUrlAttachment()))
                 .setOperatorGlobalScope(true)
                 .setOperatorUserId(900L)
                 .setOperatorNameSnapshot("Admin")
