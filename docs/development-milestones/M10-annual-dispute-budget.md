@@ -189,18 +189,34 @@
 
 ## 任务 M10.5 年度排名
 
-- [ ] 创建 `ClubPointAnnualRankingRecordDO`。
-- [ ] 创建对应 Mapper。
-- [ ] 按年度积分获得值统计排名。
-- [ ] 排名不受兑换扣分影响。
-- [ ] 保存用户、部门、俱乐部快照。
-- [ ] 保存排名生成时间和规则快照。
-- [ ] 支持重新生成排名。
+- [x] 创建 `ClubPointAnnualRankingRecordDO`。
+- [x] 创建对应 Mapper。
+- [x] 按年度积分获得值统计排名。
+- [x] 排名不受兑换扣分影响。
+- [x] 保存俱乐部快照，并保留流水 ID 追溯用户、部门快照。
+- [x] 保存排名生成时间和规则快照。
+- [x] 支持重新生成排名。
 
 验收：
 
-- [ ] 兑换扣分不会降低年度排名贡献值。
-- [ ] 排名可追溯到年度和统计口径。
+- [x] 兑换扣分不会降低年度排名贡献值。
+- [x] 排名可追溯到年度和统计口径。
+
+验证记录：
+
+- RED：新增 `ClubPointAnnualRankingServiceImplTest`，运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAnnualRankingServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`，失败原因为 `ClubPointAnnualRankingRecordDO`、`ClubPointAnnualRankingRecordMapper`、`ClubPointAnnualRankingGenerateReqBO`、`ClubPointAnnualRankingService` 和 `ClubPointAnnualRankingServiceImpl` 缺失。
+- GREEN：新增年度排名 DO、Mapper、生成请求 BO、Service 和实现，补 `ClubPointTransactionMapper.selectListForAnnualRanking(...)`；同一命令返回 `BUILD SUCCESS`，`ClubPointAnnualRankingServiceImplTest` 运行 `2` 个测试，失败 `0`，错误 `0`。
+- 组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointAnnualRankingServiceImplTest,ClubPointAnnualClearingJobTest,ClubPointAnnualClearingServiceImplTest,ClubPointLedgerServiceImplTest,ClubPointLedgerMapperTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `17` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅有 `ClubPointTransactionMapper.java` 的 CRLF/LF 提示；M10.5 源码和测试范围 `tenant_id|TenantBaseDO` 无命中；精确元数据模式无命中；Redis 模式无命中；年度排名 Service 范围无账户直接更新、流水直接插入或删除流水命中。
+
+实现边界：
+
+- M10.5 只实现年度排名记录和生成服务，不生成激励记录、不登记预算、不实现 API、不实现 Job；激励建议记录进入 M10.6，预算进入 M10.7，接口进入 M10.8。
+- 年度排名对象按数据库设计固定为俱乐部，不是员工账户；排名记录保存 `club_id`、`club_code_snapshot`、`club_name_snapshot`，用户和部门快照不复制到排名表，而是通过 `snapshot_json.positiveTransactionIds` 和 `snapshot_json.reversalTransactionIds` 回查流水事实源追溯。
+- 排名从 `club_points_transaction` 聚合，不读取账户缓存；纳入年度正向发放流水时只统计基础参与、全程额外、主动贡献和特殊奖励分类，并按发放俱乐部快照聚合。
+- 撤销扣减只统计 `sourceType=REVERSAL` 且指向已纳入正向发放流水的撤销流水，避免把兑换扣分、年度清零、普通扣分或账户余额变化混入俱乐部发放量。
+- 重新生成会物理删除同年度旧排名快照后重建，以避开派生表 `year,club_code_snapshot` 唯一键和逻辑删除冲突；该操作只影响排名快照，不删除或改写积分流水事实源。
+- 排名规则快照保存当前生效规则版本 ID、版本号、统计公式、分类积分、撤销积分和参与计算的流水 ID；激励建议金额按当前 PRD 固定为第 `1-3` 名 `2000` 元、第 `4-6` 名 `1000` 元，确认状态初始为待确认。
 
 ## 任务 M10.6 激励建议
 

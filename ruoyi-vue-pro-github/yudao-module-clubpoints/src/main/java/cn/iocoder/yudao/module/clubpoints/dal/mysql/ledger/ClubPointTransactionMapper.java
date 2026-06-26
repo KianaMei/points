@@ -40,6 +40,17 @@ public interface ClubPointTransactionMapper extends BaseMapperX<ClubPointTransac
                 .orderByAsc(ClubPointTransactionDO::getId));
     }
 
+    default List<ClubPointTransactionDO> selectListForAnnualRanking(Integer year) {
+        return selectList(new LambdaQueryWrapperX<ClubPointTransactionDO>()
+                .eq(ClubPointTransactionDO::getBusinessYear, year)
+                .in(ClubPointTransactionDO::getStatus, Arrays.asList(
+                        ClubPointTransactionStatusEnum.VALID.getStatus(),
+                        ClubPointTransactionStatusEnum.REVERSED.getStatus(),
+                        ClubPointTransactionStatusEnum.REVERSAL.getStatus()))
+                .orderByAsc(ClubPointTransactionDO::getOccurredAt)
+                .orderByAsc(ClubPointTransactionDO::getId));
+    }
+
     default ClubPointTransactionDO selectByIdForUpdate(Long id) {
         return selectOneForUpdate(ClubPointTransactionDO::getId, id);
     }
