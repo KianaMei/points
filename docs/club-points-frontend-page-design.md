@@ -405,7 +405,7 @@ src/views/clubpoints/
 | --- | --- | --- | --- |
 | 报表中心 | `/clubpoints/admin/report` | `GET /clubpoints/report/point-detail-page`、`GET /clubpoints/report/ledger-summary-page`、`GET /clubpoints/report/redemption-page`、`GET /clubpoints/report/club-ranking-page`、`GET /clubpoints/report/budget-page`、`GET /clubpoints/report/export-excel` | `clubpoints:report:query`、`clubpoints:report:export` |
 | 审计日志 | `/clubpoints/admin/audit` | `GET /clubpoints/audit/page` | `clubpoints:audit:query` |
-| 任务运行 | `/clubpoints/admin/job-run` | `GET /clubpoints/job-run/page`、`POST /clubpoints/job-run/handle` | `clubpoints:job:query`、`clubpoints:job:handle` |
+| 任务运行 | `/clubpoints/admin/job-run` | `GET /clubpoints/job-run/page`、`GET /clubpoints/job-run/detail`、`POST /clubpoints/job-run/handle` | `clubpoints:job:query`、`clubpoints:job:handle` |
 
 报表中心第一版支持：
 

@@ -84,5 +84,8 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_BUDGET_INVALID = new ErrorCode(1_300_000_072, "预算记录参数无效");
     ErrorCode CLUB_BUDGET_SOURCE_INVALID = new ErrorCode(1_300_000_073, "预算记录来源无效");
     ErrorCode CLUB_REPORT_EXPORT_TYPE_INVALID = new ErrorCode(1_300_000_074, "报表导出类型无效");
+    ErrorCode CLUB_JOB_RUN_NOT_EXISTS = new ErrorCode(1_300_000_075, "任务运行记录不存在");
+    ErrorCode CLUB_JOB_RUN_STATUS_INVALID = new ErrorCode(1_300_000_076, "任务运行状态不允许当前操作");
+    ErrorCode CLUB_JOB_RUN_TASK_TYPE_INVALID = new ErrorCode(1_300_000_077, "任务类型不支持重试");
 
 }

@@ -1249,6 +1249,8 @@ M11.4 已落地 `GET /clubpoints/report/export-excel`，导出权限为 `clubpoi
 5. 支持人工处理标记。
 6. 人工处理写审计。
 
+M11.5 已落地 `GET /clubpoints/job-run/page`、`GET /clubpoints/job-run/detail`、`POST /clubpoints/job-run/handle`。查询使用 `clubpoints:job:query`，人工处理使用 `clubpoints:job:handle`；失败任务重试写 `JOB_RUN_RETRY` 强审计，按原 `runKey` 和 `retryCount+1` 派发到活动结算或年度清零 Job，年度清零只重试 `resultJson.failedUserIds` 中的失败用户，底层 Job 幂等键继续兜底重复重试。
+
 ### 16.3 前端
 
 前端从独立仓库 `github.com/yudaocode/yudao-ui-admin-vue3` 克隆完整工程，当前已落到 `C:\jobs\pointsmall\ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3`。后续 clubpoints 前端直接在这个工程内开发。页面、字段、按钮权限、接口映射和强确认口径以 `docs/club-points-frontend-page-design.md` 为准。

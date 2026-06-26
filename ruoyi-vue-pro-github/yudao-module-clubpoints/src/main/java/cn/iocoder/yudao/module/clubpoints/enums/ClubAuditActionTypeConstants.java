@@ -6,6 +6,7 @@ package cn.iocoder.yudao.module.clubpoints.enums;
 public interface ClubAuditActionTypeConstants {
 
     String REPORT_EXPORT = "REPORT_EXPORT";
+    String JOB_RUN_RETRY = "JOB_RUN_RETRY";
     String PHYSICAL_DELETE = "PHYSICAL_DELETE";
     String REVIEW_APPROVE = "REVIEW_APPROVE";
     String POINT_ADJUST = "POINT_ADJUST";

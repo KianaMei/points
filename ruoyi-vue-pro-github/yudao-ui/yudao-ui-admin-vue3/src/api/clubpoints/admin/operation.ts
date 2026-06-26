@@ -38,10 +38,40 @@ export interface AdminOperationRespVO extends ClubPointBaseRespVO {
   status?: number
 }
 
+export interface AdminJobRunRespVO extends ClubPointBaseRespVO {
+  taskType?: string
+  bizType?: string
+  bizId?: number
+  runKey?: string
+  idempotencyKey?: string
+  status?: number
+  plannedTime?: string | Date
+  startTime?: string | Date
+  endTime?: string | Date
+  triggerSource?: number
+  handlerUserId?: number
+  totalCount?: number
+  successCount?: number
+  skipCount?: number
+  failedCount?: number
+  retryCount?: number
+  nextRetryTime?: string | Date
+  errorType?: string
+  errorMessage?: string
+  resultJson?: string
+  manualHandleReason?: string
+}
+
+export interface AdminJobRunHandleReqVO {
+  id: number
+  reason: string
+}
+
 const DISPUTE_PREFIX = '/clubpoints/dispute'
 const ANNUAL_PREFIX = '/clubpoints/annual'
 const BUDGET_PREFIX = '/clubpoints/budget'
 const REPORT_PREFIX = '/clubpoints/report'
+const JOB_RUN_PREFIX = '/clubpoints/job-run'
 
 export const getAdminDisputePage = async (
   params: ClubPointPageParam
@@ -119,4 +149,18 @@ export const getReportBudgetPage = async (params: ClubPointPageParam) => {
 
 export const exportReportExcel = async (params: ClubPointPageParam & { reportType: number }) => {
   return await request.download({ url: `${REPORT_PREFIX}/export-excel`, params })
+}
+
+export const getJobRunPage = async (
+  params: ClubPointPageParam
+): Promise<ClubPointPageResult<AdminJobRunRespVO>> => {
+  return await request.get({ url: `${JOB_RUN_PREFIX}/page`, params })
+}
+
+export const getJobRunDetail = async (id: number): Promise<AdminJobRunRespVO> => {
+  return await request.get({ url: `${JOB_RUN_PREFIX}/detail`, params: { id } })
+}
+
+export const handleJobRun = async (data: AdminJobRunHandleReqVO) => {
+  return await request.post({ url: `${JOB_RUN_PREFIX}/handle`, data })
 }

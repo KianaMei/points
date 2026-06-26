@@ -172,3 +172,4 @@ M0 空模块
 - M11.2 已完成前端 API 模块，创建 app 7 个、leader 4 个、admin 8 个按角色和领域分组的请求封装；所有业务 API 文件复用 `@/config/axios`，兑换申请、管理员代录和积分调整暴露请求号复用 helper，并通过新增范围类型检查过滤、页面散写 URL 扫描和质量门禁。下一步入口是 M11.3 报表查询。
 - M11.3 已完成管理员报表查询接口，支持积分明细、总台账、兑换记录、俱乐部排名和预算统计五类分页查询；查询权限为 `clubpoints:report:query`，导出权限保留 `clubpoints:report:export` 给 M11.4；已通过 RED/GREEN Controller / Service 测试和权限 seed 同步。下一步入口是 M11.4 报表导出。
 - M11.4 已完成管理员报表导出接口，支持五类报表 Excel 导出、`clubpoints:report:export` 权限、`REPORT_EXPORT` 强审计、审计失败阻断导出和前端下载封装；已通过 RED/GREEN Controller / Service 测试。下一步入口是 M11.5 任务监控。
+- M11.5 已完成管理员任务运行列表、详情和失败任务人工重试接口；`clubpoints:job:query` 查询、`clubpoints:job:handle` 处理，重试写 `JOB_RUN_RETRY` 强审计，并按原 `runKey + retryCount+1` 派发活动结算或年度清零 Job 保持幂等；已通过 RED/GREEN Controller / Service 测试。下一步入口是 M11.6 通知和待办。

@@ -170,17 +170,25 @@ M11.4 证据：
 
 ## 任务 M11.5 任务监控
 
-- [ ] 管理员查看 `club_points_job_run` 列表。
-- [ ] 管理员查看任务运行详情。
-- [ ] 管理员重试失败任务。
-- [ ] 重试必须保持幂等。
-- [ ] 人工重试写强审计。
+- [x] 管理员查看 `club_points_job_run` 列表。
+- [x] 管理员查看任务运行详情。
+- [x] 管理员重试失败任务。
+- [x] 重试必须保持幂等。
+- [x] 人工重试写强审计。
 
 验收：
 
-- [ ] 结算任务可追踪。
-- [ ] 年度清零任务可追踪。
-- [ ] 失败任务可重试。
+- [x] 结算任务可追踪。
+- [x] 年度清零任务可追踪。
+- [x] 失败任务可重试。
+
+M11.5 证据：
+
+- RED：新增 `ClubJobRunAdminControllerTest` 和 `ClubJobRunAdminServiceImplTest`，覆盖 `/clubpoints/job-run/page`、`/detail`、`/handle` 权限、活动结算失败任务重试、年度清零失败用户重试、强审计和非失败状态拒绝；运行 `mvn -pl yudao-module-clubpoints -am -Dtest="ClubJobRunAdminControllerTest,ClubJobRunAdminServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`，失败原因为 M11.5 Controller、VO、BO、Service 不存在。
+- GREEN：新增 `ClubJobRunAdminController`、任务运行 VO/BO、`ClubJobRunAdminService`、`ClubJobRunAdminServiceImpl`、`ClubJobRunRetryDispatcher` 和生产委派实现；`ClubJobRunMapper` 增加分页过滤；错误码补任务不存在、状态不允许和任务类型不支持重试；强审计动作补 `JOB_RUN_RETRY`。
+- 接口：`GET /clubpoints/job-run/page` 和 `GET /clubpoints/job-run/detail` 使用 `clubpoints:job:query`；`POST /clubpoints/job-run/handle` 使用 `clubpoints:job:handle`，人工处理原因必填。
+- 重试口径：只允许 `RETRYABLE_FAILED` / `FINAL_FAILED` 任务；活动结算按原 `runKey`、`bizId` 和 `retryCount+1` 调用活动结算 Job Service；年度清零从 `resultJson.failedUserIds` 提取失败用户后按 `retryCount+1` 调用年度清零 Job Service；底层 Job 幂等键继续使用 `taskType + runKey + retryCount`。
+- 验证：同一 Maven 命令最终返回 `BUILD SUCCESS`；`ClubJobRunAdminControllerTest` 1 个测试、`ClubJobRunAdminServiceImplTest` 4 个测试，合计 5 个测试，失败 0，错误 0。
 
 ## 任务 M11.6 通知和待办
 
