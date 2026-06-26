@@ -220,18 +220,33 @@
 
 ## 任务 M10.6 激励建议
 
-- [ ] 创建 `ClubPointIncentiveRecordDO`。
-- [ ] 创建对应 Mapper。
-- [ ] 根据排名生成激励建议。
-- [ ] 保存建议金额或激励等级。
-- [ ] 管理员确认激励。
-- [ ] 管理员取消激励。
-- [ ] 确认和取消写强审计。
+- [x] 创建 `ClubPointIncentiveRecordDO`。
+- [x] 创建对应 Mapper。
+- [x] 根据排名生成激励建议。
+- [x] 保存建议金额或激励等级。
+- [x] 管理员确认激励。
+- [x] 管理员取消激励。
+- [x] 确认和取消写强审计。
 
 验收：
 
-- [ ] 激励建议不自动等于发放。
-- [ ] 管理员确认后状态固定。
+- [x] 激励建议不自动等于发放。
+- [x] 管理员确认后状态固定。
+
+验证记录：
+
+- RED：新增 `ClubPointIncentiveServiceImplTest`，运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointIncentiveServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`，失败原因为激励记录 DO、Mapper、状态 / 类型 / 来源枚举、建议 / 操作 BO、Service / 实现、`INCENTIVE_CONFIRM`、`INCENTIVE_CANCEL` 和激励错误码缺失。
+- GREEN：新增 `ClubPointIncentiveRecordDO`、`ClubPointIncentiveRecordMapper`、激励状态 / 类型 / 来源枚举、`ClubPointIncentiveSuggestReqBO`、`ClubPointIncentiveOperationReqBO`、`ClubPointIncentiveService` / `ClubPointIncentiveServiceImpl`；补确认和取消强审计动作以及激励错误码；同一命令返回 `BUILD SUCCESS`，`ClubPointIncentiveServiceImplTest` 运行 `3` 个测试，失败 `0`，错误 `0`。
+- 组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointIncentiveServiceImplTest,ClubPointAnnualRankingServiceImplTest,ClubPointAnnualClearingJobTest,ClubPointAnnualClearingServiceImplTest,ClubAuditServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `18` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅常量文件有 CRLF/LF 提示；M10.6 源码和测试范围 `tenant_id|TenantBaseDO` 无命中；精确元数据模式无命中；Redis 模式无命中；激励 Service 范围无账本 Service、流水 Mapper、账户 Mapper、流水表或账户表绕行命中。
+
+实现边界：
+
+- M10.6 只实现激励建议记录和确认 / 取消服务，不登记预算记录、不实现 API、不生成员工积分流水、不修改积分账户；预算进入 M10.7，接口进入 M10.8。
+- 年度排名激励建议从 `club_points_annual_ranking_record` 读取，只为 `incentive_amount_cent > 0` 的排名记录创建 `club_points_incentive_record`；按 `source_type=ANNUAL_RANKING` 和 `source_id=ranking.id` 查重，重复生成直接跳过。
+- 激励类型固定为俱乐部排名激励，状态初始为 `SUGGESTED`；标题和金额来自排名快照，`budget_record_id` 为空，表示建议还没有等于预算登记或实际发放。
+- 确认和取消都要求管理员全局范围，只允许从 `SUGGESTED` 状态操作；确认写 `confirmed_by`、`confirmed_time` 和备注后状态变 `CONFIRMED`，取消状态变 `CANCELED`，确认后再次取消会抛 `CLUB_INCENTIVE_STATUS_INVALID`。
+- 确认和取消均写 `INCENTIVE_RECORD` 强审计，动作分别为 `INCENTIVE_CONFIRM` 和 `INCENTIVE_CANCEL`；审计失败时同事务回滚激励状态更新。
 
 ## 任务 M10.7 预算记录
 

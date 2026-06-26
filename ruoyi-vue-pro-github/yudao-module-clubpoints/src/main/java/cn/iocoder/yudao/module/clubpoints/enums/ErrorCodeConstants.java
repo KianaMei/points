@@ -77,5 +77,8 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_DISPUTE_NOT_EXISTS = new ErrorCode(1_300_000_065, "异议不存在");
     ErrorCode CLUB_DISPUTE_STATUS_INVALID = new ErrorCode(1_300_000_066, "异议状态不允许当前操作");
     ErrorCode CLUB_DISPUTE_INVALID = new ErrorCode(1_300_000_067, "异议参数无效");
+    ErrorCode CLUB_INCENTIVE_NOT_EXISTS = new ErrorCode(1_300_000_068, "激励记录不存在");
+    ErrorCode CLUB_INCENTIVE_STATUS_INVALID = new ErrorCode(1_300_000_069, "激励记录状态不允许当前操作");
+    ErrorCode CLUB_INCENTIVE_INVALID = new ErrorCode(1_300_000_070, "激励记录参数无效");
 
 }
