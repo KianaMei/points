@@ -4,6 +4,7 @@ import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActiv
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActivityPointConfigVersionDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActivityRegistrationDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointAttendanceRecordDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRuleItemDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.settlement.ClubPointActivitySettlementRunDO;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.activity.ClubPointActivityMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.activity.ClubPointActivityPointConfigVersionMapper;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
@@ -43,6 +45,7 @@ public class ClubPointActivitySettlementServiceImpl implements ClubPointActivity
     private static final String SOURCE_TITLE_BASE = "活动基础参与积分";
     private static final String SOURCE_TITLE_FULL_EXTRA = "活动全程参与额外积分";
     private static final String SOURCE_TITLE_ABSENCE = "活动无故缺席扣分";
+    private static final String SOURCE_TITLE_MONTHLY_ABSENCE = "月度累计无故缺席扣分";
 
     @Resource
     private ClubPointActivityMapper activityMapper;
@@ -123,6 +126,7 @@ public class ClubPointActivitySettlementServiceImpl implements ClubPointActivity
                     ruleResolveService.getFixedPoints(config.getRuleVersionId(),
                             ClubPointActivitySettlementItemTypeEnum.ABSENCE_SINGLE.getRuleItemCode()),
                     SOURCE_TITLE_ABSENCE, operatorUserId);
+            createMonthlyAbsenceTransactionIfNeeded(activity, config, registration, operatorUserId);
             return true;
         }
 
@@ -170,6 +174,68 @@ public class ClubPointActivitySettlementServiceImpl implements ClubPointActivity
                 .setRuleItemCode(resolveRuleItemCode(config, itemType))
                 .setRuleVersionId(config.getRuleVersionId())
                 .setSourceSnapshotJson(buildSourceSnapshot(activity, registration, itemType)));
+    }
+
+    private void createMonthlyAbsenceTransactionIfNeeded(ClubPointActivityDO activity,
+                                                         ClubPointActivityPointConfigVersionDO config,
+                                                         ClubPointActivityRegistrationDO registration,
+                                                         Long operatorUserId) {
+        ClubPointRuleItemDO thresholdItem = ruleResolveService.getItem(config.getRuleVersionId(),
+                ClubPointRuleItemCodeEnum.ABSENCE_MONTHLY_THRESHOLD.getCode());
+        Integer threshold = thresholdItem.getIntValue();
+        if (threshold == null || threshold <= 0) {
+            throw exception(CLUB_ACTIVITY_STATUS_INVALID);
+        }
+
+        YearMonth yearMonth = YearMonth.from(activity.getEndTime());
+        LocalDateTime monthStart = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime monthEnd = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
+        List<ClubPointActivityRegistrationDO> monthlyAbsences = registrationMapper.selectMonthlyUnexcusedAbsenceList(
+                registration.getUserId(), monthStart, monthEnd, REGISTRATION_ACTIVE,
+                ClubPointActivityStatusEnum.ENDED.getStatus(), ClubPointActivityStatusEnum.SETTLED.getStatus(),
+                ClubPointAttendanceTargetTypeEnum.CHECK_IN.getTargetType());
+        if (monthlyAbsences.size() < threshold) {
+            return;
+        }
+
+        ClubPointActivityRegistrationDO triggerRegistration = monthlyAbsences.get(threshold - 1);
+        Integer businessMonth = businessMonth(activity.getEndTime());
+        Integer points = ruleResolveService.getFixedPoints(config.getRuleVersionId(),
+                ClubPointActivitySettlementItemTypeEnum.ABSENCE_MONTHLY.getRuleItemCode());
+        createMonthlyAbsenceTransaction(config, registration, triggerRegistration, businessMonth,
+                monthlyAbsences.size(), threshold, points, operatorUserId);
+    }
+
+    private void createMonthlyAbsenceTransaction(ClubPointActivityPointConfigVersionDO config,
+                                                 ClubPointActivityRegistrationDO registration,
+                                                 ClubPointActivityRegistrationDO triggerRegistration,
+                                                 Integer businessMonth, Integer absenceCount, Integer threshold,
+                                                 Integer points, Long operatorUserId) {
+        if (points == null || points <= 0) {
+            return;
+        }
+        ledgerService.createTransaction(new ClubPointLedgerCreateReqBO()
+                .setTransactionNo(buildMonthlyTransactionNo(businessMonth, registration.getUserId()))
+                .setUserId(registration.getUserId())
+                .setUserNameSnapshot(registration.getUserNameSnapshot())
+                .setDeptIdSnapshot(registration.getDeptIdSnapshot())
+                .setDeptNameSnapshot(registration.getDeptNameSnapshot())
+                .setDirection(ClubPointActivitySettlementItemTypeEnum.ABSENCE_MONTHLY.getDirection())
+                .setPoints(points)
+                .setPointCategory(ClubPointActivitySettlementItemTypeEnum.ABSENCE_MONTHLY.getPointCategory())
+                .setSourceType(ClubPointActivitySettlementItemTypeEnum.ABSENCE_MONTHLY.getSourceType())
+                .setSourceTitleSnapshot(SOURCE_TITLE_MONTHLY_ABSENCE)
+                .setEvidenceType(1)
+                .setMaterialSummary(SOURCE_TITLE_MONTHLY_ABSENCE)
+                .setReason(SOURCE_TITLE_MONTHLY_ABSENCE)
+                .setOccurredAt(triggerRegistration.getActivityEndTimeSnapshot())
+                .setIdempotencyKey(ClubPointActivitySettlementItemTypeEnum.ABSENCE_MONTHLY
+                        .buildIdempotencyKey(null, registration.getUserId(), businessMonth))
+                .setOperatorUserId(operatorUserId)
+                .setRuleItemCode(ClubPointActivitySettlementItemTypeEnum.ABSENCE_MONTHLY.getRuleItemCode())
+                .setRuleVersionId(config.getRuleVersionId())
+                .setSourceSnapshotJson(buildMonthlyAbsenceSnapshot(registration, triggerRegistration,
+                        businessMonth, absenceCount, threshold)));
     }
 
     private static boolean shouldSkip(ClubPointActivityRegistrationDO registration) {
@@ -237,6 +303,10 @@ public class ClubPointActivitySettlementServiceImpl implements ClubPointActivity
         return "AS-" + activityId + "-" + userId + "-" + itemType.getItemType().charAt(0);
     }
 
+    private static String buildMonthlyTransactionNo(Integer businessMonth, Long userId) {
+        return "AM-" + businessMonth + "-" + userId;
+    }
+
     private static Integer businessMonth(LocalDateTime occurredAt) {
         return occurredAt.getYear() * 100 + occurredAt.getMonthValue();
     }
@@ -248,6 +318,18 @@ public class ClubPointActivitySettlementServiceImpl implements ClubPointActivity
                 + ",\"registrationId\":" + registration.getId()
                 + ",\"userId\":" + registration.getUserId()
                 + ",\"itemType\":\"" + itemType.getItemType() + "\"}";
+    }
+
+    private static String buildMonthlyAbsenceSnapshot(ClubPointActivityRegistrationDO registration,
+                                                      ClubPointActivityRegistrationDO triggerRegistration,
+                                                      Integer businessMonth, Integer absenceCount,
+                                                      Integer threshold) {
+        return "{\"businessMonth\":" + businessMonth
+                + ",\"userId\":" + registration.getUserId()
+                + ",\"absenceCount\":" + absenceCount
+                + ",\"threshold\":" + threshold
+                + ",\"triggerActivityId\":" + triggerRegistration.getActivityId()
+                + ",\"triggerRegistrationId\":" + triggerRegistration.getId() + "}";
     }
 
 }

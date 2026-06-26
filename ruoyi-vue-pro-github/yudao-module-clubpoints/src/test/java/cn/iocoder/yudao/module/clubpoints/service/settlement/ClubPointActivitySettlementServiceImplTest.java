@@ -224,6 +224,63 @@ class ClubPointActivitySettlementServiceImplTest extends BaseDbUnitTest {
         assertFixtureAccounts(fixture);
     }
 
+    @Test
+    void settleActivityShouldDeductMonthlyAbsenceOnceWhenThresholdReached() {
+        ClubPointRuleVersionDO ruleVersion = seedSettlementRules();
+        ClubPointClubDO club = insertClub();
+        Long userId = 7201L;
+        insertExistingAccount(userId, 50);
+        ClubPointActivityDO first = insertEndedActivity(club, BASE_TIME.plusDays(1),
+                ClubPointActivityStatusEnum.ENDED.getStatus());
+        ClubPointActivityDO second = insertEndedActivity(club, BASE_TIME.plusDays(2),
+                ClubPointActivityStatusEnum.ENDED.getStatus());
+        insertConfigVersion(first, ruleVersion);
+        insertConfigVersion(second, ruleVersion);
+        insertRegistration(first, userId, "Monthly Absent", false, false,
+                ClubPointRegistrationStatusEnum.REGISTERED.getStatus());
+        insertRegistration(second, userId, "Monthly Absent", false, false,
+                ClubPointRegistrationStatusEnum.REGISTERED.getStatus());
+        String monthlyKey = ClubPointActivitySettlementItemTypeEnum.ABSENCE_MONTHLY
+                .buildIdempotencyKey(null, userId, 202607);
+
+        settlementService.settleActivity(buildRunReq(first.getId(), "M7-4-MONTHLY-1"));
+        settlementService.settleActivity(buildRunReq(second.getId(), "M7-4-MONTHLY-2"));
+        assertNull(transactionMapper.selectByIdempotencyKey(monthlyKey));
+
+        ClubPointActivityDO third = insertEndedActivity(club, BASE_TIME.plusDays(3),
+                ClubPointActivityStatusEnum.ENDED.getStatus());
+        insertConfigVersion(third, ruleVersion);
+        insertRegistration(third, userId, "Monthly Absent", false, false,
+                ClubPointRegistrationStatusEnum.REGISTERED.getStatus());
+        settlementService.settleActivity(buildRunReq(third.getId(), "M7-4-MONTHLY-3"));
+
+        ClubPointTransactionDO monthlyTransaction = transactionMapper.selectByIdempotencyKey(monthlyKey);
+        assertNotNull(monthlyTransaction);
+        assertEquals(20, monthlyTransaction.getPoints());
+        assertEquals(ClubPointRuleItemCodeEnum.ABSENCE_MONTHLY_DEDUCT.getCode(),
+                monthlyTransaction.getRuleItemCodeSnapshot());
+        assertEquals(ClubPointTransactionDirectionEnum.DECREASE.getDirection(), monthlyTransaction.getDirection());
+        assertEquals(ClubPointCategoryEnum.DEDUCTION.getCategory(), monthlyTransaction.getPointCategory());
+        assertEquals(ClubPointTransactionSourceTypeEnum.ACTIVITY_SETTLEMENT.getType(),
+                monthlyTransaction.getSourceType());
+        assertNull(monthlyTransaction.getIssuingClubId());
+        assertNull(monthlyTransaction.getActivityId());
+        assertTrue(monthlyTransaction.getSnapshotJson().contains("\"businessMonth\":202607"));
+        assertTrue(monthlyTransaction.getSnapshotJson().contains("\"absenceCount\":3"));
+        assertTrue(monthlyTransaction.getSnapshotJson().contains("\"threshold\":3"));
+        assertEquals(21, accountMapper.selectByUserId(userId).getAvailablePoints());
+
+        ClubPointActivityDO fourth = insertEndedActivity(club, BASE_TIME.plusDays(4),
+                ClubPointActivityStatusEnum.ENDED.getStatus());
+        insertConfigVersion(fourth, ruleVersion);
+        insertRegistration(fourth, userId, "Monthly Absent", false, false,
+                ClubPointRegistrationStatusEnum.REGISTERED.getStatus());
+        settlementService.settleActivity(buildRunReq(fourth.getId(), "M7-4-MONTHLY-4"));
+
+        assertEquals(monthlyTransaction.getId(), transactionMapper.selectByIdempotencyKey(monthlyKey).getId());
+        assertEquals(18, accountMapper.selectByUserId(userId).getAvailablePoints());
+    }
+
     private ClubPointRuleVersionDO seedSettlementRules() {
         ClubPointRuleVersionDO version = new ClubPointRuleVersionDO()
                 .setVersionNo("M7-RULE-001")
@@ -238,6 +295,10 @@ class ClubPointActivitySettlementServiceImplTest extends BaseDbUnitTest {
                 "Full extra", ClubPointCategoryEnum.FULL_PARTICIPATION_EXTRA.getCategory(), 2, 2);
         insertRuleItem(version.getId(), ClubPointRuleItemCodeEnum.ABSENCE_SINGLE_DEDUCT.getCode(),
                 "Absence single", ClubPointCategoryEnum.DEDUCTION.getCategory(), 3, 3);
+        insertIntRuleItem(version.getId(), ClubPointRuleItemCodeEnum.ABSENCE_MONTHLY_THRESHOLD.getCode(),
+                "Absence monthly threshold", ClubPointCategoryEnum.DEDUCTION.getCategory(), 3, 4);
+        insertRuleItem(version.getId(), ClubPointRuleItemCodeEnum.ABSENCE_MONTHLY_DEDUCT.getCode(),
+                "Absence monthly", ClubPointCategoryEnum.DEDUCTION.getCategory(), 20, 5);
         return version;
     }
 
@@ -256,6 +317,19 @@ class ClubPointActivitySettlementServiceImplTest extends BaseDbUnitTest {
                 .setSort(sort));
     }
 
+    private void insertIntRuleItem(Long versionId, String code, String name, Integer category,
+                                   Integer intValue, Integer sort) {
+        ruleItemMapper.insert(new ClubPointRuleItemDO()
+                .setRuleVersionId(versionId)
+                .setItemCode(code)
+                .setItemName(name)
+                .setItemType(2)
+                .setCategory(category)
+                .setIntValue(intValue)
+                .setStatus(1)
+                .setSort(sort));
+    }
+
     private ClubPointClubDO insertClub() {
         ClubPointClubDO club = new ClubPointClubDO()
                 .setCode("CLUB-M7-2001")
@@ -270,6 +344,11 @@ class ClubPointActivitySettlementServiceImplTest extends BaseDbUnitTest {
     }
 
     private ClubPointActivityDO insertEndedActivity(ClubPointClubDO club) {
+        return insertEndedActivity(club, BASE_TIME.plusDays(3), ClubPointActivityStatusEnum.ENDED.getStatus());
+    }
+
+    private ClubPointActivityDO insertEndedActivity(ClubPointClubDO club, LocalDateTime startTime,
+                                                   Integer status) {
         ClubPointActivityDO activity = new ClubPointActivityDO()
                 .setClubId(club.getId())
                 .setClubCodeSnapshot(club.getCode())
@@ -278,16 +357,16 @@ class ClubPointActivitySettlementServiceImplTest extends BaseDbUnitTest {
                 .setLocation("Gym")
                 .setDescription("Settlement activity desc")
                 .setLevel(2)
-                .setStatus(ClubPointActivityStatusEnum.ENDED.getStatus())
-                .setStartTime(BASE_TIME.plusDays(3))
-                .setEndTime(BASE_TIME.plusDays(3).plusHours(2))
-                .setRegistrationDeadline(BASE_TIME.plusDays(2))
-                .setCancelDeadlineTime(BASE_TIME.plusDays(2).plusHours(12))
-                .setCheckinStartTime(BASE_TIME.plusDays(3).minusMinutes(30))
-                .setCheckinEndTime(BASE_TIME.plusDays(3).plusMinutes(30))
+                .setStatus(status)
+                .setStartTime(startTime)
+                .setEndTime(startTime.plusHours(2))
+                .setRegistrationDeadline(startTime.minusDays(1))
+                .setCancelDeadlineTime(startTime.minusHours(12))
+                .setCheckinStartTime(startTime.minusMinutes(30))
+                .setCheckinEndTime(startTime.plusMinutes(30))
                 .setCheckoutMode(1)
-                .setCheckoutStartTime(BASE_TIME.plusDays(3).plusHours(1))
-                .setCheckoutEndTime(BASE_TIME.plusDays(3).plusHours(3))
+                .setCheckoutStartTime(startTime.plusHours(1))
+                .setCheckoutEndTime(startTime.plusHours(3))
                 .setCreatorUserId(2000L)
                 .setSnapshotJson("{}")
                 .setRemark("activity remark");

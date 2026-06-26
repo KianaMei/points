@@ -6,7 +6,10 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActivityRegistrationDO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -38,5 +41,26 @@ public interface ClubPointActivityRegistrationMapper extends BaseMapperX<ClubPoi
                 .orderByDesc(ClubPointActivityRegistrationDO::getRegisterTime)
                 .orderByDesc(ClubPointActivityRegistrationDO::getId));
     }
+
+    @Select("SELECT r.* FROM club_points_activity_registration r"
+            + " JOIN club_points_activity a ON a.id = r.activity_id"
+            + " LEFT JOIN club_points_attendance_record c"
+            + " ON c.registration_id = r.id AND c.target_type = #{checkinTargetType}"
+            + " WHERE r.user_id = #{userId}"
+            + " AND r.status = #{registrationStatus}"
+            + " AND (r.no_absence_deduct IS NULL OR r.no_absence_deduct = FALSE)"
+            + " AND (r.special_absence_flag IS NULL OR r.special_absence_flag = FALSE)"
+            + " AND a.status IN (#{endedStatus}, #{settledStatus})"
+            + " AND a.end_time >= #{monthStart}"
+            + " AND a.end_time < #{monthEnd}"
+            + " AND c.id IS NULL"
+            + " ORDER BY a.end_time ASC, r.id ASC")
+    List<ClubPointActivityRegistrationDO> selectMonthlyUnexcusedAbsenceList(@Param("userId") Long userId,
+                                                                            @Param("monthStart") LocalDateTime monthStart,
+                                                                            @Param("monthEnd") LocalDateTime monthEnd,
+                                                                            @Param("registrationStatus") Integer registrationStatus,
+                                                                            @Param("endedStatus") Integer endedStatus,
+                                                                            @Param("settledStatus") Integer settledStatus,
+                                                                            @Param("checkinTargetType") Integer checkinTargetType);
 
 }

@@ -1,6 +1,6 @@
 # M7 活动自动结算 Implementation Plan
 
-**Status:** `[~]` M7.1-M7.3 已完成并有 RED/GREEN 证据；当前入口是 M7.4 月度累计缺席。
+**Status:** `[~]` M7.1-M7.4 已完成并有 RED/GREEN 证据；当前入口是 M7.5 Job Handler。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -136,17 +136,26 @@
 
 ## 任务 M7.4 月度累计缺席
 
-- [ ] 统计用户当月无故缺席次数。
-- [ ] 读取月度累计缺席规则。
-- [ ] 达到阈值后生成扣分流水。
-- [ ] 同一用户同一年月只扣一次。
-- [ ] 记录统计快照。
+- [x] 统计用户当月无故缺席次数。
+- [x] 读取月度累计缺席规则。
+- [x] 达到阈值后生成扣分流水。
+- [x] 同一用户同一年月只扣一次。
+- [x] 记录统计快照。
 
 验收：
 
-- [ ] 未达到阈值不扣分。
-- [ ] 达到阈值扣分一次。
-- [ ] 重算不重复扣。
+- [x] 未达到阈值不扣分。
+- [x] 达到阈值扣分一次。
+- [x] 重算不重复扣。
+
+证据：
+
+- RED：新增 `ClubPointActivitySettlementServiceImplTest#settleActivityShouldDeductMonthlyAbsenceOnceWhenThresholdReached` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivitySettlementServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；`ClubPointActivitySettlementServiceImplTest` 运行 `5` 个测试，失败 `1`，错误 `0`，失败原因是第三次无故缺席后 `ABSENCE_MONTHLY:202607:7201` 流水仍为 `null`，符合 M7.4 RED 预期。
+- GREEN：`ClubPointActivityRegistrationMapper` 增加按用户、自然月、活动 `ENDED/SETTLED`、有效报名、非特殊缺席、无签到事实查询当月无故缺席列表；`ClubPointActivitySettlementServiceImpl` 在单次缺席扣分后读取 `ABSENCE_MONTHLY_THRESHOLD.intValue` 和 `ABSENCE_MONTHLY_DEDUCT.defaultPoints`，达到阈值后通过 `ClubPointLedgerService.createTransaction(...)` 写月度累计缺席扣分流水。
+- 实现边界：M7.4 不新增表，不直接写 `club_points_transaction`，不写 Job Handler，不写管理员接口；月度累计缺席流水使用全局月度来源，`issuingClubId` 和 `activityId` 为空，避免负责人通过某个俱乐部看到跨俱乐部累计来源；统计快照写入流水 `snapshotJson`，包含 `businessMonth`、`absenceCount`、`threshold`、触发活动和触发报名。
+- M7.4 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivitySettlementServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointActivitySettlementServiceImplTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
+- M7 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivitySettlementEnumTest,ClubPointActivitySettlementServiceImplTest,ClubPointLedgerServiceImplTest,ClubPointActivityServiceImplTest,ClubPointRegistrationServiceImplTest,ClubPointAttendanceServiceImplTest,ClubPointAttendanceCorrectionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `39` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
 
 ## 任务 M7.5 Job Handler
 
