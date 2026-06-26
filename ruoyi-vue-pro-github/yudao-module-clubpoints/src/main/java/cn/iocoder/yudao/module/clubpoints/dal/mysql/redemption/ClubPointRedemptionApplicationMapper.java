@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionApplicationDO;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -17,6 +18,15 @@ public interface ClubPointRedemptionApplicationMapper extends BaseMapperX<ClubPo
     default List<ClubPointRedemptionApplicationDO> selectListByStatus(Integer status) {
         return selectList(new LambdaQueryWrapperX<ClubPointRedemptionApplicationDO>()
                 .eq(ClubPointRedemptionApplicationDO::getStatus, status)
+                .orderByAsc(ClubPointRedemptionApplicationDO::getApplyTime)
+                .orderByAsc(ClubPointRedemptionApplicationDO::getId));
+    }
+
+    default List<ClubPointRedemptionApplicationDO> selectListByStatusAppliedBefore(Integer status,
+                                                                                  LocalDateTime appliedBefore) {
+        return selectList(new LambdaQueryWrapperX<ClubPointRedemptionApplicationDO>()
+                .eq(ClubPointRedemptionApplicationDO::getStatus, status)
+                .le(ClubPointRedemptionApplicationDO::getApplyTime, appliedBefore)
                 .orderByAsc(ClubPointRedemptionApplicationDO::getApplyTime)
                 .orderByAsc(ClubPointRedemptionApplicationDO::getId));
     }

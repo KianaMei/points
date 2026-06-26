@@ -1,6 +1,6 @@
 # M9 兑换闭环 Implementation Plan
 
-**Status:** `[~]` M9.6 已完成并有 RED/GREEN 证据；当前入口是 M9.7 取消和超时。
+**Status:** `[~]` M9.7 已完成并有 RED/GREEN 证据；当前入口是 M9.8 API。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -226,16 +226,27 @@
 
 ## 任务 M9.7 取消和超时
 
-- [ ] 员工在允许状态取消申请。
-- [ ] 取消释放冻结。
-- [ ] 取消释放库存锁。
-- [ ] 超时未审核按规则处理。
-- [ ] 取消和超时写记录。
+- [x] 员工在允许状态取消申请。
+- [x] 取消释放冻结。
+- [x] 取消释放库存锁。
+- [x] 超时未审核按规则处理。
+- [x] 取消和超时写记录。
 
 验收：
 
-- [ ] 取消不生成扣减流水。
-- [ ] 释放后库存和积分一致。
+- [x] 取消不生成扣减流水。
+- [x] 释放后库存和积分一致。
+
+证据：
+
+- RED：新增 `ClubPointRedemptionCancelServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionCancelServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `ClubPointRedemptionCancelReqBO` 和 `ClubPointRedemptionTimeoutReqBO` 不存在，符合 M9.7 RED 预期。
+- GREEN：新增 `ClubPointRedemptionCancelReqBO`、`ClubPointRedemptionTimeoutReqBO`，扩展兑换申请 Service，提供员工本人取消和待审核超时批量处理能力；员工取消要求本人范围，已取消同用户重复调用幂等返回。
+- 取消事务：仅允许 `PENDING_REVIEW(1)` 申请取消；取消后申请转 `CANCELED_BEFORE_REVIEW(2)` 并写 `cancel_time`、`cancel_reason`，调用 `ClubPointFreezeService.releaseFreeze(...)` 释放冻结，调用礼品 Service 数据库条件更新释放已锁库存，库存锁转 `RELEASED(3)` 并写释放原因。
+- 超时口径：设计文档没有单独超时状态，M9.7 按待审核申请自动取消处理；`timeoutPendingApplications(...)` 要求全局范围，只处理 `apply_time <= appliedBefore` 的待审核申请，复用取消释放链路并返回处理数量。
+- 实现边界：M9.7 只实现取消和超时 Service，不实现取消 API、定时任务或领取状态；取消和超时不生成兑换扣减流水，不直接写 `club_points_transaction`；库存事实源仍是数据库条件更新，未引入 Redis。
+- M9.7 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionCancelServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRedemptionCancelServiceImplTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- M9 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointRedemptionCancelServiceImplTest,ClubPointRedemptionMapperTest,ClubPointRedemptionBatchServiceImplTest,ClubPointRedemptionGiftServiceImplTest,ClubPointRedemptionEligibilityServiceImplTest,ClubPointRedemptionApplicationServiceImplTest,ClubPointRedemptionReviewServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `31` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；clubpoints 主代码 Redis 库存事实源模式无命中；redemption 生产 Service 范围无直接写账本命中，测试中的 `createTransaction(...)` / `reverseTransaction(...)` 仅为空实现测试替身方法签名。
 
 ## 任务 M9.8 API
 

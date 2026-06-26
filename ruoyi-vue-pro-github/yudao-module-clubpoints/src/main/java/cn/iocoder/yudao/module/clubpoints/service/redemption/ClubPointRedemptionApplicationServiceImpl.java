@@ -32,7 +32,9 @@ import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointFreezeCreat
 import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointFreezeReleaseReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.notify.ClubNotifyService;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionApplyReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionCancelReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionReviewReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionTimeoutReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeService;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -68,6 +70,8 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
     private static final String STOCK_LOCK_IDEMPOTENCY_PREFIX = "STOCK_LOCK:";
     private static final String BIZ_TYPE_REDEMPTION_APPLICATION = "REDEMPTION_APPLICATION";
     private static final String REDEMPTION_APPROVE_PREFIX = "REDEMPTION_APPROVE:";
+    private static final String DEFAULT_CANCEL_REASON = "员工取消兑换申请";
+    private static final String DEFAULT_TIMEOUT_REASON = "审核超时自动取消";
 
     @Resource
     private ClubPointRedemptionEligibilityService eligibilityService;
@@ -175,6 +179,43 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
         notifyReviewResult(application, result, reqBO.getReason());
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelOwnApplication(ClubPointRedemptionCancelReqBO reqBO) {
+        validateCancelReq(reqBO);
+        ClubPointRedemptionApplicationDO application = validateApplicationExistsForReview(reqBO.getId());
+        clubScopeService.validateSelf(reqBO.getUserId(), application.getUserId());
+        if (ClubPointRedemptionApplicationStatusEnum.CANCELED_BEFORE_REVIEW.getStatus()
+                .equals(application.getStatus())) {
+            return;
+        }
+        cancelPendingApplication(application, cancelReason(reqBO.getReason(), DEFAULT_CANCEL_REASON),
+                reqBO.getCancelTime() == null ? LocalDateTime.now() : reqBO.getCancelTime());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int timeoutPendingApplications(ClubPointRedemptionTimeoutReqBO reqBO) {
+        validateTimeoutReq(reqBO);
+        clubScopeService.validateGlobal(Boolean.TRUE.equals(reqBO.getOperatorGlobalScope()));
+        String reason = cancelReason(reqBO.getReason(), DEFAULT_TIMEOUT_REASON);
+        LocalDateTime timeoutTime = reqBO.getTimeoutTime() == null ? LocalDateTime.now() : reqBO.getTimeoutTime();
+        int handled = 0;
+        for (ClubPointRedemptionApplicationDO pendingApplication :
+                applicationMapper.selectListByStatusAppliedBefore(
+                        ClubPointRedemptionApplicationStatusEnum.PENDING_REVIEW.getStatus(), reqBO.getAppliedBefore())) {
+            ClubPointRedemptionApplicationDO application =
+                    applicationMapper.selectByIdForUpdate(pendingApplication.getId());
+            if (application == null || !ClubPointRedemptionApplicationStatusEnum.PENDING_REVIEW.getStatus()
+                    .equals(application.getStatus())) {
+                continue;
+            }
+            cancelPendingApplication(application, reason, timeoutTime);
+            handled++;
+        }
+        return handled;
+    }
+
     private void approveApplication(ClubPointRedemptionApplicationDO application, ClubPointStockLockDO stockLock,
                                     ClubPointRedemptionReviewReqBO reqBO, LocalDateTime reviewTime,
                                     Long auditLogId) {
@@ -205,6 +246,24 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
         ClubPointAccountDO afterAccount = accountMapper.selectByUserId(application.getUserId());
         applyReviewedApplication(application, reqBO, reviewTime, afterAccount)
                 .setStatus(ClubPointRedemptionApplicationStatusEnum.REJECTED.getStatus());
+    }
+
+    private void cancelPendingApplication(ClubPointRedemptionApplicationDO application, String reason,
+                                          LocalDateTime cancelTime) {
+        validateReviewable(application);
+        ClubPointStockLockDO stockLock = validateStockLockForReview(application);
+        freezeService.releaseFreeze(new ClubPointFreezeReleaseReqBO()
+                .setFreezeId(application.getFreezeId())
+                .setReleasedAt(cancelTime)
+                .setReleaseReason(reason));
+        giftService.releaseLockedStock(application.getGiftId(), application.getQuantity());
+        stockLock.setStatus(ClubPointStockLockStatusEnum.RELEASED.getStatus())
+                .setReleasedTime(cancelTime)
+                .setReleaseReason(reason);
+        stockLockMapper.updateById(stockLock);
+        ClubPointAccountDO afterAccount = accountMapper.selectByUserId(application.getUserId());
+        applyCanceledApplication(application, reason, cancelTime, afterAccount);
+        applicationMapper.updateById(application);
     }
 
     private ClubPointRedemptionBatchDO validateBatchOpenForApply(Long batchId) {
@@ -406,6 +465,17 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
                 .setAfterAvailablePoints(accountAvailablePoints(afterAccount));
     }
 
+    private static ClubPointRedemptionApplicationDO applyCanceledApplication(
+            ClubPointRedemptionApplicationDO application, String reason, LocalDateTime cancelTime,
+            ClubPointAccountDO afterAccount) {
+        return application.setStatus(ClubPointRedemptionApplicationStatusEnum.CANCELED_BEFORE_REVIEW.getStatus())
+                .setCancelTime(cancelTime)
+                .setCancelReason(reason)
+                .setAfterNetPoints(accountNetPoints(afterAccount))
+                .setAfterFrozenPoints(accountFrozenPoints(afterAccount))
+                .setAfterAvailablePoints(accountAvailablePoints(afterAccount));
+    }
+
     private static String batchSnapshot(ClubPointRedemptionBatchDO batch) {
         Map<String, Object> snapshot = new LinkedHashMap<>();
         snapshot.put("id", batch.getId());
@@ -521,6 +591,18 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
         return result;
     }
 
+    private static void validateCancelReq(ClubPointRedemptionCancelReqBO reqBO) {
+        if (reqBO == null || reqBO.getId() == null || reqBO.getUserId() == null) {
+            throw exception(CLUB_REDEMPTION_APPLICATION_STATUS_INVALID);
+        }
+    }
+
+    private static void validateTimeoutReq(ClubPointRedemptionTimeoutReqBO reqBO) {
+        if (reqBO == null || reqBO.getAppliedBefore() == null) {
+            throw exception(CLUB_REDEMPTION_APPLICATION_STATUS_INVALID);
+        }
+    }
+
     private static String buildApplicationIdempotencyKey(ClubPointRedemptionApplyReqBO reqBO) {
         return APPLICATION_IDEMPOTENCY_PREFIX + reqBO.getBatchId() + ":" + reqBO.getGiftId()
                 + ":" + reqBO.getUserId() + ":" + reqBO.getRequestNo();
@@ -528,6 +610,10 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
 
     private static LocalDateTime applyTime(ClubPointRedemptionApplyReqBO reqBO) {
         return reqBO.getApplyTime() == null ? LocalDateTime.now() : reqBO.getApplyTime();
+    }
+
+    private static String cancelReason(String reason, String defaultReason) {
+        return StringUtils.hasText(reason) ? reason : defaultReason;
     }
 
     private static String userNameSnapshot(ClubPointRedemptionApplicationDO application,
