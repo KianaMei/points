@@ -47,21 +47,22 @@ spring:
       primary: master
       datasource:
         master:
-          url: jdbc:mysql://127.0.0.1:3306/club_points?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true # 本地 Club Points 数据库
-          username: root
-          password: 123456
-        slave: # 模拟从库，可根据自己需要修改 # 模拟从库，可根据自己需要修改
+          url: jdbc:mysql://rm-i5m62e6se1v9x6k56.mysql.rds.ops.cloud.wzgroup.cn:3306/ai_dangjian?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true # AI党建积分俱乐部
+          username: ai_dangjian
+          password: Wl87607601
+        slave: # 模拟从库，可根据自己需要修改
           lazy: true # 开启懒加载，保证启动速度
-          url: jdbc:mysql://127.0.0.1:3306/club_points?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true # 本地 Club Points 数据库
-          username: root
-          password: 123456
+          url: jdbc:mysql://rm-i5m62e6se1v9x6k56.mysql.rds.ops.cloud.wzgroup.cn:3306/ai_dangjian?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true # AI党建积分俱乐部
+          username: ai_dangjian
+          password: Wl87607601
 
   # Redis 配置。Redisson 默认的配置足够使用，一般不需要进行调优
   redis:
-    host: 400-infra.server.iocoder.cn # 地址
+    host: r-i5ma0d4107ef7e94.redis.rds.ops.cloud.wzgroup.cn # 地址
     port: 6379 # 端口
     database: 1 # 数据库索引
-#    password: 123456 # 密码，建议生产环境开启
+    username: ai_dangjian # 账号
+    password: Wl87607601 # 密码
 
 --- #################### 定时任务相关配置 ####################
 
