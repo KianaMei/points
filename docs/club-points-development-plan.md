@@ -1359,6 +1359,11 @@ src/views/clubpoints/
 16. M12.6 轻量编译 `mvn -pl yudao-server -am -DskipTests "-Dflatten.skip=true" compile` 返回 `BUILD SUCCESS`；前端 `vue-tsc` 全量仍因非 clubpoints 存量类型债退出 1，过滤 `src/api/clubpoints` 与 `src/views/clubpoints` 无命中。
 17. M12.6 live API 回归确认员工活动、员工报名、员工兑换、员工异议、负责人负责俱乐部、管理员活动、材料审核、兑换审核、年度清零记录、报表查询和报表导出主接口均为 HTTP 200；admin token 没有负责俱乐部时，负责人分页按页面逻辑跳过。
 18. M12.6 Playwright 回归确认 8889 登录后三端 10 个主页面无 pageerror、无页面 404 文案、无 `/admin-api/clubpoints/...` 4xx/5xx；管理员报表导出确认后 `/clubpoints/report/export-excel` 返回 HTTP 200 并下载 `积分明细.xls`。
+19. M12.7 已完成 MVP 演示脚本硬化，新增 `ClubPointMvpDemoHardeningTest`，通过 API 串起规则发布、俱乐部创建、成员添加、负责人设置、负责人活动提交、管理员审核、员工报名签到签退、管理员手动结算、员工查账、兑换申请、兑换审核、年度排名、年度清零、审计和积分明细报表。
+20. M12.7 已补齐管理员俱乐部写接口，覆盖俱乐部创建 / 修改 / 停用 / 删除、成员添加 / 移除、负责人设置 / 移除；演示数据准备不手工改库，接口仍调用既有 Service 并由后端注入操作人、角色快照、IP 和 UA。
+21. M12.7 固定管理员手动结算 `force=true` 语义：已发布活动可先由后端收口到已结束，再走原 Job、结算 Service、账本和幂等链路；`force=false` 仍不绕过结算状态要求。
+22. M12.7 验证命令 `mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointMvpDemoHardeningTest,ClubPointClubQueryControllerTest,ClubPointActivityControllerTest,ClubPointSettlementAdminControllerTest,ClubPointRedemptionControllerTest,ClubPointAnnualOperationControllerTest,ClubPointReportControllerTest,ClubPointReportServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；8 个测试类合计运行 36 个测试，失败 0，错误 0。
+23. M12.7 轻量编译 `mvn -pl yudao-server -am -DskipTests "-Dflatten.skip=true" compile` 返回 `BUILD SUCCESS`；前端 `vue-tsc` 过滤 `src/api/clubpoints`、`src/views/clubpoints` 和 `clubpoints` 无输出，未发现 clubpoints 路径新增类型错误。
 
 ### 17.1 必跑测试矩阵
 

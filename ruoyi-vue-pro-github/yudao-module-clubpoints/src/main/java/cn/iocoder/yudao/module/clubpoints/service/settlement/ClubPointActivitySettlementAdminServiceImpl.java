@@ -52,6 +52,7 @@ public class ClubPointActivitySettlementAdminServiceImpl implements ClubPointAct
     @Override
     public String runSettlement(ClubPointSettlementManualRunReqBO reqBO) throws Exception {
         auditService.createAuditLog(buildAuditReq(reqBO));
+        closePublishedActivityIfForced(reqBO);
         return jobService.run(new ClubPointActivitySettlementJobReqBO()
                 .setRunKey(buildManualRunKey(reqBO.getActivityId()))
                 .setActivityId(reqBO.getActivityId())
@@ -60,6 +61,18 @@ public class ClubPointActivitySettlementAdminServiceImpl implements ClubPointAct
                 .setHandlerUserId(reqBO.getOperatorUserId())
                 .setPlannedTime(LocalDateTime.now())
                 .setSettlementTime(LocalDateTime.now()));
+    }
+
+    private void closePublishedActivityIfForced(ClubPointSettlementManualRunReqBO reqBO) {
+        if (!Boolean.TRUE.equals(reqBO.getForce())) {
+            return;
+        }
+        ClubPointActivityDO activity = activityMapper.selectById(reqBO.getActivityId());
+        if (activity == null || !ClubPointActivityStatusEnum.PUBLISHED.getStatus().equals(activity.getStatus())) {
+            return;
+        }
+        activity.setStatus(ClubPointActivityStatusEnum.ENDED.getStatus());
+        activityMapper.updateById(activity);
     }
 
     @Override

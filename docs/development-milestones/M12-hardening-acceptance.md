@@ -206,26 +206,36 @@
 
 ## 任务 M12.7 MVP 演示脚本
 
-- [ ] 管理员创建规则版本并发布。
-- [ ] 管理员创建俱乐部和负责人。
-- [ ] 负责人创建活动并提交审核。
-- [ ] 管理员审核活动通过。
-- [ ] 员工报名活动。
-- [ ] 员工签到签退。
-- [ ] 管理员或任务触发活动结算。
-- [ ] 员工查看积分到账。
-- [ ] 管理员创建兑换批次和礼品。
-- [ ] 员工提交兑换申请。
-- [ ] 管理员审核兑换通过。
-- [ ] 员工查看兑换扣分。
-- [ ] 管理员生成年度排名。
-- [ ] 管理员执行年度清零。
-- [ ] 管理员查看审计和报表。
+- [x] 管理员创建规则版本并发布。
+- [x] 管理员创建俱乐部和负责人。
+- [x] 负责人创建活动并提交审核。
+- [x] 管理员审核活动通过。
+- [x] 员工报名活动。
+- [x] 员工签到签退。
+- [x] 管理员或任务触发活动结算。
+- [x] 员工查看积分到账。
+- [x] 管理员创建兑换批次和礼品。
+- [x] 员工提交兑换申请。
+- [x] 管理员审核兑换通过。
+- [x] 员工查看兑换扣分。
+- [x] 管理员生成年度排名。
+- [x] 管理员执行年度清零。
+- [x] 管理员查看审计和报表。
 
 验收：
 
-- [ ] 完整链路无手工改库。
-- [ ] 演示数据可重复准备。
+- [x] 完整链路无手工改库。
+- [x] 演示数据可重复准备。
+
+证据：
+
+- RED：新增 `ClubPointMvpDemoHardeningTest` 后首次运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointMvpDemoHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 失败在管理员 `force=true` 手动结算已发布活动，异常为 `活动状态不允许当前操作`；根因是 `AdminSettlementRunReqVO.force` 只进入审计快照，没有驱动手动演示链路把已发布活动收口到可结算状态。
+- GREEN：新增 `ClubPointMvpDemoHardeningTest`，通过 Controller 和真实业务 Service 串起管理员规则发布、俱乐部创建、成员添加、负责人设置、负责人活动提交、管理员审核、员工报名签到签退、管理员强制结算、员工查账、兑换批次和礼品、员工兑换申请、管理员兑换审核、年度排名、年度清零、审计和积分明细报表；只 mock `AdminUserApi`、`DeptApi`、`ClubNotifyService`、`FileService` 这类外部边界。
+- GREEN：补齐管理员俱乐部写接口：`/clubpoints/club/create`、`/clubpoints/club/update`、`/clubpoints/club/disable`、`/clubpoints/club/delete`、`/clubpoints/club-member/add`、`/clubpoints/club-member/remove`、`/clubpoints/club-leader/assign`、`/clubpoints/club-leader/remove`，接口调用既有 Service，操作人、角色快照、IP 和 UA 由后端注入，不接受前端传入。
+- GREEN：`force=true` 的管理员手动结算语义固定为：如果活动仍是 `PUBLISHED`，先由后端把活动手动收口到 `ENDED`，随后继续走原有 Job、结算 Service、账本和幂等链路；`force=false` 不绕过活动结算状态要求。
+- Verify：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointMvpDemoHardeningTest,ClubPointClubQueryControllerTest,ClubPointActivityControllerTest,ClubPointSettlementAdminControllerTest,ClubPointRedemptionControllerTest,ClubPointAnnualOperationControllerTest,ClubPointReportControllerTest,ClubPointReportServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；8 个测试类合计运行 36 个测试，失败 0，错误 0。
+- Verify：`mvn -pl yudao-server -am -DskipTests "-Dflatten.skip=true" compile` 返回 `BUILD SUCCESS`。
+- Verify：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 仍只作为过滤验证使用；本次过滤 `src/api/clubpoints`、`src/views/clubpoints` 和 `clubpoints` 无输出，未发现 clubpoints 路径新增类型错误。
 
 ## 任务 M12.8 文档收口
 
@@ -243,12 +253,12 @@
 
 ## M12 放行标准
 
-- [ ] MVP 演示脚本通过。
-- [ ] 权限矩阵通过。
-- [ ] 幂等并发测试通过。
-- [ ] 年度跨年测试通过。
-- [ ] 强审计测试通过。
-- [ ] 前端三类角色主路径通过。
+- [x] MVP 演示脚本通过。
+- [x] 权限矩阵通过。
+- [x] 幂等并发测试通过。
+- [x] 年度跨年测试通过。
+- [x] 强审计测试通过。
+- [x] 前端三类角色主路径通过。
 - [ ] 文档与代码一致。
 
 ## M12 不通过时禁止

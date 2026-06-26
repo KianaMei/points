@@ -195,4 +195,8 @@ M0 空模块
 - M12.5 已通过 `mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointAnnualCrossYearHardeningTest,ClubPointAnnualClearingModelTest,ClubPointAnnualClearingServiceImplTest,ClubPointRedemptionReviewServiceImplTest,ClubPointRedemptionCancelServiceImplTest,ClubPointAnnualRankingServiceImplTest,ClubPointAnnualOperationControllerTest,ClubPointRedemptionControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`；8 个测试类合计运行 34 个测试，失败 0，错误 0。
 - M12.6 已完成前端回归，修复 `/admin-api` 前缀覆盖、员工报名分页、管理员活动管理接口、负责人页面默认负责俱乐部、前端 query/body 契约和无后端实现的删除 / 撤回死入口。
 - M12.6 已通过活动 Controller 测试、前端 API 前缀 hardening 测试、7 类接口组合测试、`yudao-server` 轻量编译、live API 回归、8889 前端入口、Playwright 10 页面回归和管理员报表导出验证；`vue-tsc` 全量仍有非 clubpoints 存量债，clubpoints 路径过滤无命中。
-- M12 当前进行中；下一步入口是 M12.7 MVP 演示脚本。
+- M12.7 已完成 MVP 演示脚本，新增 `ClubPointMvpDemoHardeningTest` 通过 API 串起规则发布、俱乐部和负责人、活动审核、报名签到签退、`force=true` 手动结算、员工查账、兑换、年度排名、年度清零、审计和积分明细报表。
+- M12.7 已补齐管理员俱乐部写接口供演示数据可重复准备，并固定 `force=true` 管理员手动结算语义：已发布活动可先收口到已结束，再走原 Job、结算 Service、账本和幂等链路。
+- M12.7 已通过 `mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointMvpDemoHardeningTest,ClubPointClubQueryControllerTest,ClubPointActivityControllerTest,ClubPointSettlementAdminControllerTest,ClubPointRedemptionControllerTest,ClubPointAnnualOperationControllerTest,ClubPointReportControllerTest,ClubPointReportServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`；8 个测试类合计运行 36 个测试，失败 0，错误 0。
+- M12.7 已通过 `mvn -pl yudao-server -am -DskipTests "-Dflatten.skip=true" compile`；clubpoints 前端路径类型过滤无输出。
+- M12 当前进行中；下一步入口是 M12.8 文档收口。

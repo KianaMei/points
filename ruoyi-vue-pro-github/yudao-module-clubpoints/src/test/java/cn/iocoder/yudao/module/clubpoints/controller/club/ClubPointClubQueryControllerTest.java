@@ -9,12 +9,16 @@ import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.club.ClubPointClubAdminController;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.club.ClubPointClubLeaderAdminController;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.club.ClubPointClubMemberAdminController;
+import cn.iocoder.yudao.module.clubpoints.controller.admin.club.vo.AdminClubDeleteReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.club.vo.AdminClubLeaderPageReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.club.vo.AdminClubLeaderRespVO;
+import cn.iocoder.yudao.module.clubpoints.controller.admin.club.vo.AdminClubMemberSaveReqVO;
+import cn.iocoder.yudao.module.clubpoints.controller.admin.club.vo.AdminClubOperationReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.club.vo.AdminClubMemberPageReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.club.vo.AdminClubMemberRespVO;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.club.vo.AdminClubPageReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.club.vo.AdminClubRespVO;
+import cn.iocoder.yudao.module.clubpoints.controller.admin.club.vo.AdminClubSaveReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.app.club.ClubPointClubAppController;
 import cn.iocoder.yudao.module.clubpoints.controller.app.club.vo.AppClubMemberPageReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.app.club.vo.AppClubMemberRespVO;
@@ -25,7 +29,9 @@ import cn.iocoder.yudao.module.clubpoints.controller.leader.club.vo.LeaderClubRe
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubLeaderDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubMemberDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubPointClubDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.audit.ClubAuditLogDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.audit.ClubAuditLogMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.club.ClubLeaderMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.club.ClubMemberMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.club.ClubPointClubMapper;
@@ -34,14 +40,26 @@ import cn.iocoder.yudao.module.clubpoints.enums.ClubPointClubStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointLeaderStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointMemberStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.service.club.ClubPointClubQueryServiceImpl;
+import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditServiceImpl;
+import cn.iocoder.yudao.module.clubpoints.service.club.ClubPointClubServiceImpl;
+import cn.iocoder.yudao.module.clubpoints.service.club.ClubPointLeaderServiceImpl;
+import cn.iocoder.yudao.module.clubpoints.service.club.ClubPointMemberServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeServiceImpl;
+import cn.iocoder.yudao.module.system.api.dept.DeptApi;
+import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.annotation.Resource;
@@ -53,12 +71,19 @@ import java.util.stream.Collectors;
 
 import static cn.iocoder.yudao.framework.common.enums.UserTypeEnum.ADMIN;
 import static cn.iocoder.yudao.framework.security.core.LoginUser.INFO_KEY_NICKNAME;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CLUB_DISABLE;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CLUB_LEADER_ASSIGN;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CLUB_MEMBER_ADD;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CLUB_UPDATE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_SCOPE_DENIED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
 @Import({
         ClubPointClubAppController.class,
@@ -67,6 +92,10 @@ import static org.junit.jupiter.api.Assertions.fail;
         ClubPointClubMemberAdminController.class,
         ClubPointClubLeaderAdminController.class,
         ClubPointClubQueryServiceImpl.class,
+        ClubPointClubServiceImpl.class,
+        ClubPointMemberServiceImpl.class,
+        ClubPointLeaderServiceImpl.class,
+        ClubAuditServiceImpl.class,
         ClubScopeServiceImpl.class
 })
 class ClubPointClubQueryControllerTest extends BaseDbUnitTest {
@@ -89,6 +118,13 @@ class ClubPointClubQueryControllerTest extends BaseDbUnitTest {
     private ClubLeaderMapper leaderMapper;
     @Resource
     private ClubPointAccountMapper accountMapper;
+    @Resource
+    private ClubAuditLogMapper auditLogMapper;
+
+    @MockBean
+    private AdminUserApi adminUserApi;
+    @MockBean
+    private DeptApi deptApi;
 
     @AfterEach
     void clearSecurityContext() {
@@ -210,6 +246,58 @@ class ClubPointClubQueryControllerTest extends BaseDbUnitTest {
     }
 
     @Test
+    void adminClubMutationEndpointsShouldCreateUpdateDisableMembersAndLeadersThroughServices() {
+        login(1L, "管理员");
+        mockUser(1001L, "员工1001", 201L, "综合部", "13900001001");
+        mockUser(9001L, "负责人9001", 202L, "运营部", "13900009001");
+
+        Long clubId = adminController.createClub(new AdminClubSaveReqVO()
+                .setCode("CLUB-M12-DEMO")
+                .setName("M12 演示俱乐部")
+                .setDescription("M12 demo club")
+                .setContactText("contact")
+                .setSort(1)
+                .setReason("创建演示俱乐部")).getCheckedData();
+        adminController.updateClub(new AdminClubSaveReqVO()
+                .setId(clubId)
+                .setCode("CLUB-M12-DEMO")
+                .setName("M12 演示俱乐部改名")
+                .setDescription("M12 demo club updated")
+                .setContactText("contact updated")
+                .setSort(2)
+                .setReason("更新演示俱乐部")).checkError();
+        Long memberId = adminMemberController.addMember(new AdminClubMemberSaveReqVO()
+                .setClubId(clubId)
+                .setUserId(1001L)
+                .setReason("添加演示成员")).getCheckedData();
+        Long leaderId = adminLeaderController.assignLeader(new AdminClubMemberSaveReqVO()
+                .setClubId(clubId)
+                .setUserId(9001L)
+                .setReason("设置演示负责人")).getCheckedData();
+        adminController.disableClub(new AdminClubOperationReqVO()
+                .setId(clubId)
+                .setReason("演示停用")).checkError();
+
+        ClubPointClubDO club = clubMapper.selectById(clubId);
+        ClubMemberDO member = memberMapper.selectById(memberId);
+        ClubLeaderDO leader = leaderMapper.selectById(leaderId);
+
+        assertEquals("M12 演示俱乐部改名", club.getName());
+        assertEquals(ClubPointClubStatusEnum.DISABLED.getStatus(), club.getStatus());
+        assertEquals("员工1001", member.getUserNameSnapshot());
+        assertEquals("综合部", member.getDeptNameSnapshot());
+        assertEquals("负责人9001", leader.getUserNameSnapshot());
+
+        Set<String> auditActions = auditLogMapper.selectList().stream()
+                .map(ClubAuditLogDO::getActionType)
+                .collect(Collectors.toSet());
+        assertTrue(auditActions.contains(CLUB_UPDATE));
+        assertTrue(auditActions.contains(CLUB_DISABLE));
+        assertTrue(auditActions.contains(CLUB_MEMBER_ADD));
+        assertTrue(auditActions.contains(CLUB_LEADER_ASSIGN));
+    }
+
+    @Test
     void endpointsShouldUseDocumentedClubPathsAndPermissions() throws Exception {
         assertEquals("/clubpoints/app/club",
                 ClubPointClubAppController.class.getAnnotation(RequestMapping.class).value()[0]);
@@ -236,11 +324,32 @@ class ClubPointClubQueryControllerTest extends BaseDbUnitTest {
                 new Class<?>[]{AdminClubPageReqVO.class}, "/page", "@ss.hasPermission('clubpoints:club:query')");
         assertGetMapping(ClubPointClubAdminController.class, "getClub", new Class<?>[]{Long.class},
                 "/get", "@ss.hasPermission('clubpoints:club:query')");
+        assertPostMapping(ClubPointClubAdminController.class, "createClub",
+                new Class<?>[]{AdminClubSaveReqVO.class}, "/create", "@ss.hasPermission('clubpoints:club:create')");
+        assertPutMapping(ClubPointClubAdminController.class, "updateClub",
+                new Class<?>[]{AdminClubSaveReqVO.class}, "/update", "@ss.hasPermission('clubpoints:club:update')");
+        assertPostMapping(ClubPointClubAdminController.class, "disableClub",
+                new Class<?>[]{AdminClubOperationReqVO.class}, "/disable",
+                "@ss.hasPermission('clubpoints:club:disable')");
+        assertDeleteMapping(ClubPointClubAdminController.class, "deleteClub",
+                new Class<?>[]{AdminClubDeleteReqVO.class}, "/delete", "@ss.hasPermission('clubpoints:club:delete')");
         assertGetMapping(ClubPointClubMemberAdminController.class, "getMemberPage",
                 new Class<?>[]{AdminClubMemberPageReqVO.class}, "/page",
                 "@ss.hasPermission('clubpoints:club-member:query')");
+        assertPostMapping(ClubPointClubMemberAdminController.class, "addMember",
+                new Class<?>[]{AdminClubMemberSaveReqVO.class}, "/add",
+                "@ss.hasPermission('clubpoints:club-member:add')");
+        assertPostMapping(ClubPointClubMemberAdminController.class, "removeMember",
+                new Class<?>[]{AdminClubMemberSaveReqVO.class}, "/remove",
+                "@ss.hasPermission('clubpoints:club-member:remove')");
         assertGetMapping(ClubPointClubLeaderAdminController.class, "getLeaderPage",
                 new Class<?>[]{AdminClubLeaderPageReqVO.class}, "/page",
+                "@ss.hasPermission('clubpoints:club-leader:update')");
+        assertPostMapping(ClubPointClubLeaderAdminController.class, "assignLeader",
+                new Class<?>[]{AdminClubMemberSaveReqVO.class}, "/assign",
+                "@ss.hasPermission('clubpoints:club-leader:update')");
+        assertPostMapping(ClubPointClubLeaderAdminController.class, "removeLeader",
+                new Class<?>[]{AdminClubMemberSaveReqVO.class}, "/remove",
                 "@ss.hasPermission('clubpoints:club-leader:update')");
     }
 
@@ -248,6 +357,31 @@ class ClubPointClubQueryControllerTest extends BaseDbUnitTest {
                                          String expectedPath, String expectedPermission) throws NoSuchMethodException {
         Method method = controllerClass.getMethod(methodName, parameterTypes);
         assertEquals(expectedPath, method.getAnnotation(GetMapping.class).value()[0]);
+        assertPermission(method, expectedPermission);
+    }
+
+    private static void assertPostMapping(Class<?> controllerClass, String methodName, Class<?>[] parameterTypes,
+                                          String expectedPath, String expectedPermission) throws NoSuchMethodException {
+        Method method = controllerClass.getMethod(methodName, parameterTypes);
+        assertEquals(expectedPath, method.getAnnotation(PostMapping.class).value()[0]);
+        assertPermission(method, expectedPermission);
+    }
+
+    private static void assertPutMapping(Class<?> controllerClass, String methodName, Class<?>[] parameterTypes,
+                                         String expectedPath, String expectedPermission) throws NoSuchMethodException {
+        Method method = controllerClass.getMethod(methodName, parameterTypes);
+        assertEquals(expectedPath, method.getAnnotation(PutMapping.class).value()[0]);
+        assertPermission(method, expectedPermission);
+    }
+
+    private static void assertDeleteMapping(Class<?> controllerClass, String methodName, Class<?>[] parameterTypes,
+                                            String expectedPath, String expectedPermission) throws NoSuchMethodException {
+        Method method = controllerClass.getMethod(methodName, parameterTypes);
+        assertEquals(expectedPath, method.getAnnotation(DeleteMapping.class).value()[0]);
+        assertPermission(method, expectedPermission);
+    }
+
+    private static void assertPermission(Method method, String expectedPermission) {
         PreAuthorize preAuthorize = method.getAnnotation(PreAuthorize.class);
         if (expectedPermission == null) {
             assertFalse(method.isAnnotationPresent(PreAuthorize.class));
@@ -323,6 +457,20 @@ class ClubPointClubQueryControllerTest extends BaseDbUnitTest {
                 .setId(userId)
                 .setUserType(ADMIN.getValue())
                 .setInfo(info), request);
+    }
+
+    private void mockUser(Long userId, String nickname, Long deptId, String deptName, String mobile) {
+        AdminUserRespDTO user = new AdminUserRespDTO()
+                .setId(userId)
+                .setNickname(nickname)
+                .setDeptId(deptId)
+                .setMobile(mobile);
+        DeptRespDTO dept = new DeptRespDTO()
+                .setId(deptId)
+                .setName(deptName);
+        doNothing().when(adminUserApi).validateUser(userId);
+        when(adminUserApi.getUser(userId)).thenReturn(user);
+        when(deptApi.getDept(deptId)).thenReturn(dept);
     }
 
     private static void assertServiceException(Runnable runnable, ErrorCode errorCode) {
