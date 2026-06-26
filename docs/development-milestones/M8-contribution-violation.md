@@ -1,6 +1,6 @@
 # M8 非签到积分、违规扣分、弄虚作假 Implementation Plan
 
-**Status:** `[~]` M8.1 已完成并有 RED/GREEN 证据；当前入口是 M8.2 状态机和错误码。
+**Status:** `[~]` M8.1-M8.2 已完成并有 RED/GREEN 证据；当前入口是 M8.3 负责人提交材料。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -83,17 +83,26 @@
 
 ## 任务 M8.2 状态机和错误码
 
-- [ ] 定义材料草稿状态。
-- [ ] 定义待审核状态。
-- [ ] 定义审核通过状态。
-- [ ] 定义审核驳回状态。
-- [ ] 定义已作废状态。
-- [ ] 补充错误码：材料不存在、状态不允许、规则越界、附件缺失、重复提交、无权限审核。
+- [x] 定义材料草稿状态。
+- [x] 定义待审核状态。
+- [x] 定义审核通过状态。
+- [x] 定义审核驳回状态。
+- [x] 定义已作废状态。
+- [x] 补充错误码：材料不存在、状态不允许、规则越界、附件缺失、重复提交、无权限审核。
 
 验收：
 
-- [ ] 状态跳转受控。
-- [ ] 审核后材料不可随意修改。
+- [x] 状态跳转受控。
+- [x] 审核后材料不可随意修改。
+
+证据：
+
+- RED：新增 `ClubPointContributionEnumTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `ClubPointContributionMaterialStatusEnum` 和 6 个 contribution 错误码不存在，符合 M8.2 RED 预期。
+- GREEN：新增 `ClubPointContributionMaterialStatusEnum`，与 seed 字典 `club_points_material_status` 对齐；补 `canTransitionTo(...)`、`canEditContent()`、`canReview()`、`canWithdraw()` 状态 guard；`ErrorCodeConstants` 新增材料不存在、状态不允许、规则越界、附件缺失、重复提交、无权限审核 6 个错误码。
+- 冲突处理：M8.2 清单写“已作废状态”，但 API 设计、流程设计和 seed 均为 `6=已删除/已删除快照`；本次按更具体的 API/seed 落为 `DELETED_SNAPSHOT(6)`，物理删除快照语义后续在材料删除任务中继续使用。
+- M8.2 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointContributionEnumTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- M8 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointContributionMapperTest,ClubPointContributionEnumTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `5` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
 
 ## 任务 M8.3 负责人提交材料
 

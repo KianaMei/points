@@ -339,3 +339,8 @@
 - 2026-06-26：M8.1 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointContributionMapperTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
 - 2026-06-26：M8.1 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
 - 2026-06-26：M8.1 文档同步：`M8-contribution-violation.md` 勾选 M8.1 并补 RED/GREEN/边界/单测/质量证据，`00-index.md` 将 M8 标为 `[~]`，当前入口切换到 M8.2 状态机和错误码。
+- 2026-06-26：M8.2 RED：新增 `ClubPointContributionEnumTest`，覆盖材料状态字典、状态跳转、审核/撤回/编辑 guard 和 6 个 contribution 错误码；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`，原因是材料状态枚举和 contribution 错误码不存在。
+- 2026-06-26：M8.2 GREEN：新增 `ClubPointContributionMaterialStatusEnum` 和材料不存在、状态不允许、规则越界、附件缺失、重复提交、无权限审核 6 个错误码；M8.2 清单中的“已作废”按 API/seed/流程文档落为 `DELETED_SNAPSHOT(6)`。
+- 2026-06-26：M8.2 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionEnumTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointContributionEnumTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- 2026-06-26：M8 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointContributionMapperTest,ClubPointContributionEnumTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `5` 个测试，失败 `0`，错误 `0`。
+- 2026-06-26：M8.2 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。

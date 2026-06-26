@@ -53,5 +53,11 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_ATTENDANCE_CHECKIN_REQUIRED = new ErrorCode(1_300_000_041, "请先完成签到");
     ErrorCode CLUB_ATTENDANCE_NOT_FOUND = new ErrorCode(1_300_000_042, "签到签退记录不存在");
     ErrorCode CLUB_ATTENDANCE_TARGET_INVALID = new ErrorCode(1_300_000_043, "签到签退类型无效");
+    ErrorCode CLUB_CONTRIBUTION_MATERIAL_NOT_FOUND = new ErrorCode(1_300_000_044, "非签到材料不存在");
+    ErrorCode CLUB_CONTRIBUTION_STATUS_INVALID = new ErrorCode(1_300_000_045, "非签到材料状态不允许当前操作");
+    ErrorCode CLUB_CONTRIBUTION_RULE_VALUE_OUT_OF_RANGE = new ErrorCode(1_300_000_046, "非签到材料分值超出规则范围");
+    ErrorCode CLUB_CONTRIBUTION_ATTACHMENT_REQUIRED = new ErrorCode(1_300_000_047, "非签到材料附件缺失");
+    ErrorCode CLUB_CONTRIBUTION_SUBMIT_DUPLICATED = new ErrorCode(1_300_000_048, "非签到材料重复提交");
+    ErrorCode CLUB_CONTRIBUTION_REVIEW_DENIED = new ErrorCode(1_300_000_049, "无权审核非签到材料");
 
 }
