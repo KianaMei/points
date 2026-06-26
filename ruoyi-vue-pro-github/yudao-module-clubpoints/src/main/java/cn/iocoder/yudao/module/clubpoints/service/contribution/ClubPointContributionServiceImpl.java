@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.clubpoints.service.contribution;
 
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubPointClubDO;
@@ -27,11 +28,14 @@ import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditService;
 import cn.iocoder.yudao.module.clubpoints.service.audit.bo.ClubAuditCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionDirectCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionFraudHandleReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionDetailBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionItemSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionMaterialSaveReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionReviewReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionSubmitReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionViolationDeductReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionWithdrawReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.ClubPointLedgerService;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointLedgerCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointLedgerReverseReqBO;
@@ -174,9 +178,62 @@ public class ClubPointContributionServiceImpl implements ClubPointContributionSe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void withdraw(ClubPointContributionWithdrawReqBO reqBO) {
+        if (reqBO == null || reqBO.getId() == null || reqBO.getOperatorUserId() == null) {
+            throw exception(CLUB_CONTRIBUTION_STATUS_INVALID);
+        }
+        ClubPointContributionMaterialDO material = validateMaterialExistsForReview(reqBO.getId());
+        clubScopeService.validateManagedClub(reqBO.getOperatorUserId(), material.getClubId());
+        validateTransition(material, ClubPointContributionMaterialStatusEnum.WITHDRAWN);
+        material.setStatus(ClubPointContributionMaterialStatusEnum.WITHDRAWN.getStatus())
+                .setReviewReason(reqBO.getReason());
+        material.setSnapshotJson(snapshot(material, itemMapper.selectListByMaterialId(material.getId()).size()));
+        materialMapper.updateById(material);
+    }
+
+    @Override
+    public PageResult<ClubPointContributionMaterialDO> getLeaderMaterialPage(Long operatorUserId,
+                                                                            ClubPointContributionPageReqBO reqBO) {
+        validateLeaderPageReq(operatorUserId, reqBO);
+        clubScopeService.validateManagedClub(operatorUserId, reqBO.getClubId());
+        return materialMapper.selectPage(reqBO, reqBO.getClubId(), reqBO.getType(), reqBO.getStatus(), false);
+    }
+
+    @Override
+    public ClubPointContributionDetailBO getLeaderMaterial(Long operatorUserId, Long id) {
+        if (operatorUserId == null || id == null) {
+            throw exception(CLUB_CONTRIBUTION_MATERIAL_NOT_FOUND);
+        }
+        ClubPointContributionMaterialDO material = validateMaterialExists(id);
+        clubScopeService.validateManagedClub(operatorUserId, material.getClubId());
+        if (Boolean.TRUE.equals(material.getDirectCreated())) {
+            throw exception(CLUB_SCOPE_DENIED);
+        }
+        return buildDetail(material);
+    }
+
+    @Override
     public List<ClubPointContributionMaterialDO> listPendingReviewMaterials(boolean operatorGlobalScope) {
         validateReviewScope(operatorGlobalScope);
         return materialMapper.selectListByStatus(ClubPointContributionMaterialStatusEnum.PENDING_REVIEW.getStatus());
+    }
+
+    @Override
+    public PageResult<ClubPointContributionMaterialDO> getAdminReviewPage(boolean operatorGlobalScope,
+                                                                         ClubPointContributionPageReqBO reqBO) {
+        validateReviewScope(operatorGlobalScope);
+        if (reqBO == null) {
+            throw exception(CLUB_CONTRIBUTION_STATUS_INVALID);
+        }
+        return materialMapper.selectPage(reqBO, reqBO.getClubId(), reqBO.getType(),
+                ClubPointContributionMaterialStatusEnum.PENDING_REVIEW.getStatus(), false);
+    }
+
+    @Override
+    public ClubPointContributionDetailBO getAdminMaterial(boolean operatorGlobalScope, Long id) {
+        validateReviewScope(operatorGlobalScope);
+        return buildDetail(validateMaterialExists(id));
     }
 
     @Override
@@ -316,6 +373,18 @@ public class ClubPointContributionServiceImpl implements ClubPointContributionSe
             throw exception(CLUB_CONTRIBUTION_MATERIAL_NOT_FOUND);
         }
         return material;
+    }
+
+    private ClubPointContributionDetailBO buildDetail(ClubPointContributionMaterialDO material) {
+        return new ClubPointContributionDetailBO()
+                .setMaterial(material)
+                .setItems(itemMapper.selectListByMaterialId(material.getId()));
+    }
+
+    private static void validateLeaderPageReq(Long operatorUserId, ClubPointContributionPageReqBO reqBO) {
+        if (operatorUserId == null || reqBO == null || reqBO.getClubId() == null) {
+            throw exception(CLUB_CONTRIBUTION_STATUS_INVALID);
+        }
     }
 
     private ClubPointContributionMaterialDO validateMaterialExistsForReview(Long materialId) {

@@ -150,7 +150,9 @@ INSERT INTO `system_menu` (`id`, `name`, `permission`, `type`, `sort`, `parent_i
 (1300012051, '规则管理', 'clubpoints:rule:manage', 3, 51, 1300010370, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012052, '查询结算', 'clubpoints:settlement:query', 3, 52, 1300010340, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012053, '运行结算', 'clubpoints:settlement:run', 3, 53, 1300010340, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300012054, '特殊缺席', 'clubpoints:registration:special-absence', 3, 54, 1300010240, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0')
+(1300012054, '特殊缺席', 'clubpoints:registration:special-absence', 3, 54, 1300010240, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300012056, '违规扣分', 'clubpoints:contribution:violation-deduct', 3, 56, 1300010390, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300012057, '弄虚作假处理', 'clubpoints:contribution:fraud-handle', 3, 57, 1300010390, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0')
 ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `permission` = VALUES(`permission`),

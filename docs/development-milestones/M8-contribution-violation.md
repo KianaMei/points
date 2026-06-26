@@ -1,6 +1,6 @@
 # M8 非签到积分、违规扣分、弄虚作假 Implementation Plan
 
-**Status:** `[~]` M8.1-M8.7 已完成并有 RED/GREEN 证据；当前入口是 M8.8 API。
+**Status:** `[~]` M8.1-M8.8 已完成并有 RED/GREEN 证据；当前入口是 M8.9 测试。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -238,20 +238,30 @@
 
 ## 任务 M8.8 API
 
-- [ ] 负责人材料列表。
-- [ ] 负责人材料详情。
-- [ ] 负责人提交材料。
-- [ ] 负责人撤回草稿。
-- [ ] 管理员审核列表。
-- [ ] 管理员审核接口。
-- [ ] 管理员代录接口。
-- [ ] 管理员违规扣分接口。
-- [ ] 管理员弄虚作假处理接口。
+- [x] 负责人材料列表。
+- [x] 负责人材料详情。
+- [x] 负责人提交材料。
+- [x] 负责人撤回草稿。
+- [x] 管理员审核列表。
+- [x] 管理员审核接口。
+- [x] 管理员代录接口。
+- [x] 管理员违规扣分接口。
+- [x] 管理员弄虚作假处理接口。
 
 验收：
 
-- [ ] API 路径和 `club-points-api-design.md` 一致。
-- [ ] 负责人和管理员权限边界清楚。
+- [x] API 路径和 `club-points-api-design.md` 一致。
+- [x] 负责人和管理员权限边界清楚。
+
+证据：
+
+- RED：新增 `ClubPointContributionControllerTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `controller.admin.contribution`、`controller.leader.contribution`、相关 VO 和 Controller 类不存在，符合 M8.8 API RED 预期。
+- GREEN：新增负责人 `/clubpoints/leader/contribution` Controller，提供 `/page`、`/get`、`/create`、`/update`、`/submit`、`/withdraw`；新增管理员 `/clubpoints/contribution` Controller，提供 `/review-page`、`/get`、`/review`、`/direct-create`、`/violation-deduct`、`/fraud-handle`；补齐 leader/admin contribution VO、分页/详情/撤回 BO、Mapper 分页查询和 Service 读侧/撤回能力。
+- 权限边界：Controller 只做 VO 到 BO 转换和登录态操作人注入；负责人查询必须传 `clubId`，Service 通过 `ClubScopeService.validateManagedClub(...)` 校验负责俱乐部，且负责人不能查看管理员代录、违规扣分、弄虚作假处理等 `directCreated=true` 材料；管理员读写要求全局范围，审核、代录、违规扣分、弄虚作假仍由 Service 层强审计和事务兜底。
+- API 与 seed：补齐 `clubpoints:contribution:violation-deduct` 和 `clubpoints:contribution:fraud-handle` 权限码，`club-points-api-design.md`、权限文档和 seed 对齐；M8.8 清单不包含物理删除材料接口，API 设计中的 `/delete` 不在本任务扩大实现范围内。
+- M8.8 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointContributionControllerTest` 运行 `3` 个测试，失败 `0`，错误 `0`。
+- M8 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointContributionMapperTest,ClubPointContributionEnumTest,ClubPointContributionServiceImplTest,ClubPointContributionControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `27` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；违规扣分和弄虚作假权限码在 seed、API 文档和权限文档中均命中；contribution Controller/Service 范围无 `transactionMapper.insert` 或直接写 `club_points_transaction`，Service 账本写入只命中 `createTransaction(...)` 和 `reverseTransaction(...)`。
 
 ## 任务 M8.9 测试
 
@@ -271,8 +281,8 @@
 
 ## M8 放行标准
 
-- [ ] 非签到材料提交可用。
-- [ ] 非签到审核发分可用。
+- [x] 非签到材料提交可用。
+- [x] 非签到审核发分可用。
 - [x] 管理员代录可用。
 - [x] 违规扣分可用。
 - [x] 弄虚作假处理可用。

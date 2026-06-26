@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.clubpoints.dal.mysql.contribution;
 
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.contribution.ClubPointContributionMaterialDO;
@@ -24,6 +26,17 @@ public interface ClubPointContributionMaterialMapper extends BaseMapperX<ClubPoi
                 .eq(ClubPointContributionMaterialDO::getStatus, status)
                 .orderByAsc(ClubPointContributionMaterialDO::getSubmitTime)
                 .orderByAsc(ClubPointContributionMaterialDO::getId));
+    }
+
+    default PageResult<ClubPointContributionMaterialDO> selectPage(PageParam pageParam, Long clubId, Integer type,
+                                                                  Integer status, Boolean directCreated) {
+        return selectPage(pageParam, new LambdaQueryWrapperX<ClubPointContributionMaterialDO>()
+                .eqIfPresent(ClubPointContributionMaterialDO::getClubId, clubId)
+                .eqIfPresent(ClubPointContributionMaterialDO::getType, type)
+                .eqIfPresent(ClubPointContributionMaterialDO::getStatus, status)
+                .eqIfPresent(ClubPointContributionMaterialDO::getDirectCreated, directCreated)
+                .orderByDesc(ClubPointContributionMaterialDO::getSubmitTime)
+                .orderByDesc(ClubPointContributionMaterialDO::getId));
     }
 
 }
