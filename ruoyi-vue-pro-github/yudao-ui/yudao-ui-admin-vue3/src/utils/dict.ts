@@ -168,6 +168,32 @@ export enum DICT_TYPE {
   MEMBER_POINT_BIZ_TYPE = 'member_point_biz_type', // 积分的业务类型
   MEMBER_EXPERIENCE_BIZ_TYPE = 'member_experience_biz_type', // 会员经验业务类型
 
+  // ========== CLUB POINTS 俱乐部积分模块 ==========
+  CLUB_POINTS_CLUB_STATUS = 'club_points_club_status',
+  CLUB_POINTS_MEMBER_STATUS = 'club_points_member_status',
+  CLUB_POINTS_ACTIVITY_STATUS = 'club_points_activity_status',
+  CLUB_POINTS_REGISTRATION_STATUS = 'club_points_registration_status',
+  CLUB_POINTS_ATTENDANCE_TARGET_TYPE = 'club_points_attendance_target_type',
+  CLUB_POINTS_ATTENDANCE_SOURCE_TYPE = 'club_points_attendance_source_type',
+  CLUB_POINTS_MATERIAL_STATUS = 'club_points_material_status',
+  CLUB_POINTS_TRANSACTION_DIRECTION = 'club_points_transaction_direction',
+  CLUB_POINTS_TRANSACTION_STATUS = 'club_points_transaction_status',
+  CLUB_POINTS_FREEZE_STATUS = 'club_points_freeze_status',
+  CLUB_POINTS_REDEMPTION_BATCH_STATUS = 'club_points_redemption_batch_status',
+  CLUB_POINTS_REDEMPTION_GIFT_STATUS = 'club_points_redemption_gift_status',
+  CLUB_POINTS_REDEMPTION_APPLICATION_STATUS = 'club_points_redemption_application_status',
+  CLUB_POINTS_DISPUTE_STATUS = 'club_points_dispute_status',
+  CLUB_POINTS_JOB_STATUS = 'club_points_job_status',
+  CLUB_POINTS_REVIEW_RESULT = 'club_points_review_result',
+  CLUB_POINTS_POINT_CATEGORY = 'club_points_point_category',
+  CLUB_POINTS_LEADER_STATUS = 'club_points_leader_status',
+  CLUB_POINTS_REGISTRATION_CANCEL_REASON = 'club_points_registration_cancel_reason',
+  CLUB_POINTS_RULE_VERSION_STATUS = 'club_points_rule_version_status',
+  CLUB_POINTS_RULE_ITEM_STATUS = 'club_points_rule_item_status',
+  CLUB_POINTS_TRANSACTION_SOURCE_TYPE = 'club_points_transaction_source_type',
+  CLUB_POINTS_ANNUAL_CLEARING_STATUS = 'club_points_annual_clearing_status',
+  CLUB_POINTS_ACTIVITY_SETTLEMENT_STATUS = 'club_points_activity_settlement_status',
+
   // ========== MALL - 商品模块 ==========
   PRODUCT_SPU_STATUS = 'product_spu_status', //商品状态
 

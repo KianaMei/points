@@ -63,23 +63,33 @@
 
 ## 任务 M11.1 前端基建和共用组件
 
-- [ ] 建 `src/api/clubpoints/` 下 `app`、`leader`、`admin`、`shared` 目录。
-- [ ] 建 `src/views/clubpoints/` 下 `app`、`leader`、`admin`、`components` 目录。
-- [ ] 建 `shared/requestNo.ts`，按业务类型生成请求号，重试复用同号，重开生成新号。
-- [ ] 建 `components/PointAmount.vue`，展示正负积分、冻结和年度清零提示。
-- [ ] 建 `components/StatusTag.vue`，按字典展示俱乐部、活动、报名、材料、兑换、任务状态。
-- [ ] 建 `components/AttachmentInput.vue`，复用 infra 文件上传，输出 `AttachmentInputVO[]`。
-- [ ] 建 `components/StrongConfirmDialog.vue`，仅管理员物理删除俱乐部使用。
-- [ ] 建 `components/ReviewDialog.vue`，活动、材料、兑换审核复用，输出 `ReviewReqVO`。
-- [ ] 建 `components/RuleItemSelect.vue`，选择已发布规则版本和规则项并展示分值区间。
-- [ ] 建 `components/UserPicker.vue` 和 `components/ClubSelect.vue`，复用 system 用户和按角色俱乐部数据。
-- [ ] 核对页面用到的字典类型已在 seed 存在，缺失的补 `club-points-seed.sql`，前端不硬编码中文状态。
+- [x] 建 `src/api/clubpoints/` 下 `app`、`leader`、`admin`、`shared` 目录。
+- [x] 建 `src/views/clubpoints/` 下 `app`、`leader`、`admin`、`components` 目录。
+- [x] 建 `shared/requestNo.ts`，按业务类型生成请求号，重试复用同号，重开生成新号。
+- [x] 建 `components/PointAmount.vue`，展示正负积分、冻结和年度清零提示。
+- [x] 建 `components/StatusTag.vue`，按字典展示俱乐部、活动、报名、材料、兑换、任务状态。
+- [x] 建 `components/AttachmentInput.vue`，复用 infra 文件上传，输出 `AttachmentInputVO[]`。
+- [x] 建 `components/StrongConfirmDialog.vue`，仅管理员物理删除俱乐部使用。
+- [x] 建 `components/ReviewDialog.vue`，活动、材料、兑换审核复用，输出 `ReviewReqVO`。
+- [x] 建 `components/RuleItemSelect.vue`，选择已发布规则版本和规则项并展示分值区间。
+- [x] 建 `components/UserPicker.vue` 和 `components/ClubSelect.vue`，复用 system 用户和按角色俱乐部数据。
+- [x] 核对页面用到的字典类型已在 seed 存在，缺失的补 `club-points-seed.sql`，前端不硬编码中文状态。
 
 验收：
 
-- [ ] 共用组件能被页面 import 并渲染，无控制台报错。
-- [ ] `pnpm dev` 起在端口 `8889`，`Invoke-WebRequest http://127.0.0.1:8889` 返回 `200`。
-- [ ] 请求号重试复用、重开换号符合预期。
+- [x] 共用组件能被页面 import 并渲染，无控制台报错。
+- [x] `pnpm dev` 起在端口 `8889`，`Invoke-WebRequest http://127.0.0.1:8889` 返回 `200`。
+- [x] 请求号重试复用、重开换号符合预期。
+
+M11.1 证据：
+
+- RED：运行 `Test-Path` 检查 `src/api/clubpoints/{app,leader,admin,shared}`、`src/views/clubpoints/{app,leader,admin,components}`、`shared/requestNo.ts` 和 8 个共用组件，全部返回 `False`。
+- GREEN：新增 `shared/requestNo.ts`、`shared/types.ts`、8 个共用组件和目录占位；`Test-Path` 复核上述目录和文件全部返回 `True`。
+- 请求号验证：用 Node + TypeScript `transpileModule` 执行 `requestNo.ts`，断言同一业务上下文重试复用同号，不同上下文、`resetRequestNo`、`clearRequestNo` 后重开均换号，命令退出码 `0`。
+- 前端类型验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，输出为前端工程存量 TypeScript 债；二次过滤 `clubpoints` 路径命中 `0` 行。
+- 前端入口验证：临时启动 `pnpm dev` 后 `Invoke-WebRequest http://127.0.0.1:8889` 返回 HTTP `200`；停止临时 job 后端口仍由 2026-06-25 15:44:52 已存在的 `node` 进程监听，未杀用户已有进程。
+- 字典验证：新增 `DICT_TYPE.CLUB_POINTS_*` 共 24 个，全部能在 `club-points-seed.sql` 找到对应 `system_dict_type`，`MissingInSeed=0`。
+- 质量门禁：`git diff --check` 无输出；M11.1 前端范围精确元数据模式无命中；`tenant_id|TenantBaseDO`、Redis 模式和静态 `/clubpoints/...` 业务路由扫描无命中。
 
 ## 任务 M11.2 前端 API 模块
 
