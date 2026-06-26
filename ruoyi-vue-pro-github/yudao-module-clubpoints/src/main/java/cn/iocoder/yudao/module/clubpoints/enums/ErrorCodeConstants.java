@@ -74,5 +74,8 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_REDEMPTION_ELIGIBILITY_NOT_QUALIFIED = new ErrorCode(1_300_000_062, "不具备本批次兑换资格");
     ErrorCode CLUB_REDEMPTION_APPLICATION_NOT_EXISTS = new ErrorCode(1_300_000_063, "兑换申请不存在");
     ErrorCode CLUB_REDEMPTION_APPLICATION_STATUS_INVALID = new ErrorCode(1_300_000_064, "兑换申请状态不允许当前操作");
+    ErrorCode CLUB_DISPUTE_NOT_EXISTS = new ErrorCode(1_300_000_065, "异议不存在");
+    ErrorCode CLUB_DISPUTE_STATUS_INVALID = new ErrorCode(1_300_000_066, "异议状态不允许当前操作");
+    ErrorCode CLUB_DISPUTE_INVALID = new ErrorCode(1_300_000_067, "异议参数无效");
 
 }

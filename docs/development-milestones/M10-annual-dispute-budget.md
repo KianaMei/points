@@ -63,22 +63,36 @@
 
 ## 任务 M10.1 异议 DO 和 Service
 
-- [ ] 创建 `ClubPointDisputeDO`。
-- [ ] 创建对应 Mapper。
-- [ ] 员工提交异议。
-- [ ] 员工上传附件。
-- [ ] 管理员受理异议。
-- [ ] 管理员驳回异议。
-- [ ] 管理员处理异议。
-- [ ] 需要改积分时调用撤销或调整流水。
-- [ ] 异议本身不直接改积分。
-- [ ] 处理异议写强审计。
+- [x] 创建 `ClubPointDisputeDO`。
+- [x] 创建对应 Mapper。
+- [x] 员工提交异议。
+- [x] 员工上传附件。
+- [x] 管理员受理异议。
+- [x] 管理员驳回异议。
+- [x] 管理员处理异议。
+- [x] 需要改积分时调用撤销或调整流水。
+- [x] 异议本身不直接改积分。
+- [x] 处理异议写强审计。
 
 验收：
 
-- [ ] 异议状态机可控。
-- [ ] 异议处理可追溯。
-- [ ] 积分变化仍走账本。
+- [x] 异议状态机可控。
+- [x] 异议处理可追溯。
+- [x] 积分变化仍走账本。
+
+验证记录：
+
+- RED：新增 `ClubPointDisputeServiceImplTest`，运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointDisputeServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`，失败原因为异议 DO、Mapper、Service、BO、枚举、`BIZ_TYPE_DISPUTE`、`DISPUTE_HANDLE` 缺失。
+- GREEN：新增 `ClubPointDisputeDO`、`ClubPointDisputeMapper`、异议状态 / 目标类型 / 关联动作枚举、提交 / 受理 / 处理 BO 和 `ClubPointDisputeService` 实现；同一命令返回 `BUILD SUCCESS`，`ClubPointDisputeServiceImplTest` 运行 `8` 个测试，失败 `0`，错误 `0`。
+- 组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointDisputeServiceImplTest,ClubPointLedgerAdjustmentServiceImplTest,ClubAttachmentServiceImplTest,ClubAuditServiceImplTest,ClubNotifyServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `29` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；异议 Service 和测试范围 Redis 模式无命中；异议主代码无直接写流水或账户命中。
+
+实现边界：
+
+- M10.1 不实现 Controller，员工端和管理员端 API 留到 M10.8。
+- 异议状态机固定为 `PENDING(1)`、`REPLIED(2)`、`CLOSED(3)`；受理只设置处理人和处理时间，状态仍为 `PENDING`；处理后进入 `REPLIED`；驳回作为无积分动作终态进入 `CLOSED`。
+- 异议附件绑定到 `BIZ_TYPE_DISPUTE`；提交、受理、驳回和处理均不直接写 `club_points_transaction` 或积分账户。
+- 调整积分走 `ClubPointLedgerService.adjustPoints(...)`，撤销积分走 `ClubPointLedgerService.reverseTransaction(...)`；处理异议自身写 `DISPUTE_HANDLE` 强审计，审计失败回滚异议处理和同事务账本动作，通知失败不回滚业务。
 
 ## 任务 M10.2 年度清零模型
 
