@@ -23,6 +23,19 @@ public interface ClubPointRedemptionApplicationMapper extends BaseMapperX<ClubPo
                 .orderByDesc(ClubPointRedemptionApplicationDO::getId));
     }
 
+    default PageResult<ClubPointRedemptionApplicationDO> selectPageForReport(PageParam pageParam, Long batchId,
+                                                                             Long userId, Integer status,
+                                                                             LocalDateTime startTime,
+                                                                             LocalDateTime endTime) {
+        return selectPage(pageParam, new LambdaQueryWrapperX<ClubPointRedemptionApplicationDO>()
+                .eqIfPresent(ClubPointRedemptionApplicationDO::getBatchId, batchId)
+                .eqIfPresent(ClubPointRedemptionApplicationDO::getUserId, userId)
+                .eqIfPresent(ClubPointRedemptionApplicationDO::getStatus, status)
+                .betweenIfPresent(ClubPointRedemptionApplicationDO::getApplyTime, startTime, endTime)
+                .orderByDesc(ClubPointRedemptionApplicationDO::getApplyTime)
+                .orderByDesc(ClubPointRedemptionApplicationDO::getId));
+    }
+
     default ClubPointRedemptionApplicationDO selectByIdForUpdate(Long id) {
         return selectOneForUpdate(ClubPointRedemptionApplicationDO::getId, id);
     }

@@ -70,7 +70,7 @@ INSERT INTO `system_menu` (`id`, `name`, `permission`, `type`, `sort`, `parent_i
 (1300010440, '年度清零', 'clubpoints:annual:clear', 2, 140, 1300010300, 'annual-clearing', 'ep:refresh-left', 'clubpoints/admin/annual-clearing/index', 'ClubPointsAdminAnnualClearing', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010450, '年度排名和激励', 'clubpoints:annual:query', 2, 150, 1300010300, 'annual-ranking', 'ep:medal', 'clubpoints/admin/annual-ranking/index', 'ClubPointsAdminAnnualRanking', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010460, '预算记录', 'clubpoints:budget:manage', 2, 160, 1300010300, 'budget', 'ep:money', 'clubpoints/admin/budget/index', 'ClubPointsAdminBudget', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010470, '报表中心', 'clubpoints:report:export', 2, 170, 1300010300, 'report', 'ep:download', 'clubpoints/admin/report/index', 'ClubPointsAdminReport', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010470, '报表中心', 'clubpoints:report:query', 2, 170, 1300010300, 'report', 'ep:download', 'clubpoints/admin/report/index', 'ClubPointsAdminReport', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010480, '审计日志', 'clubpoints:audit:query', 2, 180, 1300010300, 'audit', 'ep:document-copy', 'clubpoints/admin/audit/index', 'ClubPointsAdminAudit', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010490, '任务运行', 'clubpoints:job:query', 2, 190, 1300010300, 'job-run', 'ep:operation', 'clubpoints/admin/job-run/index', 'ClubPointsAdminJobRun', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0')
 ON DUPLICATE KEY UPDATE
@@ -152,7 +152,8 @@ INSERT INTO `system_menu` (`id`, `name`, `permission`, `type`, `sort`, `parent_i
 (1300012053, '运行结算', 'clubpoints:settlement:run', 3, 53, 1300010340, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012054, '特殊缺席', 'clubpoints:registration:special-absence', 3, 54, 1300010240, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012056, '违规扣分', 'clubpoints:contribution:violation-deduct', 3, 56, 1300010390, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300012057, '弄虚作假处理', 'clubpoints:contribution:fraud-handle', 3, 57, 1300010390, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0')
+(1300012057, '弄虚作假处理', 'clubpoints:contribution:fraud-handle', 3, 57, 1300010390, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300012058, '查询报表', 'clubpoints:report:query', 3, 58, 1300010470, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0')
 ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `permission` = VALUES(`permission`),

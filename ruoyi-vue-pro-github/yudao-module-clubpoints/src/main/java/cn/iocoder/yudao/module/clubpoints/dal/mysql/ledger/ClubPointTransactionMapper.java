@@ -8,6 +8,7 @@ import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointTransac
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionStatusEnum;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -115,8 +116,8 @@ public interface ClubPointTransactionMapper extends BaseMapperX<ClubPointTransac
     default PageResult<ClubPointTransactionDO> selectPageForAdmin(PageParam pageParam, Long userId,
                                                                   Integer direction, Integer pointCategory,
                                                                   Integer sourceType, Long clubId,
-                                                                  java.time.LocalDateTime startTime,
-                                                                  java.time.LocalDateTime endTime) {
+                                                                  LocalDateTime startTime,
+                                                                  LocalDateTime endTime) {
         return selectPage(pageParam, new LambdaQueryWrapperX<ClubPointTransactionDO>()
                 .eqIfPresent(ClubPointTransactionDO::getUserId, userId)
                 .in(ClubPointTransactionDO::getStatus, QUERY_EFFECTIVE_STATUSES)
@@ -127,6 +128,43 @@ public interface ClubPointTransactionMapper extends BaseMapperX<ClubPointTransac
                 .betweenIfPresent(ClubPointTransactionDO::getOccurredAt, startTime, endTime)
                 .orderByDesc(ClubPointTransactionDO::getOccurredAt)
                 .orderByDesc(ClubPointTransactionDO::getId));
+    }
+
+    default PageResult<ClubPointTransactionDO> selectPageForReportPointDetail(PageParam pageParam, Long userId,
+                                                                              Long clubId, Integer year,
+                                                                              Integer direction,
+                                                                              Integer pointCategory,
+                                                                              Integer sourceType,
+                                                                              LocalDateTime startTime,
+                                                                              LocalDateTime endTime) {
+        return selectPage(pageParam, new LambdaQueryWrapperX<ClubPointTransactionDO>()
+                .eqIfPresent(ClubPointTransactionDO::getUserId, userId)
+                .eqIfPresent(ClubPointTransactionDO::getIssuingClubId, clubId)
+                .eqIfPresent(ClubPointTransactionDO::getBusinessYear, year)
+                .in(ClubPointTransactionDO::getStatus, QUERY_EFFECTIVE_STATUSES)
+                .eqIfPresent(ClubPointTransactionDO::getDirection, direction)
+                .eqIfPresent(ClubPointTransactionDO::getPointCategory, pointCategory)
+                .eqIfPresent(ClubPointTransactionDO::getSourceType, sourceType)
+                .betweenIfPresent(ClubPointTransactionDO::getOccurredAt, startTime, endTime)
+                .orderByDesc(ClubPointTransactionDO::getOccurredAt)
+                .orderByDesc(ClubPointTransactionDO::getId));
+    }
+
+    default List<ClubPointTransactionDO> selectListForReportSummary(Collection<Long> userIds, Long clubId,
+                                                                    Integer year, LocalDateTime startTime,
+                                                                    LocalDateTime endTime) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return selectList(new LambdaQueryWrapperX<ClubPointTransactionDO>()
+                .in(ClubPointTransactionDO::getUserId, userIds)
+                .eqIfPresent(ClubPointTransactionDO::getIssuingClubId, clubId)
+                .eqIfPresent(ClubPointTransactionDO::getBusinessYear, year)
+                .in(ClubPointTransactionDO::getStatus, QUERY_EFFECTIVE_STATUSES)
+                .betweenIfPresent(ClubPointTransactionDO::getOccurredAt, startTime, endTime)
+                .orderByAsc(ClubPointTransactionDO::getUserId)
+                .orderByAsc(ClubPointTransactionDO::getOccurredAt)
+                .orderByAsc(ClubPointTransactionDO::getId));
     }
 
     default List<ClubPointTransactionDO> selectListByUserIdsAndIssuingClubId(Collection<Long> userIds, Long issuingClubId) {

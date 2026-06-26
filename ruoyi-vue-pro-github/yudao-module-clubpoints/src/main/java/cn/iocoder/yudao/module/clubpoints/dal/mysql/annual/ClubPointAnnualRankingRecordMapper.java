@@ -34,6 +34,15 @@ public interface ClubPointAnnualRankingRecordMapper extends BaseMapperX<ClubPoin
                 .orderByAsc(ClubPointAnnualRankingRecordDO::getId));
     }
 
+    default PageResult<ClubPointAnnualRankingRecordDO> selectPageForReport(PageParam pageParam, Integer year,
+                                                                           Long clubId) {
+        return selectPage(pageParam, new LambdaQueryWrapperX<ClubPointAnnualRankingRecordDO>()
+                .eqIfPresent(ClubPointAnnualRankingRecordDO::getYear, year)
+                .eqIfPresent(ClubPointAnnualRankingRecordDO::getClubId, clubId)
+                .orderByAsc(ClubPointAnnualRankingRecordDO::getRankNo)
+                .orderByAsc(ClubPointAnnualRankingRecordDO::getId));
+    }
+
     @Delete("DELETE FROM club_points_annual_ranking_record WHERE `year` = #{year}")
     int deletePhysicallyByYear(@Param("year") Integer year);
 

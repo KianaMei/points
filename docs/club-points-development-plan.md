@@ -1232,6 +1232,8 @@ Lock4j 可以减少并发冲突，但数据库条件更新才是最终事实。
 
 导出必须记录导出人、时间、类型、筛选条件。第一版不新增导出业务表，导出留痕写入 `club_points_audit_log`，必要时同时复用 `system_operate_log`。
 
+M11.3 已落地页面查询接口：`/clubpoints/report/point-detail-page`、`/clubpoints/report/ledger-summary-page`、`/clubpoints/report/redemption-page`、`/clubpoints/report/club-ranking-page`、`/clubpoints/report/budget-page`。查询权限为 `clubpoints:report:query`；导出权限仍为 `clubpoints:report:export`，导出和强审计在 M11.4 处理。
+
 ### 16.2 任务监控
 
 **源码落点**：`service/jobrun/JobRunService.java`、`controller/admin/jobrun/JobRunController.java`。

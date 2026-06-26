@@ -403,7 +403,7 @@ src/views/clubpoints/
 
 | 页面 | 路由 | API | 权限 |
 | --- | --- | --- | --- |
-| 报表中心 | `/clubpoints/admin/report` | `GET /clubpoints/report/export-excel` | `clubpoints:report:export` |
+| 报表中心 | `/clubpoints/admin/report` | `GET /clubpoints/report/point-detail-page`、`GET /clubpoints/report/ledger-summary-page`、`GET /clubpoints/report/redemption-page`、`GET /clubpoints/report/club-ranking-page`、`GET /clubpoints/report/budget-page`、`GET /clubpoints/report/export-excel` | `clubpoints:report:query`、`clubpoints:report:export` |
 | 审计日志 | `/clubpoints/admin/audit` | `GET /clubpoints/audit/page` | `clubpoints:audit:query` |
 | 任务运行 | `/clubpoints/admin/job-run` | `GET /clubpoints/job-run/page`、`POST /clubpoints/job-run/handle` | `clubpoints:job:query`、`clubpoints:job:handle` |
 
@@ -417,7 +417,7 @@ src/views/clubpoints/
 | 俱乐部发放积分排名 | 是 | 建议支持 |
 | 预算和经费使用统计 | 是 | 建议支持 |
 
-员工和负责人菜单不能出现导出按钮。导出动作必须写强审计，记录导出人、时间、类型和筛选条件。
+报表页面查询权限使用 `clubpoints:report:query`，导出按钮权限使用 `clubpoints:report:export`。员工和负责人菜单不能出现导出按钮。导出动作必须写强审计，记录导出人、时间、类型和筛选条件。
 
 ## 7. API 模块拆分
 
@@ -471,6 +471,7 @@ src/views/clubpoints/
 | 积分调整 | 调整积分 | `clubpoints:ledger:adjust` |
 | 撤销流水 | 撤销 | `clubpoints:ledger:reverse` |
 | 兑换审核 | 审核 | `clubpoints:redemption:review` |
+| 报表查询 | 查询 | `clubpoints:report:query` |
 | 报表导出 | 导出 | `clubpoints:report:export` |
 
 ## 9. 表单和交互规则

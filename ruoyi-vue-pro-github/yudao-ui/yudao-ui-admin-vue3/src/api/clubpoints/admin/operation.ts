@@ -41,6 +41,7 @@ export interface AdminOperationRespVO extends ClubPointBaseRespVO {
 const DISPUTE_PREFIX = '/clubpoints/dispute'
 const ANNUAL_PREFIX = '/clubpoints/annual'
 const BUDGET_PREFIX = '/clubpoints/budget'
+const REPORT_PREFIX = '/clubpoints/report'
 
 export const getAdminDisputePage = async (
   params: ClubPointPageParam
@@ -94,4 +95,24 @@ export const updateBudget = async (data: AdminBudgetSaveReqVO) => {
 
 export const disableBudget = async (data: ClubPointReasonReqVO) => {
   return await request.post({ url: `${BUDGET_PREFIX}/disable`, data })
+}
+
+export const getReportPointDetailPage = async (params: ClubPointPageParam) => {
+  return await request.get({ url: `${REPORT_PREFIX}/point-detail-page`, params })
+}
+
+export const getReportLedgerSummaryPage = async (params: ClubPointPageParam) => {
+  return await request.get({ url: `${REPORT_PREFIX}/ledger-summary-page`, params })
+}
+
+export const getReportRedemptionPage = async (params: ClubPointPageParam) => {
+  return await request.get({ url: `${REPORT_PREFIX}/redemption-page`, params })
+}
+
+export const getReportClubRankingPage = async (params: ClubPointPageParam) => {
+  return await request.get({ url: `${REPORT_PREFIX}/club-ranking-page`, params })
+}
+
+export const getReportBudgetPage = async (params: ClubPointPageParam) => {
+  return await request.get({ url: `${REPORT_PREFIX}/budget-page`, params })
 }

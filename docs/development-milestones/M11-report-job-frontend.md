@@ -117,18 +117,28 @@ M11.2 证据：
 
 ## 任务 M11.3 报表查询
 
-- [ ] 管理员查询积分明细报表。
-- [ ] 管理员查询总台账报表。
-- [ ] 管理员查询兑换记录报表。
-- [ ] 管理员查询俱乐部排名报表。
-- [ ] 管理员查询预算报表。
-- [ ] 报表基于流水和业务快照查询。
-- [ ] 不新增导出主表。
+- [x] 管理员查询积分明细报表。
+- [x] 管理员查询总台账报表。
+- [x] 管理员查询兑换记录报表。
+- [x] 管理员查询俱乐部排名报表。
+- [x] 管理员查询预算报表。
+- [x] 报表基于流水和业务快照查询。
+- [x] 不新增导出主表。
 
 验收：
 
-- [ ] 报表数据来源明确。
-- [ ] 员工和负责人不能导出报表。
+- [x] 报表数据来源明确。
+- [x] 员工和负责人不能导出报表。
+
+M11.3 证据：
+
+- RED：新增 `ClubPointReportControllerTest` 和 `ClubPointReportServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointReportControllerTest,ClubPointReportServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`，返回 `BUILD FAILURE`；失败原因是 `ClubPointReportAdminController`、`ClubPointReportServiceImpl`、报表 VO/BO 包不存在。
+- GREEN：新增 `service/report`、`controller/admin/report`、五类报表 BO/VO 和 Mapper 查询方法；五个查询接口统一 `GET /clubpoints/report/*-page`，权限统一 `clubpoints:report:query`。
+- 查询接口：`/point-detail-page` 读 `club_points_transaction`；`/ledger-summary-page` 读账户缓存并按 `club_points_transaction` 聚合；`/redemption-page` 读兑换申请的批次/礼品快照；`/club-ranking-page` 读 `club_points_annual_ranking_record`；`/budget-page` 读 `club_points_budget_record`。
+- 验证：同一测试命令最终返回 `BUILD SUCCESS`；`ClubPointReportControllerTest` 1 个测试、`ClubPointReportServiceImplTest` 5 个测试，合计 6 个测试，失败 0，错误 0。
+- 权限 seed：`报表中心` 菜单权限改为 `clubpoints:report:query`，新增 `查询报表` 按钮权限；`导出报表` 仍为 `clubpoints:report:export`，员工和负责人角色授权列表不包含查询/导出报表。
+- 前端 API：`api/clubpoints/admin/operation.ts` 新增五个报表查询函数，页面仍不散写业务 URL。
+- 边界说明：M11.3 只做页面查询，不做 Excel 导出、不写强审计、不新增导出业务表；导出强审计属于 M11.4。
 
 ## 任务 M11.4 报表导出
 
