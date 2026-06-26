@@ -45,7 +45,7 @@
 | `[x]` | M4 | `M4-ledger.md` | 积分流水、冻结、余额缓存形成账本脊柱 |
 | `[x]` | M5 | `M5-club-member-leader.md` | 俱乐部、成员、负责人闭环可用 |
 | `[x]` | M6 | `M6-activity-registration-attendance.md` | 活动、报名、签到签退、特殊缺席闭环可用 |
-| `[~]` | M7 | `M7-activity-settlement.md` | 活动积分和缺席扣分可幂等结算 |
+| `[x]` | M7 | `M7-activity-settlement.md` | 活动积分和缺席扣分可幂等结算 |
 | `[ ]` | M8 | `M8-contribution-violation.md` | 非签到积分、违规扣分、弄虚作假闭环可用 |
 | `[ ]` | M9 | `M9-redemption.md` | 兑换资格、冻结、库存、审核闭环可用 |
 | `[ ]` | M10 | `M10-annual-dispute-budget.md` | 异议、年度清零、排名、激励、预算闭环可用 |
@@ -82,7 +82,7 @@ M0 空模块
 
 ## 当前最近入口
 
-当前最近入口是 M7：
+当前最近入口是 M8：
 
 - M0 已创建 `ruoyi-vue-pro-github/yudao-module-clubpoints` 空模块。
 - M0 已在根 POM 和 `yudao-server/pom.xml` 接入 `yudao-module-clubpoints`。
@@ -136,4 +136,5 @@ M0 空模块
 - M7.4 已完成月度累计缺席统计、阈值读取、达到阈值后扣分、同用户同年月只扣一次和统计快照写入，并通过 RED/GREEN 服务测试、M7 当前组合验证和质量门禁。
 - M7.5 已完成活动结算 Job Handler、任务运行记录、失败可重试留痕、重试幂等不重复发分和结算运行关联 `job_run_id`，并通过 RED/GREEN Job 测试、M7 当前组合验证和质量门禁。
 - M7.6 已完成管理员待结算活动分页、手动触发结算、结算运行记录分页、结算明细查询、手动结算强审计和手动重跑不重复流水，并通过 RED/GREEN 接口测试、M7 当前组合验证和质量门禁。
-- M7 下一步入口是 M7.7 测试收口。
+- M7.7 已完成测试收口，覆盖正常签到发分、缺席扣分、特殊缺席、重复结算、并发结算、月度累计缺席、余额不足扣分失败和 Job 失败记录，并通过 M7 收口组合验证和质量门禁。
+- M7 已放行；下一步入口是 M8 非签到积分、违规扣分、弄虚作假闭环。

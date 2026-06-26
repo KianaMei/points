@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.clubpoints.service.settlement;
 
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
+import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActivityDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActivityPointConfigVersionDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActivityRegistrationDO;
@@ -52,7 +53,9 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_LEDGER_AVAILABLE_POINTS_NOT_ENOUGH;
 
 @Import({
         ClubPointActivitySettlementServiceImpl.class,
@@ -279,6 +282,26 @@ class ClubPointActivitySettlementServiceImplTest extends BaseDbUnitTest {
 
         assertEquals(monthlyTransaction.getId(), transactionMapper.selectByIdempotencyKey(monthlyKey).getId());
         assertEquals(18, accountMapper.selectByUserId(userId).getAvailablePoints());
+    }
+
+    @Test
+    void settleActivityShouldFailWithoutLedgerTransactionWhenAbsenceDeductBalanceInsufficient() {
+        ClubPointRuleVersionDO ruleVersion = seedSettlementRules();
+        ClubPointClubDO club = insertClub();
+        ClubPointActivityDO activity = insertEndedActivity(club);
+        insertConfigVersion(activity, ruleVersion);
+        ClubPointActivityRegistrationDO absent = insertRegistration(activity, 7202L, "Poor Absent", false, false,
+                ClubPointRegistrationStatusEnum.REGISTERED.getStatus());
+
+        ServiceException exception = assertThrows(ServiceException.class,
+                () -> settlementService.settleActivity(buildRunReq(activity.getId(), "M7-7-INSUFFICIENT")));
+
+        assertEquals(CLUB_LEDGER_AVAILABLE_POINTS_NOT_ENOUGH.getCode(), exception.getCode());
+        assertNull(transactionMapper.selectByIdempotencyKey(ClubPointActivitySettlementItemTypeEnum.ABSENCE_SINGLE
+                .buildIdempotencyKey(activity.getId(), absent.getUserId(), 202607)));
+        assertNull(settlementRunMapper.selectByRunKey("M7-7-INSUFFICIENT"));
+        assertEquals(ClubPointActivityStatusEnum.ENDED.getStatus(),
+                activityMapper.selectById(activity.getId()).getStatus());
     }
 
     private ClubPointRuleVersionDO seedSettlementRules() {

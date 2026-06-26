@@ -1,6 +1,6 @@
 # M7 活动自动结算 Implementation Plan
 
-**Status:** `[~]` M7.1-M7.6 已完成并有 RED/GREEN 证据；当前入口是 M7.7 测试。
+**Status:** `[x]` M7 已完成并有验证证据；下一步入口是 M8 非签到积分、违规扣分、弄虚作假。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -204,29 +204,37 @@
 
 ## 任务 M7.7 测试
 
-- [ ] 测试正常签到发分。
-- [ ] 测试未签到缺席扣分。
-- [ ] 测试特殊缺席不扣分。
-- [ ] 测试重复结算。
-- [ ] 测试并发结算。
-- [ ] 测试月度累计缺席。
-- [ ] 测试余额不足时扣分规则。
-- [ ] 测试 Job 失败记录。
+- [x] 测试正常签到发分。
+- [x] 测试未签到缺席扣分。
+- [x] 测试特殊缺席不扣分。
+- [x] 测试重复结算。
+- [x] 测试并发结算。
+- [x] 测试月度累计缺席。
+- [x] 测试余额不足时扣分规则。
+- [x] 测试 Job 失败记录。
 
 验收：
 
-- [ ] 所有结算测试通过。
-- [ ] 流水、账户缓存、结算记录一致。
+- [x] 所有结算测试通过。
+- [x] 流水、账户缓存、结算记录一致。
+
+证据：
+
+- 覆盖复核：正常签到发分、未签到缺席扣分、特殊缺席不扣分、重复结算、并发结算和月度累计缺席已由 `ClubPointActivitySettlementServiceImplTest` 覆盖；Job 失败记录已由 `ClubPointActivitySettlementJobTest` 覆盖；管理员手动结算接口已由 `ClubPointSettlementAdminControllerTest` 覆盖。
+- M7.7 补强：新增 `ClubPointActivitySettlementServiceImplTest#settleActivityShouldFailWithoutLedgerTransactionWhenAbsenceDeductBalanceInsufficient`，覆盖余额不足时单次缺席扣分由 LedgerService 拒绝，且不生成缺席扣分流水、不写结算运行记录、活动状态仍保持 `ENDED(6)`。
+- M7.7 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivitySettlementServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointActivitySettlementServiceImplTest` 运行 `6` 个测试，失败 `0`，错误 `0`。
+- M7 收口组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivitySettlementEnumTest,ClubPointActivitySettlementServiceImplTest,ClubPointActivitySettlementJobTest,ClubPointSettlementAdminControllerTest,ClubPointLedgerServiceImplTest,ClubPointActivityServiceImplTest,ClubPointRegistrationServiceImplTest,ClubPointAttendanceServiceImplTest,ClubPointAttendanceCorrectionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `46` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
 
 ## M7 放行标准
 
-- [ ] 自动结算可用。
-- [ ] 手动结算可用。
-- [ ] 重跑幂等。
-- [ ] 月度缺席扣分可用。
-- [ ] 结算记录可追溯。
+- [x] 自动结算可用。
+- [x] 手动结算可用。
+- [x] 重跑幂等。
+- [x] 月度缺席扣分可用。
+- [x] 结算记录可追溯。
 
 ## M7 不通过时禁止
 
-- [ ] 禁止写活动相关前端收口。
-- [ ] 禁止做全链路积分演示。
+- [x] 禁止写活动相关前端收口。
+- [x] 禁止做全链路积分演示。
