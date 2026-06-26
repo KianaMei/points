@@ -21,7 +21,10 @@ public enum ClubPointContributionMaterialTypeEnum {
             ClubPointTransactionDirectionEnum.INCREASE.getDirection()),
     SPECIAL_CONTRIBUTION(5, ClubPointRuleItemCodeEnum.SPECIAL_CONTRIBUTION.getCode(),
             ClubPointCategoryEnum.SPECIAL_REWARD.getCategory(),
-            ClubPointTransactionDirectionEnum.INCREASE.getDirection());
+            ClubPointTransactionDirectionEnum.INCREASE.getDirection()),
+    VIOLATION_DEDUCT(6, ClubPointRuleItemCodeEnum.VIOLATION_DEDUCT_RANGE.getCode(),
+            ClubPointCategoryEnum.DEDUCTION.getCategory(),
+            ClubPointTransactionDirectionEnum.DECREASE.getDirection());
 
     private final Integer type;
     private final String ruleItemCode;

@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContr
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionMaterialSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionReviewReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionSubmitReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionViolationDeductReqBO;
 
 import java.util.List;
 
@@ -24,5 +25,7 @@ public interface ClubPointContributionService {
     void reviewMaterial(ClubPointContributionReviewReqBO reqBO);
 
     Long directCreate(ClubPointContributionDirectCreateReqBO reqBO);
+
+    Long violationDeduct(ClubPointContributionViolationDeductReqBO reqBO);
 
 }

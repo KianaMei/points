@@ -37,6 +37,7 @@ import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContr
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionMaterialSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionReviewReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionSubmitReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionViolationDeductReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.ClubPointLedgerServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.rule.ClubPointRuleServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeServiceImpl;
@@ -56,9 +57,14 @@ import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.B
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.STATUS_EFFECTIVE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CONTRIBUTION_DIRECT_CREATE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CONTRIBUTION_REVIEW;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CONTRIBUTION_VIOLATION_DEDUCT;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointCategoryEnum.ACTIVE_CONTRIBUTION;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointCategoryEnum.DEDUCTION;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointContributionMaterialTypeEnum.PUBLICITY_SUGGESTION;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointContributionMaterialTypeEnum.SPECIAL_CONTRIBUTION;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointContributionMaterialTypeEnum.VIOLATION_DEDUCT;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointRuleItemCodeEnum.VIOLATION_DEDUCT_RANGE;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionDirectionEnum.DECREASE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionDirectionEnum.INCREASE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionSourceTypeEnum.ADMIN_DIRECT;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionSourceTypeEnum.CONTRIBUTION_MATERIAL;
@@ -68,6 +74,7 @@ import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_C
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_CONTRIBUTION_REVIEW_DENIED;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_CONTRIBUTION_RULE_VALUE_OUT_OF_RANGE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_CONTRIBUTION_STATUS_INVALID;
+import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_LEDGER_AVAILABLE_POINTS_NOT_ENOUGH;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_ITEM_NOT_EXISTS;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_SCOPE_DENIED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -502,6 +509,121 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
         assertEquals(0L, attachmentRefMapper.selectCount());
     }
 
+    @Test
+    void violationDeductShouldCreateApprovedMaterialNegativeTransactionAttachmentAuditAndBeIdempotent() {
+        ClubPointClubDO club = insertClub("CLUB-M8-6001", "Violation Deduct Club");
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-601");
+        insertRuleItem(version.getId(), VIOLATION_DEDUCT, 5, 20, 10);
+        insertAccount(9201L, 30);
+
+        Long materialId = contributionService.violationDeduct(buildViolationDeductReq("REQ-M8-6001",
+                club.getId(), version.getId()).setPoints(12));
+        Long repeatedMaterialId = contributionService.violationDeduct(buildViolationDeductReq("REQ-M8-6001",
+                club.getId(), version.getId()).setPoints(12));
+
+        assertEquals(materialId, repeatedMaterialId);
+        assertEquals(1L, materialMapper.selectCount());
+        ClubPointContributionMaterialDO material = materialMapper.selectById(materialId);
+        assertEquals(club.getId(), material.getClubId());
+        assertEquals(VIOLATION_DEDUCT.getType(), material.getType());
+        assertEquals(ClubPointContributionMaterialStatusEnum.APPROVED.getStatus(), material.getStatus());
+        assertEquals(version.getId(), material.getRuleVersionId());
+        assertEquals(900L, material.getSubmitterUserId());
+        assertEquals(900L, material.getReviewerUserId());
+        assertEquals("REQ-M8-6001", material.getRequestNo());
+        assertTrue(material.getDirectCreated());
+        assertTrue(material.getLocked());
+        assertTrue(material.getSnapshotJson().contains("\"requestNo\":\"REQ-M8-6001\""));
+
+        List<ClubPointContributionItemDO> items = itemMapper.selectListByMaterialId(materialId);
+        assertEquals(1, items.size());
+        ClubPointContributionItemDO item = items.get(0);
+        assertEquals(9201L, item.getUserId());
+        assertEquals(VIOLATION_DEDUCT_RANGE.getCode(), item.getRuleItemCode());
+        assertEquals(DECREASE.getDirection(), item.getDirection());
+        assertEquals(DEDUCTION.getCategory(), item.getPointCategory());
+        assertEquals(12, item.getPoints());
+        assertEquals("VIOLATION_DEDUCT:REQ-M8-6001", item.getIdempotencyKey());
+        assertNotNull(item.getTransactionId());
+
+        ClubPointTransactionDO transaction = transactionMapper.selectById(item.getTransactionId());
+        assertEquals(CONTRIBUTION_MATERIAL.getType(), transaction.getSourceType());
+        assertEquals(materialId, transaction.getSourceId());
+        assertEquals(item.getId(), transaction.getSourceItemId());
+        assertEquals("VIOLATION_DEDUCT:REQ-M8-6001", transaction.getIdempotencyKey());
+        assertEquals(9201L, transaction.getUserId());
+        assertEquals(DECREASE.getDirection(), transaction.getDirection());
+        assertEquals(12, transaction.getPoints());
+        assertEquals(DEDUCTION.getCategory(), transaction.getPointCategory());
+        assertEquals(VIOLATION_DEDUCT_RANGE.getCode(), transaction.getPointTypeCode());
+        assertEquals(club.getId(), transaction.getIssuingClubId());
+        assertEquals(900L, transaction.getOperatorUserId());
+        assertNotNull(transaction.getAuditLogId());
+
+        ClubPointAccountDO account = accountMapper.selectByUserId(9201L);
+        assertEquals(18, account.getAvailablePoints());
+        assertEquals(12, account.getTotalNegativePoints());
+
+        List<ClubAttachmentRefDO> attachments = attachmentRefMapper.selectListByBiz(
+                BIZ_TYPE_CONTRIBUTION_MATERIAL, materialId, STATUS_EFFECTIVE);
+        assertEquals(1, attachments.size());
+        assertEquals(900L, attachments.get(0).getUploadedBy());
+        assertTrue(attachments.get(0).getLocked());
+
+        ClubAuditLogDO auditLog = auditLogMapper.selectById(transaction.getAuditLogId());
+        assertEquals(CONTRIBUTION_VIOLATION_DEDUCT, auditLog.getActionType());
+        assertEquals(BIZ_TYPE_CONTRIBUTION_MATERIAL, auditLog.getBizType());
+        assertEquals(materialId, auditLog.getBizId());
+        assertTrue(auditLog.getAfterJson().contains("\"requestNo\":\"REQ-M8-6001\""));
+        assertEquals(1L, auditLogMapper.selectCount());
+        assertEquals(0L, reviewRecordMapper.selectCount());
+        assertEquals(1L, transactionMapper.selectCount());
+    }
+
+    @Test
+    void violationDeductShouldRejectInvalidScopeReasonAttachmentRangeAndInsufficientBalance() {
+        ClubPointClubDO club = insertClub("CLUB-M8-6002", "Violation Validate Club");
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-602");
+        insertRuleItem(version.getId(), VIOLATION_DEDUCT, 5, 20, 10);
+        insertAccount(9201L, 10);
+
+        assertServiceException(() -> contributionService.violationDeduct(buildViolationDeductReq("REQ-M8-6002-A",
+                club.getId(), version.getId()).setOperatorGlobalScope(false)), CLUB_SCOPE_DENIED);
+        assertServiceException(() -> contributionService.violationDeduct(buildViolationDeductReq("REQ-M8-6002-B",
+                club.getId(), version.getId()).setReason("")), CLUB_CONTRIBUTION_STATUS_INVALID);
+        assertServiceException(() -> contributionService.violationDeduct(buildViolationDeductReq("REQ-M8-6002-C",
+                club.getId(), version.getId()).setAttachments(null)), CLUB_CONTRIBUTION_ATTACHMENT_REQUIRED);
+        assertServiceException(() -> contributionService.violationDeduct(buildViolationDeductReq("REQ-M8-6002-D",
+                club.getId(), version.getId()).setPoints(21)), CLUB_CONTRIBUTION_RULE_VALUE_OUT_OF_RANGE);
+        assertServiceException(() -> contributionService.violationDeduct(buildViolationDeductReq("REQ-M8-6002-E",
+                club.getId(), version.getId()).setPoints(11)), CLUB_LEDGER_AVAILABLE_POINTS_NOT_ENOUGH);
+
+        assertEquals(0L, materialMapper.selectCount());
+        assertEquals(0L, itemMapper.selectCount());
+        assertEquals(0L, transactionMapper.selectCount());
+        assertEquals(0L, auditLogMapper.selectCount());
+        assertEquals(0L, attachmentRefMapper.selectCount());
+        assertEquals(10, accountMapper.selectByUserId(9201L).getAvailablePoints());
+    }
+
+    @Test
+    void violationDeductShouldRollbackWhenAuditFails() {
+        ClubPointClubDO club = insertClub("CLUB-M8-6003", "Violation Audit Rollback Club");
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-603");
+        insertRuleItem(version.getId(), VIOLATION_DEDUCT, 5, 20, 10);
+        insertAccount(9201L, 30);
+
+        assertServiceException(() -> contributionService.violationDeduct(buildViolationDeductReq("REQ-M8-6003",
+                club.getId(), version.getId()).setOperatorNameSnapshot(null)), CLUB_AUDIT_WRITE_FAILED);
+
+        assertEquals(0L, materialMapper.selectCount());
+        assertEquals(0L, itemMapper.selectCount());
+        assertEquals(0L, transactionMapper.selectCount());
+        assertEquals(0L, auditLogMapper.selectCount());
+        assertEquals(0L, attachmentRefMapper.selectCount());
+        assertEquals(30, accountMapper.selectByUserId(9201L).getAvailablePoints());
+    }
+
     private ClubPointClubDO insertClub(String code, String name) {
         ClubPointClubDO club = new ClubPointClubDO()
                 .setCode(code)
@@ -554,6 +676,18 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
                 .setSort(1);
         ruleItemMapper.insert(item);
         return item;
+    }
+
+    private void insertAccount(Long userId, Integer availablePoints) {
+        accountMapper.insert(new ClubPointAccountDO()
+                .setUserId(userId)
+                .setTotalPositivePoints(availablePoints)
+                .setTotalNegativePoints(0)
+                .setNetPoints(availablePoints)
+                .setFrozenPoints(0)
+                .setAvailablePoints(availablePoints)
+                .setAnnualEarnedPoints(availablePoints)
+                .setVersion(0));
     }
 
     private Long createSubmittedMaterial(Long clubId, Long ruleVersionId, Long operatorUserId) {
@@ -617,6 +751,26 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
                 .setId(materialId)
                 .setResult(approved ? 1 : 2)
                 .setReason(approved ? "approve contribution" : "reject contribution")
+                .setOperatorGlobalScope(true)
+                .setOperatorUserId(900L)
+                .setOperatorNameSnapshot("Admin")
+                .setOperatorRoleSnapshot("club_points_admin")
+                .setClientIp("127.0.0.1")
+                .setUserAgent("JUnit");
+    }
+
+    private static ClubPointContributionViolationDeductReqBO buildViolationDeductReq(String requestNo, Long clubId,
+                                                                                     Long ruleVersionId) {
+        return new ClubPointContributionViolationDeductReqBO()
+                .setRequestNo(requestNo)
+                .setClubId(clubId)
+                .setUserId(9201L)
+                .setUserNameSnapshot("Violation User")
+                .setDeptNameSnapshot("Ops")
+                .setPoints(10)
+                .setRuleVersionId(ruleVersionId)
+                .setReason("violation deduct")
+                .setAttachments(Arrays.asList(buildUrlAttachment()))
                 .setOperatorGlobalScope(true)
                 .setOperatorUserId(900L)
                 .setOperatorNameSnapshot("Admin")

@@ -1,6 +1,6 @@
 # M8 非签到积分、违规扣分、弄虚作假 Implementation Plan
 
-**Status:** `[~]` M8.1-M8.5 已完成并有 RED/GREEN 证据；当前入口是 M8.6 违规扣分。
+**Status:** `[~]` M8.1-M8.6 已完成并有 RED/GREEN 证据；当前入口是 M8.7 弄虚作假处理。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -186,17 +186,28 @@
 
 ## 任务 M8.6 违规扣分
 
-- [ ] 管理员创建违规扣分。
-- [ ] 选择违规规则项。
-- [ ] 录入扣分值。
-- [ ] 校验扣分值在规则区间内。
-- [ ] 调用 LedgerService 生成负向流水。
-- [ ] 写强审计。
+- [x] 管理员创建违规扣分。
+- [x] 选择违规规则项。
+- [x] 录入扣分值。
+- [x] 校验扣分值在规则区间内。
+- [x] 调用 LedgerService 生成负向流水。
+- [x] 写强审计。
 
 验收：
 
-- [ ] 扣分不会使可用余额变成非法负数，除非规则明确允许。
-- [ ] 违规扣分可追溯到规则和原因。
+- [x] 扣分不会使可用余额变成非法负数，除非规则明确允许。
+- [x] 违规扣分可追溯到规则和原因。
+
+证据：
+
+- RED：在 `ClubPointContributionServiceImplTest` 增加 M8.6 违规扣分用例后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `ClubPointContributionViolationDeductReqBO`、`CONTRIBUTION_VIOLATION_DEDUCT` 和 `VIOLATION_DEDUCT` 不存在，符合 M8.6 RED 预期。
+- GREEN：新增 `ClubPointContributionViolationDeductReqBO`，`ClubPointContributionService` 增加 `violationDeduct(...)`；`ClubPointContributionMaterialTypeEnum` 新增 `VIOLATION_DEDUCT(6)`，固定映射规则项 `VIOLATION_DEDUCT_RANGE`、积分分类 `DEDUCTION(40)` 和扣减方向；`ClubAuditActionTypeConstants` 新增 `CONTRIBUTION_VIOLATION_DEDUCT`。
+- 账本边界：违规扣分创建已审核通过并锁定的材料和单条明细，流水只通过 `ClubPointLedgerService.createTransaction(...)` 生成，`sourceType=CONTRIBUTION_MATERIAL`，`sourceId=materialId`，`sourceItemId=itemId`，`idempotencyKey=VIOLATION_DEDUCT:{requestNo}`；实现不直接写 `club_points_transaction`。
+- 规则与余额边界：扣分分值通过 M3 规则项 `VIOLATION_DEDUCT_RANGE` 校验，越界转换为 `CLUB_CONTRIBUTION_RULE_VALUE_OUT_OF_RANGE`；可用余额不足由 LedgerService 抛 `CLUB_LEDGER_AVAILABLE_POINTS_NOT_ENOUGH`，同事务回滚材料、明细、附件、审计和流水。
+- 实现边界：正式 DDL 没有独立 PenaltyRecord 表，违规扣分追溯使用 `club_points_contribution_material` 和 `club_points_contribution_item`；M8.6 只落 Service 能力，管理员违规扣分 API 进入 M8.8。
+- M8.6 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointContributionServiceImplTest` 运行 `16` 个测试，失败 `0`，错误 `0`。
+- M8 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointContributionMapperTest,ClubPointContributionEnumTest,ClubPointContributionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `21` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
 
 ## 任务 M8.7 弄虚作假处理
 
@@ -251,7 +262,7 @@
 - [ ] 非签到材料提交可用。
 - [ ] 非签到审核发分可用。
 - [x] 管理员代录可用。
-- [ ] 违规扣分可用。
+- [x] 违规扣分可用。
 - [ ] 弄虚作假处理可用。
 
 ## M8 不通过时禁止
