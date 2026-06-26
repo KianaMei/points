@@ -21,6 +21,7 @@ import cn.iocoder.yudao.module.clubpoints.service.ledger.ClubPointLedgerService;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointLedgerCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.rule.ClubPointRuleResolveService;
 import cn.iocoder.yudao.module.clubpoints.service.settlement.bo.ClubPointActivitySettlementRunReqBO;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,11 +62,16 @@ public class ClubPointActivitySettlementServiceImpl implements ClubPointActivity
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long settleActivity(ClubPointActivitySettlementRunReqBO reqBO) {
+        ClubPointActivitySettlementRunDO existingRun = settlementRunMapper.selectByRunKey(reqBO.getRunKey());
+        if (existingRun != null) {
+            return existingRun.getId();
+        }
         ClubPointActivityDO activity = activityMapper.selectByIdForUpdate(reqBO.getActivityId());
         if (activity == null) {
             throw exception(CLUB_ACTIVITY_NOT_FOUND);
         }
-        if (!ClubPointActivityStatusEnum.ENDED.getStatus().equals(activity.getStatus())) {
+        boolean alreadySettled = ClubPointActivityStatusEnum.SETTLED.getStatus().equals(activity.getStatus());
+        if (!ClubPointActivityStatusEnum.ENDED.getStatus().equals(activity.getStatus()) && !alreadySettled) {
             throw exception(CLUB_ACTIVITY_STATUS_INVALID);
         }
         ClubPointActivityPointConfigVersionDO config = validateConfigVersion(activity);
@@ -87,10 +93,12 @@ public class ClubPointActivitySettlementServiceImpl implements ClubPointActivity
 
         ClubPointActivitySettlementRunDO run = buildRun(reqBO, activity, config, registrations.size(),
                 successCount, skipCount);
-        settlementRunMapper.insert(run);
-        activity.setStatus(ClubPointActivityStatusEnum.SETTLED.getStatus());
-        activityMapper.updateById(activity);
-        return run.getId();
+        Long runId = insertRun(run);
+        if (!alreadySettled) {
+            activity.setStatus(ClubPointActivityStatusEnum.SETTLED.getStatus());
+            activityMapper.updateById(activity);
+        }
+        return runId;
     }
 
     private ClubPointActivityPointConfigVersionDO validateConfigVersion(ClubPointActivityDO activity) {
@@ -188,6 +196,19 @@ public class ClubPointActivitySettlementServiceImpl implements ClubPointActivity
                 .setTriggerSource(reqBO.getTriggerSource() != null ? reqBO.getTriggerSource()
                         : ClubPointActivitySettlementTriggerSourceEnum.SCHEDULED.getSource())
                 .setOperatorUserId(reqBO.getOperatorUserId());
+    }
+
+    private Long insertRun(ClubPointActivitySettlementRunDO run) {
+        try {
+            settlementRunMapper.insert(run);
+            return run.getId();
+        } catch (DuplicateKeyException ex) {
+            ClubPointActivitySettlementRunDO duplicated = settlementRunMapper.selectByRunKey(run.getRunKey());
+            if (duplicated != null) {
+                return duplicated.getId();
+            }
+            throw ex;
+        }
     }
 
     private static String resolveRuleItemCode(ClubPointActivityPointConfigVersionDO config,

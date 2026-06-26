@@ -1,6 +1,6 @@
 # M7 活动自动结算 Implementation Plan
 
-**Status:** `[~]` M7.1 已完成并有 RED/GREEN 证据；当前入口是 M7.2 SettlementService。
+**Status:** `[~]` M7.1-M7.3 已完成并有 RED/GREEN 证据；当前入口是 M7.4 月度累计缺席。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -112,18 +112,27 @@
 
 ## 任务 M7.3 结算幂等
 
-- [ ] 活动结算运行加 request key。
-- [ ] 单个用户活动发分生成稳定 idempotency key。
-- [ ] 单个用户活动缺席扣分生成稳定 idempotency key。
-- [ ] 月度累计缺席扣分生成稳定 idempotency key。
-- [ ] 重跑时识别已处理流水。
-- [ ] 数据库唯一键冲突按已处理返回。
+- [x] 活动结算运行加 request key。
+- [x] 单个用户活动发分生成稳定 idempotency key。
+- [x] 单个用户活动缺席扣分生成稳定 idempotency key。
+- [x] 月度累计缺席扣分生成稳定 idempotency key。
+- [x] 重跑时识别已处理流水。
+- [x] 数据库唯一键冲突按已处理返回。
 
 验收：
 
-- [ ] 同一活动重复结算不重复发分。
-- [ ] 同一缺席重复结算不重复扣分。
-- [ ] 并发结算不会生成重复流水。
+- [x] 同一活动重复结算不重复发分。
+- [x] 同一缺席重复结算不重复扣分。
+- [x] 并发结算不会生成重复流水。
+
+证据：
+
+- RED：在 `ClubPointActivitySettlementServiceImplTest` 增加同 `runKey` 重跑、不同 `runKey` 重跑和并发结算测试后，运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivitySettlementServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；`ClubPointActivitySettlementServiceImplTest` 运行 `4` 个测试，失败 `0`，错误 `3`，原因是首次结算后活动状态已变为 `SETTLED(7)`，后续重跑仍按仅允许 `ENDED(6)` 处理并抛 `CLUB_ACTIVITY_STATUS_INVALID`，符合 M7.3 RED 预期。
+- GREEN：`ClubPointActivitySettlementServiceImpl` 在入口按 `runKey` 查询既有运行记录并直接返回；活动状态校验允许 `ENDED(6)` 首次结算和 `SETTLED(7)` 重跑；运行记录插入捕获 `DuplicateKeyException` 后按 `runKey` 查询既有记录返回；流水仍统一通过 `ClubPointLedgerService.createTransaction(...)` 的 `idempotencyKey` 幂等复用。
+- 实现边界：M7.3 不直接写 `club_points_transaction`，不实现月度累计缺席扣分业务，不写 Job Handler，不写管理员接口；月度累计缺席扣分当前只保留 `ABSENCE_MONTHLY` 的稳定幂等键形态，实际统计和扣分进入 M7.4。
+- M7.3 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivitySettlementServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointActivitySettlementServiceImplTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- M7 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivitySettlementEnumTest,ClubPointActivitySettlementServiceImplTest,ClubPointLedgerServiceImplTest,ClubPointActivityServiceImplTest,ClubPointRegistrationServiceImplTest,ClubPointAttendanceServiceImplTest,ClubPointAttendanceCorrectionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `38` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
 
 ## 任务 M7.4 月度累计缺席
 

@@ -42,6 +42,12 @@ import org.springframework.context.annotation.Import;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -166,6 +172,56 @@ class ClubPointActivitySettlementServiceImplTest extends BaseDbUnitTest {
         assertEquals(10, accountMapper.selectByUserId(fullAttendance.getUserId()).getAvailablePoints());
         assertEquals(9, accountMapper.selectByUserId(absent.getUserId()).getAvailablePoints());
         assertEquals(ClubPointActivityStatusEnum.SETTLED.getStatus(), activityMapper.selectById(activity.getId()).getStatus());
+    }
+
+    @Test
+    void settleActivityWithSameRunKeyShouldReturnExistingRunAndKeepLedgerOnce() {
+        SettlementFixture fixture = insertSettlementFixture();
+        Long firstRunId = settlementService.settleActivity(buildRunReq(fixture.activity.getId(), "M7-3-SAME-RUN"));
+
+        Long secondRunId = settlementService.settleActivity(buildRunReq(fixture.activity.getId(), "M7-3-SAME-RUN"));
+
+        assertEquals(firstRunId, secondRunId);
+        assertEquals(1L, settlementRunMapper.selectList().size());
+        assertEquals(4L, countSettlementTransactions(fixture.activity.getId()));
+        assertFixtureAccounts(fixture);
+    }
+
+    @Test
+    void settleActivityAgainWithDifferentRunKeyShouldReuseLedgerIdempotency() {
+        SettlementFixture fixture = insertSettlementFixture();
+        Long firstRunId = settlementService.settleActivity(buildRunReq(fixture.activity.getId(), "M7-3-RERUN-1"));
+
+        Long secondRunId = settlementService.settleActivity(buildRunReq(fixture.activity.getId(), "M7-3-RERUN-2"));
+
+        assertTrue(secondRunId > firstRunId);
+        assertEquals(2L, settlementRunMapper.selectList().size());
+        assertEquals(4L, countSettlementTransactions(fixture.activity.getId()));
+        assertFixtureAccounts(fixture);
+    }
+
+    @Test
+    void settleActivityConcurrentlyShouldNotDuplicateLedgerTransactions() throws Exception {
+        SettlementFixture fixture = insertSettlementFixture();
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        Callable<Long> firstTask = buildConcurrentSettlementTask(fixture.activity.getId(), "M7-3-CONCURRENT-1", ready, start);
+        Callable<Long> secondTask = buildConcurrentSettlementTask(fixture.activity.getId(), "M7-3-CONCURRENT-2", ready, start);
+
+        Future<Long> first = executorService.submit(firstTask);
+        Future<Long> second = executorService.submit(secondTask);
+        assertTrue(ready.await(5, TimeUnit.SECONDS));
+        start.countDown();
+        Long firstRunId = first.get(10, TimeUnit.SECONDS);
+        Long secondRunId = second.get(10, TimeUnit.SECONDS);
+        executorService.shutdownNow();
+
+        assertTrue(firstRunId > 0);
+        assertTrue(secondRunId > 0);
+        assertEquals(2L, settlementRunMapper.selectList().size());
+        assertEquals(4L, countSettlementTransactions(fixture.activity.getId()));
+        assertFixtureAccounts(fixture);
     }
 
     private ClubPointRuleVersionDO seedSettlementRules() {
@@ -310,6 +366,83 @@ class ClubPointActivitySettlementServiceImplTest extends BaseDbUnitTest {
                 .setAvailablePoints(availablePoints)
                 .setAnnualEarnedPoints(availablePoints)
                 .setVersion(1));
+    }
+
+    private SettlementFixture insertSettlementFixture() {
+        ClubPointRuleVersionDO ruleVersion = seedSettlementRules();
+        ClubPointClubDO club = insertClub();
+        ClubPointActivityDO activity = insertEndedActivity(club);
+        insertConfigVersion(activity, ruleVersion);
+        ClubPointActivityRegistrationDO checkinOnly = insertRegistration(activity, 7101L, "Checkin Only", false, false,
+                ClubPointRegistrationStatusEnum.REGISTERED.getStatus());
+        ClubPointActivityRegistrationDO fullAttendance = insertRegistration(activity, 7102L, "Full Attendance", false, false,
+                ClubPointRegistrationStatusEnum.REGISTERED.getStatus());
+        ClubPointActivityRegistrationDO absent = insertRegistration(activity, 7103L, "Absent", false, false,
+                ClubPointRegistrationStatusEnum.REGISTERED.getStatus());
+        insertRegistration(activity, 7104L, "Special Absence", false, true,
+                ClubPointRegistrationStatusEnum.REGISTERED.getStatus());
+        insertRegistration(activity, 7105L, "No Deduct", true, false,
+                ClubPointRegistrationStatusEnum.REGISTERED.getStatus());
+        insertRegistration(activity, 7106L, "Canceled", true, false,
+                ClubPointRegistrationStatusEnum.CANCELED.getStatus());
+        insertAttendance(checkinOnly, ClubPointAttendanceTargetTypeEnum.CHECK_IN.getTargetType(), BASE_TIME.plusDays(3));
+        insertAttendance(fullAttendance, ClubPointAttendanceTargetTypeEnum.CHECK_IN.getTargetType(), BASE_TIME.plusDays(3));
+        insertAttendance(fullAttendance, ClubPointAttendanceTargetTypeEnum.CHECK_OUT.getTargetType(), BASE_TIME.plusDays(3).plusHours(2));
+        insertExistingAccount(absent.getUserId(), 12);
+        return new SettlementFixture(activity, checkinOnly, fullAttendance, absent);
+    }
+
+    private static ClubPointActivitySettlementRunReqBO buildRunReq(Long activityId, String runKey) {
+        return new ClubPointActivitySettlementRunReqBO()
+                .setActivityId(activityId)
+                .setRunKey(runKey)
+                .setTriggerSource(ClubPointActivitySettlementTriggerSourceEnum.ADMIN_MANUAL.getSource())
+                .setOperatorUserId(9001L)
+                .setSettlementTime(BASE_TIME.plusDays(4));
+    }
+
+    private Callable<Long> buildConcurrentSettlementTask(Long activityId, String runKey,
+                                                         CountDownLatch ready, CountDownLatch start) {
+        return () -> {
+            ready.countDown();
+            assertTrue(start.await(5, TimeUnit.SECONDS));
+            return settlementService.settleActivity(buildRunReq(activityId, runKey));
+        };
+    }
+
+    private long countSettlementTransactions(Long activityId) {
+        return transactionMapper.selectList().stream()
+                .filter(transaction -> activityId.equals(transaction.getActivityId()))
+                .filter(transaction -> ClubPointTransactionSourceTypeEnum.ACTIVITY_SETTLEMENT.getType()
+                        .equals(transaction.getSourceType()))
+                .count();
+    }
+
+    private void assertFixtureAccounts(SettlementFixture fixture) {
+        assertEquals(8, accountMapper.selectByUserId(fixture.checkinOnly.getUserId()).getAvailablePoints());
+        assertEquals(10, accountMapper.selectByUserId(fixture.fullAttendance.getUserId()).getAvailablePoints());
+        assertEquals(9, accountMapper.selectByUserId(fixture.absent.getUserId()).getAvailablePoints());
+        assertEquals(ClubPointActivityStatusEnum.SETTLED.getStatus(),
+                activityMapper.selectById(fixture.activity.getId()).getStatus());
+    }
+
+    private static final class SettlementFixture {
+
+        private final ClubPointActivityDO activity;
+        private final ClubPointActivityRegistrationDO checkinOnly;
+        private final ClubPointActivityRegistrationDO fullAttendance;
+        private final ClubPointActivityRegistrationDO absent;
+
+        private SettlementFixture(ClubPointActivityDO activity,
+                                  ClubPointActivityRegistrationDO checkinOnly,
+                                  ClubPointActivityRegistrationDO fullAttendance,
+                                  ClubPointActivityRegistrationDO absent) {
+            this.activity = activity;
+            this.checkinOnly = checkinOnly;
+            this.fullAttendance = fullAttendance;
+            this.absent = absent;
+        }
+
     }
 
 }
