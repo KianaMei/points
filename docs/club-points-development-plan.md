@@ -1353,6 +1353,12 @@ src/views/clubpoints/
 10. M12.5 已完成年度和跨年测试，新增 `ClubPointAnnualCrossYearHardeningTest`，覆盖北京时间 1 月 1 日清零、只清可用分、冻结不清、清零后历史流水仍可查、跨年兑换拒绝释放回账户且不追加过期清零流水、年度排名不受兑换扣分和年度清零影响。
 11. M12.5 为固定跨年审核拒绝时间，给 `ClubPointRedemptionReviewReqBO` 增加内部可选 `reviewTime`；管理员审核请求 VO 不新增该字段，前端和 API 不暴露测试控制字段。
 12. M12.5 验证命令 `mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointAnnualCrossYearHardeningTest,ClubPointAnnualClearingModelTest,ClubPointAnnualClearingServiceImplTest,ClubPointRedemptionReviewServiceImplTest,ClubPointRedemptionCancelServiceImplTest,ClubPointAnnualRankingServiceImplTest,ClubPointAnnualOperationControllerTest,ClubPointRedemptionControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；8 个测试类合计运行 34 个测试，失败 0，错误 0。
+13. M12.6 已完成前端回归修复：统一 `/admin-api` 前缀覆盖 clubpoints app / leader Controller，补齐员工报名分页和管理员活动管理接口，修正前端 query/body 契约，负责人活动 / 非签到材料页面默认读取负责俱乐部，无负责俱乐部时不发必然 400 的分页请求。
+14. M12.6 已移除后端没有服务层支撑的活动撤回 / 删除和材料删除死入口；管理员活动发布仍走提交审核后审核通过的状态机路径，不直接改状态。
+15. M12.6 后端验证命令 `mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointFrontendApiPrefixHardeningTest,ClubPointActivityControllerTest,ClubPointContributionControllerTest,ClubPointRedemptionControllerTest,ClubPointAnnualOperationControllerTest,ClubPointReportControllerTest,ClubPointReportServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；7 个测试类合计运行 33 个测试，失败 0，错误 0。
+16. M12.6 轻量编译 `mvn -pl yudao-server -am -DskipTests "-Dflatten.skip=true" compile` 返回 `BUILD SUCCESS`；前端 `vue-tsc` 全量仍因非 clubpoints 存量类型债退出 1，过滤 `src/api/clubpoints` 与 `src/views/clubpoints` 无命中。
+17. M12.6 live API 回归确认员工活动、员工报名、员工兑换、员工异议、负责人负责俱乐部、管理员活动、材料审核、兑换审核、年度清零记录、报表查询和报表导出主接口均为 HTTP 200；admin token 没有负责俱乐部时，负责人分页按页面逻辑跳过。
+18. M12.6 Playwright 回归确认 8889 登录后三端 10 个主页面无 pageerror、无页面 404 文案、无 `/admin-api/clubpoints/...` 4xx/5xx；管理员报表导出确认后 `/clubpoints/report/export-excel` 返回 HTTP 200 并下载 `积分明细.xls`。
 
 ### 17.1 必跑测试矩阵
 

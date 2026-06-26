@@ -21,12 +21,36 @@ export interface LeaderActivitySaveReqVO {
   ruleVersionId: number
   startTime?: string | Date
   endTime?: string | Date
+  level?: number
+  registrationDeadline?: string | Date
+  cancelDeadlineTime?: string | Date
+  checkinStartTime?: string | Date
+  checkinEndTime?: string | Date
+  checkoutMode?: number
+  checkoutStartTime?: string | Date
+  checkoutEndTime?: string | Date
+  basePoints?: number
+  fullExtraPoints?: number
   reason?: string
   attachments?: AttachmentInputVO[]
   [key: string]: any
 }
 
 const PREFIX = '/clubpoints/leader/activity'
+
+const withActivityDefaults = (data: LeaderActivitySaveReqVO): LeaderActivitySaveReqVO => ({
+  ...data,
+  level: data.level ?? 2,
+  registrationDeadline: data.registrationDeadline ?? data.startTime,
+  cancelDeadlineTime: data.cancelDeadlineTime ?? data.startTime,
+  checkinStartTime: data.checkinStartTime ?? data.startTime,
+  checkinEndTime: data.checkinEndTime ?? data.endTime,
+  checkoutMode: data.checkoutMode ?? 1,
+  checkoutStartTime: data.checkoutStartTime ?? data.startTime,
+  checkoutEndTime: data.checkoutEndTime ?? data.endTime,
+  basePoints: data.basePoints ?? 8,
+  fullExtraPoints: data.fullExtraPoints ?? 0
+})
 
 export const getLeaderActivityPage = async (
   params: ClubPointPageParam
@@ -39,25 +63,17 @@ export const getLeaderActivity = async (id: number): Promise<LeaderActivityRespV
 }
 
 export const createLeaderActivity = async (data: LeaderActivitySaveReqVO) => {
-  return await request.post({ url: `${PREFIX}/create`, data })
+  return await request.post({ url: `${PREFIX}/create`, data: withActivityDefaults(data) })
 }
 
 export const updateLeaderActivity = async (data: LeaderActivitySaveReqVO) => {
-  return await request.put({ url: `${PREFIX}/update`, data })
+  return await request.put({ url: `${PREFIX}/update`, data: withActivityDefaults(data) })
 }
 
 export const submitLeaderActivity = async (data: ClubPointReasonReqVO) => {
-  return await request.post({ url: `${PREFIX}/submit`, data })
-}
-
-export const withdrawLeaderActivity = async (data: ClubPointReasonReqVO) => {
-  return await request.post({ url: `${PREFIX}/withdraw`, data })
+  return await request.post({ url: `${PREFIX}/submit`, params: { id: data.id } })
 }
 
 export const cancelLeaderActivity = async (data: ClubPointReasonReqVO) => {
-  return await request.post({ url: `${PREFIX}/cancel`, data })
-}
-
-export const deleteLeaderActivity = async (id: number) => {
-  return await request.delete({ url: `${PREFIX}/delete?id=${id}` })
+  return await request.post({ url: `${PREFIX}/cancel`, params: { id: data.id, reason: data.reason } })
 }

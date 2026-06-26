@@ -54,7 +54,10 @@ export const createRegistration = async (data: AppRegistrationCreateReqVO) => {
 }
 
 export const cancelRegistration = async (data: ClubPointReasonReqVO) => {
-  return await request.post({ url: `${REGISTRATION_PREFIX}/cancel`, data })
+  return await request.post({
+    url: `${REGISTRATION_PREFIX}/cancel`,
+    data: { registrationId: data.id, reason: data.reason }
+  })
 }
 
 export const checkIn = async (data: AppAttendanceCheckReqVO) => {

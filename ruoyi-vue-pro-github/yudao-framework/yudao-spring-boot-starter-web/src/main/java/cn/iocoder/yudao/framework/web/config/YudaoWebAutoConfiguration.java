@@ -74,7 +74,17 @@ public class YudaoWebAutoConfiguration {
                 }
                 pathPrefixes.put(api.getPrefix(), // api 前缀
                         clazz -> clazz.isAnnotationPresent(RestController.class)
-                                && matcher.match(api.getController(), clazz.getPackage().getName()));
+                                && matchesAnyController(api.getController(), clazz.getPackage().getName(), matcher));
+            }
+
+            private boolean matchesAnyController(String controllers, String packageName, AntPathMatcher matcher) {
+                for (String controller : controllers.split(",")) {
+                    String pattern = controller.trim();
+                    if (StrUtil.isNotEmpty(pattern) && matcher.match(pattern, packageName)) {
+                        return true;
+                    }
+                }
+                return false;
             }
 
         };

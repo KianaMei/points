@@ -9,7 +9,10 @@ import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.activity.ClubPointActivityAdminController;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.activity.ClubPointAttendanceAdminController;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.activity.ClubPointRegistrationAdminController;
+import cn.iocoder.yudao.module.clubpoints.controller.admin.activity.vo.AdminActivityPageReqVO;
+import cn.iocoder.yudao.module.clubpoints.controller.admin.activity.vo.AdminActivityReasonReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.activity.vo.AdminActivityReviewReqVO;
+import cn.iocoder.yudao.module.clubpoints.controller.admin.activity.vo.AdminActivitySaveReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.activity.vo.AdminAttendanceCorrectReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.activity.vo.AdminAttendanceSupplementReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.activity.vo.AdminSpecialAbsenceReqVO;
@@ -21,6 +24,8 @@ import cn.iocoder.yudao.module.clubpoints.controller.app.activity.vo.AppActivity
 import cn.iocoder.yudao.module.clubpoints.controller.app.activity.vo.AppAttendanceCheckReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.app.activity.vo.AppRegistrationCancelReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.app.activity.vo.AppRegistrationCreateReqVO;
+import cn.iocoder.yudao.module.clubpoints.controller.app.activity.vo.AppRegistrationPageReqVO;
+import cn.iocoder.yudao.module.clubpoints.controller.app.activity.vo.AppRegistrationRespVO;
 import cn.iocoder.yudao.module.clubpoints.controller.leader.activity.ClubPointActivityLeaderController;
 import cn.iocoder.yudao.module.clubpoints.controller.leader.activity.vo.LeaderActivityPageReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.leader.activity.vo.LeaderActivitySaveReqVO;
@@ -228,6 +233,31 @@ class ClubPointActivityControllerTest extends BaseDbUnitTest {
     }
 
     @Test
+    void appRegistrationPageShouldReturnOnlyCurrentUserRegistrations() {
+        login(6104L, "员工6104");
+        ClubPointClubDO club = insertClub("CLUB-M6-7115", "员工报名分页俱乐部");
+        ClubPointActivityDO selfActivity = insertActivity(club, "本人报名活动",
+                ClubPointActivityStatusEnum.PUBLISHED.getStatus(), BASE_TIME.plusDays(9));
+        ClubPointActivityDO otherActivity = insertActivity(club, "他人报名活动",
+                ClubPointActivityStatusEnum.PUBLISHED.getStatus(), BASE_TIME.plusDays(10));
+        ClubPointActivityRegistrationDO selfRegistration = insertRegistration(selfActivity, 6104L);
+        ClubPointActivityRegistrationDO otherRegistration = insertRegistration(otherActivity, 6105L);
+
+        AppRegistrationPageReqVO pageReqVO = new AppRegistrationPageReqVO()
+                .setStatus(ClubPointRegistrationStatusEnum.REGISTERED.getStatus());
+        pageReqVO.setPageNo(1);
+        pageReqVO.setPageSize(10);
+        PageResult<AppRegistrationRespVO> page = appRegistrationController.getMyRegistrationPage(pageReqVO)
+                .getCheckedData();
+
+        assertEquals(1L, page.getTotal());
+        assertEquals(selfRegistration.getId(), page.getList().get(0).getId());
+        assertEquals(6104L, page.getList().get(0).getUserId());
+        assertEquals(selfActivity.getTitle(), page.getList().get(0).getActivityTitleSnapshot());
+        assertFalse(page.getList().stream().anyMatch(item -> otherRegistration.getId().equals(item.getId())));
+    }
+
+    @Test
     void leaderActivityManagementEndpointsShouldUseManagedClubScope() {
         login(6201L, "负责人6201");
         ClubPointClubDO managedClub = insertClub("CLUB-M6-7121", "负责俱乐部");
@@ -259,6 +289,42 @@ class ClubPointActivityControllerTest extends BaseDbUnitTest {
 
         assertServiceException(() -> leaderActivityController.createActivity(
                 buildLeaderSaveReq(otherClub.getId(), null)), CLUB_SCOPE_DENIED);
+    }
+
+    @Test
+    void adminActivityManagementEndpointsShouldUseGlobalScopeAndDocumentedPaths() {
+        login(1L, "管理员");
+        Long ruleVersionId = seedActivityRules();
+        ClubPointClubDO club = insertClub("CLUB-M6-7126", "管理员活动俱乐部");
+
+        Long activityId = adminActivityController.createActivity(buildAdminSaveReq(club.getId(), null, ruleVersionId))
+                .getCheckedData();
+        adminActivityController.updateActivity(buildAdminSaveReq(club.getId(), activityId, ruleVersionId)
+                .setTitle("管理员修改后的活动"));
+
+        AdminActivityPageReqVO pageReqVO = new AdminActivityPageReqVO().setClubId(club.getId());
+        pageReqVO.setPageNo(1);
+        pageReqVO.setPageSize(10);
+        PageResult<AppActivityRespVO> page = adminActivityController.getActivityPage(pageReqVO).getCheckedData();
+        AppActivityRespVO detail = adminActivityController.getActivity(activityId).getCheckedData();
+
+        assertEquals(1L, page.getTotal());
+        assertEquals(activityId, page.getList().get(0).getId());
+        assertEquals("管理员修改后的活动", detail.getTitle());
+
+        adminActivityController.publishActivity(new AdminActivityReasonReqVO()
+                .setId(activityId)
+                .setReason("管理员直接发布"));
+        ClubPointActivityDO published = activityMapper.selectById(activityId);
+        assertEquals(ClubPointActivityStatusEnum.PUBLISHED.getStatus(), published.getStatus());
+        assertNotNull(published.getCurrentConfigVersionId());
+
+        adminActivityController.cancelActivity(new AdminActivityReasonReqVO()
+                .setId(activityId)
+                .setReason("管理员取消"));
+        assertEquals(ClubPointActivityStatusEnum.CANCELED.getStatus(),
+                activityMapper.selectById(activityId).getStatus());
+        assertEquals("管理员取消", activityMapper.selectById(activityId).getCancelReason());
     }
 
     @Test
@@ -339,6 +405,8 @@ class ClubPointActivityControllerTest extends BaseDbUnitTest {
         assertPostMapping(ClubPointRegistrationAppController.class, "createRegistration",
                 new Class<?>[]{AppRegistrationCreateReqVO.class}, "/create",
                 "@ss.hasPermission('clubpoints:registration:create')");
+        assertGetMapping(ClubPointRegistrationAppController.class, "getMyRegistrationPage",
+                new Class<?>[]{AppRegistrationPageReqVO.class}, "/my-page", null);
         assertPostMapping(ClubPointRegistrationAppController.class, "cancelRegistration",
                 new Class<?>[]{AppRegistrationCancelReqVO.class}, "/cancel",
                 "@ss.hasPermission('clubpoints:registration:cancel')");
@@ -363,9 +431,27 @@ class ClubPointActivityControllerTest extends BaseDbUnitTest {
         assertPostMapping(ClubPointActivityLeaderController.class, "cancelActivity",
                 new Class<?>[]{Long.class, String.class}, "/cancel",
                 "@ss.hasPermission('clubpoints:activity:cancel')");
+        assertGetMapping(ClubPointActivityAdminController.class, "getActivityPage",
+                new Class<?>[]{AdminActivityPageReqVO.class}, "/page",
+                "@ss.hasPermission('clubpoints:activity:query')");
+        assertGetMapping(ClubPointActivityAdminController.class, "getActivity",
+                new Class<?>[]{Long.class}, "/get",
+                "@ss.hasPermission('clubpoints:activity:query')");
+        assertPostMapping(ClubPointActivityAdminController.class, "createActivity",
+                new Class<?>[]{AdminActivitySaveReqVO.class}, "/create",
+                "@ss.hasPermission('clubpoints:activity:create')");
+        assertPutMapping(ClubPointActivityAdminController.class, "updateActivity",
+                new Class<?>[]{AdminActivitySaveReqVO.class}, "/update",
+                "@ss.hasPermission('clubpoints:activity:update')");
+        assertPostMapping(ClubPointActivityAdminController.class, "publishActivity",
+                new Class<?>[]{AdminActivityReasonReqVO.class}, "/publish",
+                "@ss.hasPermission('clubpoints:activity:publish')");
         assertPostMapping(ClubPointActivityAdminController.class, "reviewActivity",
                 new Class<?>[]{AdminActivityReviewReqVO.class}, "/review",
                 "@ss.hasPermission('clubpoints:activity:review')");
+        assertPostMapping(ClubPointActivityAdminController.class, "cancelActivity",
+                new Class<?>[]{AdminActivityReasonReqVO.class}, "/cancel",
+                "@ss.hasPermission('clubpoints:activity:cancel')");
         assertPostMapping(ClubPointAttendanceAdminController.class, "supplementAttendance",
                 new Class<?>[]{AdminAttendanceSupplementReqVO.class}, "/supplement",
                 "@ss.hasPermission('clubpoints:attendance:correct')");
@@ -551,7 +637,30 @@ class ClubPointActivityControllerTest extends BaseDbUnitTest {
                 .setReason("leader operation");
     }
 
-    private void seedActivityRules() {
+    private AdminActivitySaveReqVO buildAdminSaveReq(Long clubId, Long id, Long ruleVersionId) {
+        return new AdminActivitySaveReqVO()
+                .setId(id)
+                .setClubId(clubId)
+                .setTitle("管理员活动")
+                .setLocation("Room B")
+                .setDescription("Admin activity")
+                .setLevel(2)
+                .setStartTime(BASE_TIME.plusDays(5))
+                .setEndTime(BASE_TIME.plusDays(5).plusHours(2))
+                .setRegistrationDeadline(BASE_TIME.plusDays(4))
+                .setCancelDeadlineTime(BASE_TIME.plusDays(4).plusHours(12))
+                .setCheckinStartTime(BASE_TIME.plusDays(5).minusMinutes(30))
+                .setCheckinEndTime(BASE_TIME.plusDays(5).plusMinutes(30))
+                .setCheckoutMode(1)
+                .setCheckoutStartTime(BASE_TIME.plusDays(5).plusHours(1))
+                .setCheckoutEndTime(BASE_TIME.plusDays(5).plusHours(3))
+                .setRuleVersionId(ruleVersionId)
+                .setBasePoints(8)
+                .setFullExtraPoints(2)
+                .setReason("admin operation");
+    }
+
+    private Long seedActivityRules() {
         ClubPointRuleVersionDO version = new ClubPointRuleVersionDO()
                 .setVersionNo("M6-API-RULE-001")
                 .setName("M6 API rules")
@@ -561,6 +670,7 @@ class ClubPointActivityControllerTest extends BaseDbUnitTest {
         ruleVersionMapper.insert(version);
         insertRuleItem(version.getId(), ACTIVITY_MEDIUM_BASE.getCode(), "Medium base", 1, 10, 8, 2);
         insertRuleItem(version.getId(), ACTIVITY_FULL_EXTRA.getCode(), "Full extra", 1, 11, 2, 3);
+        return version.getId();
     }
 
     private void insertRuleItem(Long versionId, String code, String name, Integer itemType, Integer category,

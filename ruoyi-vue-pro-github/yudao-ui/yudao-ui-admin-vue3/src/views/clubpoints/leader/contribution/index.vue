@@ -4,10 +4,15 @@
       :closable="false"
       class="mb-16px"
       show-icon
-      title="材料审核通过后锁定只读；负责人不能审核材料，只能提交、撤回或删除草稿。"
+      title="材料审核通过后锁定只读；负责人不能审核材料，只能提交或撤回材料。"
       type="info"
     />
     <el-form ref="queryFormRef" :inline="true" :model="queryParams" class="-mb-15px" label-width="88px">
+      <el-form-item label="负责俱乐部" prop="clubId">
+        <div class="!w-240px">
+          <ClubSelect v-model="queryParams.clubId" :options="clubOptions" />
+        </div>
+      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" class="!w-180px" clearable placeholder="请选择状态">
           <el-option
@@ -42,7 +47,7 @@
         </template>
       </el-table-column>
       <el-table-column :formatter="dateFormatter" align="center" label="创建时间" prop="createTime" width="180" />
-      <el-table-column align="center" fixed="right" label="操作" width="300">
+      <el-table-column align="center" fixed="right" label="操作" width="240">
         <template #default="{ row }">
           <el-button v-hasPermi="['clubpoints:contribution:submit']" link type="primary" @click="openForm('update', row)">
             编辑
@@ -52,9 +57,6 @@
           </el-button>
           <el-button v-hasPermi="['clubpoints:contribution:withdraw']" link type="warning" @click="withdrawMaterial(row)">
             撤回
-          </el-button>
-          <el-button v-hasPermi="['clubpoints:contribution:delete']" link type="danger" @click="deleteMaterial(row)">
-            删除
           </el-button>
         </template>
       </el-table-column>
@@ -143,7 +145,12 @@ const loading = ref(false)
 const list = ref<ContributionApi.LeaderContributionRespVO[]>([])
 const total = ref(0)
 const queryFormRef = ref()
-const queryParams = reactive({ pageNo: 1, pageSize: 10, status: undefined as number | undefined })
+const queryParams = reactive({
+  pageNo: 1,
+  pageSize: 10,
+  clubId: undefined as number | undefined,
+  status: undefined as number | undefined
+})
 const clubOptions = ref<ClubPointClubOption[]>([])
 
 const formVisible = ref(false)
@@ -167,6 +174,9 @@ const formRules = {
 }
 
 const loadClubOptions = async () => {
+  if (clubOptions.value.length > 0) {
+    return
+  }
   const clubs = await ClubApi.getMyManagedClubList()
   clubOptions.value = clubs.map((club) => ({
     id: club.id,
@@ -176,9 +186,22 @@ const loadClubOptions = async () => {
   }))
 }
 
+const ensureDefaultClub = async () => {
+  await loadClubOptions()
+  if (!queryParams.clubId && clubOptions.value.length > 0) {
+    queryParams.clubId = clubOptions.value[0].id
+  }
+}
+
 const getList = async () => {
   loading.value = true
   try {
+    await ensureDefaultClub()
+    if (!queryParams.clubId) {
+      list.value = []
+      total.value = 0
+      return
+    }
     const data = await ContributionApi.getLeaderContributionPage(queryParams)
     list.value = data.list || []
     total.value = data.total || 0
@@ -267,15 +290,6 @@ const withdrawMaterial = async (row: ContributionApi.LeaderContributionRespVO) =
     const result = await message.prompt('请输入撤回原因', '撤回材料')
     await ContributionApi.withdrawLeaderContribution({ id: row.id, reason: result.value })
     message.success('已撤回')
-    await getList()
-  } catch {}
-}
-
-const deleteMaterial = async (row: ContributionApi.LeaderContributionRespVO) => {
-  try {
-    await message.delConfirm()
-    await ContributionApi.deleteLeaderContribution(row.id)
-    message.success('已删除')
     await getList()
   } catch {}
 }

@@ -43,14 +43,11 @@
         </template>
       </el-table-column>
       <el-table-column :formatter="dateFormatter" align="center" label="提交时间" prop="submitTime" width="180" />
-      <el-table-column align="center" fixed="right" label="操作" width="260">
+      <el-table-column align="center" fixed="right" label="操作" width="220">
         <template #default="{ row }">
           <el-button link type="primary" @click="openDetail(row)">详情</el-button>
           <el-button v-hasPermi="['clubpoints:contribution:review']" link type="success" @click="openReview(row)">
             审核
-          </el-button>
-          <el-button v-hasPermi="['clubpoints:contribution:delete']" link type="danger" @click="deleteMaterial(row)">
-            删除
           </el-button>
         </template>
       </el-table-column>
@@ -149,15 +146,6 @@ const submitReview = async (payload: ReviewReqVO) => {
   await ContributionApi.reviewContribution(payload)
   message.success('材料审核已提交')
   await getList()
-}
-
-const deleteMaterial = async (row: ContributionApi.AdminContributionRespVO) => {
-  try {
-    await message.delConfirm()
-    await ContributionApi.deleteContribution(row.id)
-    message.success('材料已删除')
-    await getList()
-  } catch {}
 }
 
 onMounted(getList)

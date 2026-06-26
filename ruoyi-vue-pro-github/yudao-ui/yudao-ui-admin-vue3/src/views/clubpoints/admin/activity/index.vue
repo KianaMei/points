@@ -47,7 +47,7 @@
       </el-table-column>
       <el-table-column :formatter="dateFormatter" align="center" label="开始时间" prop="startTime" width="180" />
       <el-table-column :formatter="dateFormatter" align="center" label="结束时间" prop="endTime" width="180" />
-      <el-table-column align="center" fixed="right" label="操作" width="360">
+      <el-table-column align="center" fixed="right" label="操作" width="300">
         <template #default="{ row }">
           <el-button v-hasPermi="['clubpoints:activity:update']" link type="primary" @click="openForm('update', row)">
             编辑
@@ -60,9 +60,6 @@
           </el-button>
           <el-button v-hasPermi="['clubpoints:activity:cancel']" link type="warning" @click="cancelActivity(row)">
             取消
-          </el-button>
-          <el-button v-hasPermi="['clubpoints:activity:delete']" link type="danger" @click="deleteActivity(row)">
-            删除
           </el-button>
         </template>
       </el-table-column>
@@ -262,15 +259,6 @@ const cancelActivity = async (row: any) => {
     const result = await message.prompt(`请输入取消活动 ${row.title || row.id} 的原因`, '取消活动')
     await ActivityApi.cancelAdminActivity({ id: row.id, reason: result.value })
     message.success('已取消')
-    await getList()
-  } catch {}
-}
-
-const deleteActivity = async (row: any) => {
-  try {
-    await message.delConfirm()
-    await ActivityApi.deleteAdminActivity(row.id)
-    message.success('已删除')
     await getList()
   } catch {}
 }

@@ -58,9 +58,5 @@ export const submitLeaderContribution = async (data: ClubPointReasonReqVO) => {
 }
 
 export const withdrawLeaderContribution = async (data: ClubPointReasonReqVO) => {
-  return await request.post({ url: `${PREFIX}/withdraw`, data })
-}
-
-export const deleteLeaderContribution = async (id: number) => {
-  return await request.delete({ url: `${PREFIX}/delete?id=${id}` })
+  return await request.post({ url: `${PREFIX}/withdraw`, params: { id: data.id, reason: data.reason } })
 }

@@ -172,22 +172,37 @@
 
 ## 任务 M12.6 前端回归
 
-- [ ] 员工活动报名签到流程。
-- [ ] 员工兑换申请流程。
-- [ ] 员工异议提交流程。
-- [ ] 负责人活动管理流程。
-- [ ] 负责人非签到材料提交流程。
-- [ ] 管理员审核活动流程。
-- [ ] 管理员审核非签到流程。
-- [ ] 管理员审核兑换流程。
-- [ ] 管理员年度清零流程。
-- [ ] 管理员报表导出流程。
+- [x] 员工活动报名签到流程。
+- [x] 员工兑换申请流程。
+- [x] 员工异议提交流程。
+- [x] 负责人活动管理流程。
+- [x] 负责人非签到材料提交流程。
+- [x] 管理员审核活动流程。
+- [x] 管理员审核非签到流程。
+- [x] 管理员审核兑换流程。
+- [x] 管理员年度清零流程。
+- [x] 管理员报表导出流程。
 
 验收：
 
-- [ ] 三类角色主路径可完成。
-- [ ] 页面错误提示可理解。
-- [ ] 端口仍为 `8889`。
+- [x] 三类角色主路径可完成。
+- [x] 页面错误提示可理解。
+- [x] 端口仍为 `8889`。
+
+证据：
+
+- RED：接口回归暴露员工端 `/clubpoints/app/registration/my-page` 和管理员端 `/clubpoints/activity/page` 缺失，`app` / `leader` Controller 未纳入前端统一 `/admin-api` 前缀，负责人活动 / 非签到材料页面默认不带负责俱乐部导致主路径会触发 400，前端还暴露后端未实现的活动撤回 / 删除和材料删除入口。
+- GREEN：`YudaoWebAutoConfiguration.putPathPrefix` 支持逗号分隔 Controller pattern，`application.yaml` 的 `admin-api.controller` 在保留 admin pattern 基础上追加 `clubpoints` app / leader pattern；补齐员工报名分页、管理员活动 page/get/create/update/publish/cancel 接口；前端修正取消报名、提交、取消、撤回等 query/body 形态，移除无后端实现的删除 / 撤回入口，负责人页面先取 `my-managed-list` 默认负责俱乐部，无负责俱乐部时不发必然 400 的分页请求。
+- GREEN：管理员和负责人活动创建 / 更新通过 `withActivityDefaults` 补齐后端保存所需的活动等级、报名截止、签到签退窗口、签退模式、基础分和全程额外分等最小字段；管理员活动发布仍走 `submitForReview` 后 `approveReview` 的状态机路径，不直接改状态。
+- Verify：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointActivityControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointActivityControllerTest` 运行 7 个测试，失败 0，错误 0。
+- Verify：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointFrontendApiPrefixHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointFrontendApiPrefixHardeningTest` 运行 3 个测试，失败 0，错误 0。
+- Verify：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointFrontendApiPrefixHardeningTest,ClubPointActivityControllerTest,ClubPointContributionControllerTest,ClubPointRedemptionControllerTest,ClubPointAnnualOperationControllerTest,ClubPointReportControllerTest,ClubPointReportServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；7 个测试类合计运行 33 个测试，失败 0，错误 0。
+- Verify：`mvn -pl yudao-server -am -DskipTests "-Dflatten.skip=true" compile` 返回 `BUILD SUCCESS`。
+- Verify：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 仍因 `src/components`、`src/layout`、`src/views/infra`、`src/views/system` 等存量类型债退出 1；过滤 `src/api/clubpoints` 与 `src/views/clubpoints` 无命中。
+- Live API：登录 `admin/admin123` 后，员工活动分页、员工报名分页、员工兑换批次 / 我的兑换、员工异议、负责人 dashboard / 负责俱乐部、管理员活动分页、材料审核、兑换审核、年度清零记录、报表积分明细和报表导出接口均返回 HTTP 200；admin token 无负责俱乐部，负责人活动 / 材料分页按页面行为跳过。
+- Playwright：登录 `http://127.0.0.1:8889/login` 后依次打开 `/clubpoints/app/activity`、`/clubpoints/app/redemption`、`/clubpoints/app/dispute`、`/clubpoints/leader/activity`、`/clubpoints/leader/contribution`、`/clubpoints/admin/activity`、`/clubpoints/admin/contribution-review`、`/clubpoints/admin/redemption-application`、`/clubpoints/admin/annual-clearing`、`/clubpoints/admin/report`，10 个页面无 pageerror、无页面 404 文案、无 `/admin-api/clubpoints/...` 4xx/5xx。
+- Playwright：管理员报表页点击导出后先弹出确认框，确认后请求 `/admin-api/clubpoints/report/export-excel?pageNo=1&pageSize=10&year=2026&reportType=1` 返回 HTTP 200，并下载 `积分明细.xls`。
+- Boundary：M12.6 修复主路径回归和接口契约，不补后端物理删除能力；活动 / 材料删除死入口移除，后续如需删除能力必须回到服务层和审计设计重新做。
 
 ## 任务 M12.7 MVP 演示脚本
 

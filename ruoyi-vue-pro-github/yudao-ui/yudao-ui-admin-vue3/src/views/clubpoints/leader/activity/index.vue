@@ -4,10 +4,15 @@
       :closable="false"
       class="mb-16px"
       show-icon
-      title="负责人只能管理自己负责俱乐部的活动；取消和删除活动只做普通确认，不使用强确认。"
+      title="负责人只能管理自己负责俱乐部的活动；取消活动只做普通确认，不使用强确认。"
       type="info"
     />
     <el-form ref="queryFormRef" :inline="true" :model="queryParams" class="-mb-15px" label-width="88px">
+      <el-form-item label="负责俱乐部" prop="clubId">
+        <div class="!w-240px">
+          <ClubSelect v-model="queryParams.clubId" :options="clubOptions" />
+        </div>
+      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" class="!w-180px" clearable placeholder="请选择状态">
           <el-option
@@ -42,7 +47,7 @@
         </template>
       </el-table-column>
       <el-table-column :formatter="dateFormatter" align="center" label="开始时间" prop="startTime" width="180" />
-      <el-table-column align="center" fixed="right" label="操作" width="320">
+      <el-table-column align="center" fixed="right" label="操作" width="240">
         <template #default="{ row }">
           <el-button v-hasPermi="['clubpoints:activity:update']" link type="primary" @click="openForm('update', row)">
             编辑
@@ -50,14 +55,8 @@
           <el-button v-hasPermi="['clubpoints:activity:submit']" link type="success" @click="submitActivity(row)">
             提交
           </el-button>
-          <el-button v-hasPermi="['clubpoints:activity:submit']" link type="warning" @click="withdrawActivity(row)">
-            撤回
-          </el-button>
           <el-button v-hasPermi="['clubpoints:activity:cancel']" link type="danger" @click="cancelActivity(row)">
             取消
-          </el-button>
-          <el-button v-hasPermi="['clubpoints:activity:delete']" link type="danger" @click="deleteActivity(row)">
-            删除
           </el-button>
         </template>
       </el-table-column>
@@ -128,7 +127,12 @@ const loading = ref(false)
 const list = ref<ActivityApi.LeaderActivityRespVO[]>([])
 const total = ref(0)
 const queryFormRef = ref()
-const queryParams = reactive({ pageNo: 1, pageSize: 10, status: undefined as number | undefined })
+const queryParams = reactive({
+  pageNo: 1,
+  pageSize: 10,
+  clubId: undefined as number | undefined,
+  status: undefined as number | undefined
+})
 const clubOptions = ref<ClubPointClubOption[]>([])
 
 const formVisible = ref(false)
@@ -153,6 +157,9 @@ const formRules = {
 }
 
 const loadClubOptions = async () => {
+  if (clubOptions.value.length > 0) {
+    return
+  }
   const clubs = await ClubApi.getMyManagedClubList()
   clubOptions.value = clubs.map((club) => ({
     id: club.id,
@@ -162,9 +169,22 @@ const loadClubOptions = async () => {
   }))
 }
 
+const ensureDefaultClub = async () => {
+  await loadClubOptions()
+  if (!queryParams.clubId && clubOptions.value.length > 0) {
+    queryParams.clubId = clubOptions.value[0].id
+  }
+}
+
 const getList = async () => {
   loading.value = true
   try {
+    await ensureDefaultClub()
+    if (!queryParams.clubId) {
+      list.value = []
+      total.value = 0
+      return
+    }
     const data = await ActivityApi.getLeaderActivityPage(queryParams)
     list.value = data.list || []
     total.value = data.total || 0
@@ -233,29 +253,11 @@ const submitActivity = async (row: ActivityApi.LeaderActivityRespVO) => {
   } catch {}
 }
 
-const withdrawActivity = async (row: ActivityApi.LeaderActivityRespVO) => {
-  try {
-    const result = await message.prompt('请输入撤回原因', '撤回活动')
-    await ActivityApi.withdrawLeaderActivity({ id: row.id, reason: result.value })
-    message.success('已撤回')
-    await getList()
-  } catch {}
-}
-
 const cancelActivity = async (row: ActivityApi.LeaderActivityRespVO) => {
   try {
     const result = await message.prompt('请输入取消原因', '取消活动')
     await ActivityApi.cancelLeaderActivity({ id: row.id, reason: result.value })
     message.success('已取消')
-    await getList()
-  } catch {}
-}
-
-const deleteActivity = async (row: ActivityApi.LeaderActivityRespVO) => {
-  try {
-    await message.delConfirm()
-    await ActivityApi.deleteLeaderActivity(row.id)
-    message.success('已删除')
     await getList()
   } catch {}
 }
