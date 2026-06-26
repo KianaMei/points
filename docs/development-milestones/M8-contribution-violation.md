@@ -1,6 +1,6 @@
 # M8 非签到积分、违规扣分、弄虚作假 Implementation Plan
 
-**Status:** `[~]` M8.1-M8.8 已完成并有 RED/GREEN 证据；当前入口是 M8.9 测试。
+**Status:** `[x]` M8 已完成并有 RED/GREEN/收口验证证据；下一步入口是 M9 兑换。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -265,19 +265,26 @@
 
 ## 任务 M8.9 测试
 
-- [ ] 测试负责人提交材料。
-- [ ] 测试负责人越权失败。
-- [ ] 测试分值越界失败。
-- [ ] 测试审核通过发分。
-- [ ] 测试重复审核幂等。
-- [ ] 测试管理员代录幂等。
-- [ ] 测试违规扣分。
-- [ ] 测试弄虚作假撤销加扣分。
+- [x] 测试负责人提交材料。
+- [x] 测试负责人越权失败。
+- [x] 测试分值越界失败。
+- [x] 测试审核通过发分。
+- [x] 测试重复审核幂等。
+- [x] 测试管理员代录幂等。
+- [x] 测试违规扣分。
+- [x] 测试弄虚作假撤销加扣分。
 
 验收：
 
-- [ ] 非签到闭环测试通过。
-- [ ] 所有发分扣分都走 LedgerService。
+- [x] 非签到闭环测试通过。
+- [x] 所有发分扣分都走 LedgerService。
+
+证据：
+
+- 覆盖复核：负责人提交材料、负责人越权失败和分值越界失败由 `ClubPointContributionServiceImplTest#createDraftShouldPersistMaterialItemsAndBindAttachments`、`createDraftShouldRejectUnmanagedClub`、`createDraftShouldRejectOutOfRangePointsWithContributionError` 覆盖；接口提交、撤回、分页、详情和负责人越权由 `ClubPointContributionControllerTest#leaderContributionEndpointsShouldSubmitWithdrawAndQueryManagedClubMaterials` 覆盖。
+- 审核和幂等复核：审核通过发分、附件锁定、审计、审核记录和重复审核不重复发分由 `ClubPointContributionServiceImplTest#approveReviewShouldCreateTransactionsLockAttachmentsWriteAuditAndReviewRecord` 覆盖，该用例重复审核会抛 `CLUB_CONTRIBUTION_STATUS_INVALID`，并断言流水总数仍为 `2`。
+- 管理员闭环复核：管理员代录幂等由 `directCreateShouldCreateApprovedMaterialTransactionAttachmentAuditAndBeIdempotent` 覆盖；违规扣分由 `violationDeductShouldCreateApprovedMaterialNegativeTransactionAttachmentAuditAndBeIdempotent` 和 `violationDeductShouldRejectInvalidScopeReasonAttachmentRangeAndInsufficientBalance` 覆盖；弄虚作假撤销加扣分由 `handleFraudShouldReverseOriginalDeductAvailableCancelHonorLockAuditNotifyAndBeIdempotent` 覆盖；接口层审核、代录、违规扣分、弄虚作假处理由 `ClubPointContributionControllerTest#adminContributionEndpointsShouldReviewDirectViolationAndFraud` 覆盖。
+- M8 收口组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointContributionMapperTest,ClubPointContributionEnumTest,ClubPointContributionServiceImplTest,ClubPointContributionControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `27` 个测试，失败 `0`，错误 `0`。
 
 ## M8 放行标准
 
@@ -289,5 +296,5 @@
 
 ## M8 不通过时禁止
 
-- [ ] 禁止做积分来源统计验收。
-- [ ] 禁止做 MVP 全量演示。
+- [x] 禁止做积分来源统计验收。
+- [x] 禁止做 MVP 全量演示。
