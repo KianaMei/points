@@ -302,14 +302,23 @@ M11.10 证据：
 
 ## 任务 M11.11 管理员兑换管理页
 
-- [ ] 兑换批次 `/clubpoints/admin/redemption-batch`，支持批次创建、修改、开放、关闭。
-- [ ] 礼品维护 `/clubpoints/admin/redemption-gift`，支持礼品创建、修改、状态切换。
-- [ ] 兑换审核 `/clubpoints/admin/redemption-application`，只通过或拒绝，通过展示发放时间，拒绝展示冻结释放。
+- [x] 兑换批次 `/clubpoints/admin/redemption-batch`，支持批次创建、修改、开放、关闭。
+- [x] 礼品维护 `/clubpoints/admin/redemption-gift`，支持礼品创建、修改、状态切换。
+- [x] 兑换审核 `/clubpoints/admin/redemption-application`，只通过或拒绝，通过展示发放时间，拒绝展示冻结释放。
 
 验收：
 
-- [ ] 审核不能修改礼品、数量、积分消耗。
-- [ ] 批次和礼品状态可维护。
+- [x] 审核不能修改礼品、数量、积分消耗。
+- [x] 批次和礼品状态可维护。
+
+M11.11 证据：
+
+- RED：运行 `Test-Path` 检查 `views/clubpoints/admin/redemption-batch/index.vue`、`redemption-gift/index.vue`、`redemption-application/index.vue`，全部返回 `False`。
+- GREEN：新增 3 个管理员兑换页面，并按后端 VO 修正 `api/clubpoints/admin/redemption.ts` 批次、礼品和申请响应 / 请求字段。
+- 页面口径：批次页支持创建、修改、开启和关闭，开启提示会生成资格快照；礼品页支持创建、修改、上架和下架；兑换审核页只读展示申请号、员工、批次、礼品、数量、积分消耗、冻结积分、审核时间和发放时间，审核只提交通过或拒绝。
+- 接口验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointRedemptionControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRedemptionControllerTest` 5 个测试，失败 0，错误 0。
+- 前端类型验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，二次过滤 `clubpoints` 路径命中 `0` 行，仍为前端工程存量 TypeScript 债。
+- 质量门禁：页面范围 `request.get|post|put|delete` 无命中；精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；扫描只命中兑换审核页只读展示的礼品、数量、积分消耗字段和审核按钮，没有强确认、导出、负责人任免或移除成员入口。
 
 ## 任务 M11.12 管理员运营页面
 

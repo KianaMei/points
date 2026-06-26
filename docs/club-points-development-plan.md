@@ -1261,6 +1261,8 @@ M11.9 已落地负责人端页面：`/clubpoints/leader/dashboard`、`/clubpoint
 
 M11.10 已落地管理员活动和材料页面：`/clubpoints/admin/activity`、`/clubpoints/admin/contribution-review`、`/clubpoints/admin/contribution-direct`。活动页支持管理员直接发布和审核负责人活动；材料审核页只读材料内容并提交审核结果；管理员代录页提交 `requestNo`、员工、积分、规则版本、原因和附件，失败重试保留同号。
 
+M11.11 已落地管理员兑换管理页面：`/clubpoints/admin/redemption-batch`、`/clubpoints/admin/redemption-gift`、`/clubpoints/admin/redemption-application`。批次支持创建、修改、开启和关闭；礼品支持创建、修改、上架和下架；兑换审核只提交通过或拒绝，不允许修改申请里的礼品、数量或积分消耗。
+
 ### 16.3 前端
 
 前端从独立仓库 `github.com/yudaocode/yudao-ui-admin-vue3` 克隆完整工程，当前已落到 `C:\jobs\pointsmall\ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3`。后续 clubpoints 前端直接在这个工程内开发。页面、字段、按钮权限、接口映射和强确认口径以 `docs/club-points-frontend-page-design.md` 为准。

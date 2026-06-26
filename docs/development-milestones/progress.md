@@ -568,3 +568,9 @@
 - 2026-06-26：M11.10 接口验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointActivityControllerTest,ClubPointContributionControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；活动 Controller 5 个测试、材料 Controller 3 个测试，合计 8 个测试，失败 0，错误 0。
 - 2026-06-26：M11.10 前端验证：3 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
 - 2026-06-26：M11.10 质量验证：页面范围 `request.get|post|put|delete` 无命中；精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；扫描只命中预期审核按钮 / 方法和代录 `requestNo`，没有强确认、导出、负责人任免或移除成员入口。
+- 2026-06-26：M11.11 RED：运行 `Test-Path` 检查管理员兑换批次、礼品维护、兑换审核 3 个页面文件，全部返回 `False`，确认 M11.11 页面尚未落地。
+- 2026-06-26：M11.11 GREEN：新增 `views/clubpoints/admin/redemption-batch/index.vue`、`redemption-gift/index.vue`、`redemption-application/index.vue`；按后端 VO 修正 `api/clubpoints/admin/redemption.ts` 的批次、礼品和申请字段，页面全部复用 API 封装。
+- 2026-06-26：M11.11 交互口径：批次页支持创建、修改、开启和关闭；礼品页支持创建、修改、上架和下架；兑换审核页只读展示申请号、员工、批次、礼品、数量、积分消耗、冻结积分、审核时间和发放时间，不允许修改礼品、数量或积分消耗。
+- 2026-06-26：M11.11 接口验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointRedemptionControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；兑换 Controller 5 个测试，失败 0，错误 0。
+- 2026-06-26：M11.11 前端验证：3 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
+- 2026-06-26：M11.11 质量验证：页面范围 `request.get|post|put|delete` 无命中；精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；扫描只命中兑换审核页只读展示字段和审核按钮，没有强确认、导出、负责人任免或移除成员入口。
