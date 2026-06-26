@@ -592,3 +592,11 @@
 - 2026-06-26：M11.14 接口代码验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointDashboardControllerTest,ClubPointReportControllerTest,ClubPointReportServiceImplTest,ClubJobRunAdminControllerTest,ClubJobRunAdminServiceImplTest,ClubPointAuditAdminControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 20 个测试，失败 0，错误 0。
 - 2026-06-26：M11.14 类型和质量验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`；6 个修改页面范围 `request.get|post|put|delete` / `url:`、`tenant_id|TenantBaseDO`、Redis 模式和精确禁用元数据模式均 0 命中；查询按钮权限 0 命中，动作权限保留导出和任务处理。
 - 2026-06-26：M11 放行：`M11-report-job-frontend.md` 勾选 M11.14 和 M11 放行标准，`00-index.md` 将 M11 标为 `[x]`，当前最近入口切换到 M12 硬化验收。
+
+## M12 硬化和验收
+
+- 2026-06-26：M12.1 RED：运行 `Test-Path ruoyi-vue-pro-github\yudao-module-clubpoints\src\test\java\cn\iocoder\yudao\module\clubpoints\hardening\ClubPointSchemaHardeningTest.java` 返回 `False`，确认数据库约束复查缺少可重复硬化测试入口。
+- 2026-06-26：M12.1 GREEN：新增 `ClubPointSchemaHardeningTest`，解析正式 `sql/mysql/club-points-schema.sql` 与测试 `create_tables.sql`，断言正式 schema 为 34 张 `club_points_*` 表，并比对表集合、字段集合、主键、`deleted` 字段和全部预期唯一键；H2 DDL 只过滤比较 `club_points_*`，保留 `system_notify_message` 作为通知测试辅助表。
+- 2026-06-26：M12.1 验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointSchemaHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointSchemaHardeningTest` 运行 2 个测试，失败 0，错误 0。
+- 2026-06-26：M12.1 质量验证：禁用元数据扫描无命中；新增 hardening 测试范围内 `tenant_id|TenantBaseDO|Redis|redisTemplate|StringRedisTemplate|Redisson` 扫描无命中。
+- 2026-06-26：M12.1 文档同步：`M12-hardening-acceptance.md` 勾选 M12.1，`00-index.md` 将 M12 标为 `[~]` 并把下一入口切换到 M12.2 权限矩阵复查，`club-points-development-plan.md` 记录 M12.1 当前硬化事实。

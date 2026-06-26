@@ -59,18 +59,25 @@
 
 ## 任务 M12.1 数据库约束复查
 
-- [ ] 复查所有 `club_points_*` 主键。
-- [ ] 复查所有幂等唯一键。
-- [ ] 复查账户缓存唯一键。
-- [ ] 复查库存锁唯一键。
-- [ ] 复查年度清零唯一键。
-- [ ] 复查逻辑删除和物理删除策略。
-- [ ] 复查正式 schema 和测试 DDL 一致性。
+- [x] 复查所有 `club_points_*` 主键。
+- [x] 复查所有幂等唯一键。
+- [x] 复查账户缓存唯一键。
+- [x] 复查库存锁唯一键。
+- [x] 复查年度清零唯一键。
+- [x] 复查逻辑删除和物理删除策略。
+- [x] 复查正式 schema 和测试 DDL 一致性。
 
 验收：
 
-- [ ] 没有靠 Redis 替代数据库事实约束。
-- [ ] 没有正式表字段缺失测试覆盖。
+- [x] 没有靠 Redis 替代数据库事实约束。
+- [x] 没有正式表字段缺失测试覆盖。
+
+证据：
+
+- RED：`Test-Path ruoyi-vue-pro-github\yudao-module-clubpoints\src\test\java\cn\iocoder\yudao\module\clubpoints\hardening\ClubPointSchemaHardeningTest.java` 返回 `False`，确认 M12.1 缺少可重复硬化测试。
+- GREEN：新增 `ClubPointSchemaHardeningTest`，解析正式 MySQL schema 和 H2 测试 DDL，断言正式 schema 为 34 张 `club_points_*` 表，逐表校验主键、字段、`deleted` 字段和全部预期唯一键；H2 DDL 仅过滤比较 `club_points_*`，不把 `system_notify_message` 辅助表误判为 clubpoints 正式 schema 漂移。
+- Verify：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointSchemaHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointSchemaHardeningTest` 运行 2 个测试，失败 0，错误 0。
+- Quality：禁用元数据扫描无命中；新增 hardening 测试范围内租户字段、租户基类和 Redis 关键字扫描无命中。
 
 ## 任务 M12.2 权限矩阵复查
 

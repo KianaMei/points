@@ -1339,6 +1339,12 @@ src/views/clubpoints/
 
 **目标**：不要只看 happy path。把会出血的场景全部压住。
 
+当前硬化进度：
+
+1. M12.1 已完成数据库约束复查，新增 `ClubPointSchemaHardeningTest` 固化正式 schema 与测试 DDL 的 `club_points_*` 表、字段、主键、`deleted` 字段和唯一键一致性。
+2. M12.1 明确 H2 测试 DDL 可包含 `system_notify_message` 这类 system 辅助表，但正式 schema 对齐范围只看 `club_points_*`，不允许遗漏 clubpoints 正式表字段或唯一键。
+3. M12.1 验证命令 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointSchemaHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；运行 2 个测试，失败 0，错误 0。
+
 ### 17.1 必跑测试矩阵
 
 | 类别 | 场景 | 必须证明 |

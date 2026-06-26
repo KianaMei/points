@@ -50,7 +50,7 @@
 | `[x]` | M9 | `M9-redemption.md` | 兑换资格、冻结、库存、审核闭环可用 |
 | `[x]` | M10 | `M10-annual-dispute-budget.md` | 异议、年度清零、排名、激励、预算闭环可用 |
 | `[x]` | M11 | `M11-report-job-frontend.md` | 报表、任务监控、通知、前端页面收口 |
-| `[ ]` | M12 | `M12-hardening-acceptance.md` | 并发、权限、回归、演示验收完成 |
+| `[~]` | M12 | `M12-hardening-acceptance.md` | 并发、权限、回归、演示验收完成 |
 
 ## 依赖链
 
@@ -82,7 +82,7 @@ M0 空模块
 
 ## 当前最近入口
 
-当前最近入口是 M11：
+当前最近入口是 M12：
 
 - M0 已创建 `ruoyi-vue-pro-github/yudao-module-clubpoints` 空模块。
 - M0 已在根 POM 和 `yudao-server/pom.xml` 接入 `yudao-module-clubpoints`。
@@ -183,3 +183,6 @@ M0 空模块
 - M11.13 已完成管理员报表中心、强审计日志和任务运行 3 个页面，并补齐后端审计分页接口；报表导出只在管理员页出现并带筛选条件调用后端强审计导出，任务失败处理必须填写原因；已通过 RED/GREEN 文件验证、前端类型过滤验证、报表 / 任务 / 审计接口测试和页面权限 / URL 扫描。下一步入口是 M11.14 前端验证。
 - M11.14 已完成前端验证，覆盖 `pnpm install --frozen-lockfile`、8889 路由入口、三类角色工作台、管理员报表 / 审计 / 任务页、后端 seed 菜单、按钮权限隐藏、接口失败错误提示和类型过滤；旧 live 后端进程未加载新接口时返回 404，页面保持默认值或空表并不再抛 mounted hook 未处理异常；后端对应 Controller / Service 组合测试 20 个通过。
 - M11 已放行；下一步入口是 M12 硬化验收。
+- M12.1 已完成数据库约束复查，新增 `ClubPointSchemaHardeningTest` 复核正式 schema 与测试 DDL 的 `club_points_*` 表、主键、字段、`deleted` 字段和唯一键。
+- M12.1 已通过 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointSchemaHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`；`ClubPointSchemaHardeningTest` 运行 2 个测试，失败 0，错误 0。
+- M12 当前进行中；下一步入口是 M12.2 权限矩阵复查。
