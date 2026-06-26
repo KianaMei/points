@@ -14,4 +14,10 @@ public interface ClubPointUserYearStatusMapper extends BaseMapperX<ClubPointUser
                 .eq(ClubPointUserYearStatusDO::getYear, year));
     }
 
+    default ClubPointUserYearStatusDO selectByUserIdAndYearForUpdate(Long userId, Integer year) {
+        return selectOneForUpdate(new LambdaQueryWrapperX<ClubPointUserYearStatusDO>()
+                .eq(ClubPointUserYearStatusDO::getUserId, userId)
+                .eq(ClubPointUserYearStatusDO::getYear, year));
+    }
+
 }

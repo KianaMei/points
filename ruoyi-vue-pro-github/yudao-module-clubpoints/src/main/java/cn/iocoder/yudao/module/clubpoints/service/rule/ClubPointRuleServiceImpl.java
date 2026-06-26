@@ -29,6 +29,7 @@ import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionU
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.RULE_DISABLE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.RULE_PUBLISH;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.RULE_WITHDRAW;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointRuleItemCodeEnum.FRAUD_CLEAR_ALL;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_ITEM_CODE_DUPLICATED;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_ITEM_NOT_EXISTS;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_VALUE_OUT_OF_RANGE;
@@ -245,7 +246,16 @@ public class ClubPointRuleServiceImpl implements ClubPointRuleService {
     }
 
     private static void validatePointRange(ClubPointRuleItemDO ruleItem, Integer points) {
-        if (points == null || points < ruleItem.getMinPoints() || points > ruleItem.getMaxPoints()) {
+        if (points == null) {
+            throw exception(CLUB_RULE_VALUE_OUT_OF_RANGE);
+        }
+        if (ruleItem.getMinPoints() == null || ruleItem.getMaxPoints() == null) {
+            if (FRAUD_CLEAR_ALL.getCode().equals(ruleItem.getItemCode())) {
+                return;
+            }
+            throw exception(CLUB_RULE_VALUE_OUT_OF_RANGE);
+        }
+        if (points < ruleItem.getMinPoints() || points > ruleItem.getMaxPoints()) {
             throw exception(CLUB_RULE_VALUE_OUT_OF_RANGE);
         }
     }

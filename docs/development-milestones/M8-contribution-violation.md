@@ -1,6 +1,6 @@
 # M8 非签到积分、违规扣分、弄虚作假 Implementation Plan
 
-**Status:** `[~]` M8.1-M8.6 已完成并有 RED/GREEN 证据；当前入口是 M8.7 弄虚作假处理。
+**Status:** `[~]` M8.1-M8.7 已完成并有 RED/GREEN 证据；当前入口是 M8.8 API。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -211,18 +211,30 @@
 
 ## 任务 M8.7 弄虚作假处理
 
-- [ ] 管理员标记材料弄虚作假。
-- [ ] 撤销原材料已发流水。
-- [ ] 按弄虚作假规则扣分。
-- [ ] 锁定相关附件。
-- [ ] 写强审计。
-- [ ] 通知相关员工或负责人。
+- [x] 管理员标记材料弄虚作假。
+- [x] 撤销原材料已发流水。
+- [x] 按弄虚作假规则扣分。
+- [x] 锁定相关附件。
+- [x] 写强审计。
+- [x] 通知相关员工或负责人。
 
 验收：
 
-- [ ] 原流水用反向流水撤销。
-- [ ] 不直接删除原流水。
-- [ ] 弄虚作假扣分和撤销都可追溯。
+- [x] 原流水用反向流水撤销。
+- [x] 不直接删除原流水。
+- [x] 弄虚作假扣分和撤销都可追溯。
+
+证据：
+
+- RED：在 `ClubPointContributionServiceImplTest` 增加 M8.7 弄虚作假处理用例后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `ClubPointContributionFraudHandleReqBO`、`CONTRIBUTION_FRAUD_HANDLE` 和 `FRAUD_HANDLE` 不存在，符合 M8.7 RED 预期。
+- GREEN：新增 `ClubPointContributionFraudHandleReqBO`、`ClubPointContributionService#handleFraud(...)`、`ClubPointContributionMaterialTypeEnum.FRAUD_HANDLE` 和 `CONTRIBUTION_FRAUD_HANDLE` 强审计动作；管理员弄虚作假处理要求全局范围，使用 `requestNo` 幂等，创建已审核通过并锁定的处理材料，锁定原材料和处理附件，逐条调用 `ClubPointLedgerService.reverseTransaction(...)` 撤销原材料已发正向流水，再按 `FRAUD_CLEAR_ALL` 扣除涉及员工当前全部可用积分。
+- 年度状态：弄虚作假处理会写入或更新 `club_points_user_year_status`，将涉及员工 `honor_eligible=false`，保存取消原因、取消时间和关联扣分流水；如果撤销后无可用积分可扣，评优资格取消仍会落年度状态。
+- 通知边界：处理完成后调用 `ClubNotifyService.notifyPointsChanged(...)` 通知涉及员工；通知失败由通知服务和当前处理链路兜底，不回滚撤销、扣分、附件锁定、审计或年度状态。
+- 账本边界：撤销只通过 `ClubPointLedgerService.reverseTransaction(...)` 生成反向流水，弄虚作假扣分只通过 `ClubPointLedgerService.createTransaction(...)` 生成负向流水；实现不直接写 `club_points_transaction`，不删除、不改写原流水。
+- 规则边界：`FRAUD_CLEAR_ALL` 在 seed 中是开关型清零规则项，M8.7 仅允许该规则项在账本快照时保存实际扣除分值，确保“扣除当前全部可用积分”可追溯，其他无 min/max 的规则项仍按越界处理。
+- M8.7 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointContributionServiceImplTest` 运行 `19` 个测试，失败 `0`，错误 `0`。
+- M8 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointContributionMapperTest,ClubPointContributionEnumTest,ClubPointContributionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `24` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；contribution Service 范围账本扫描只命中 `createTransaction(...)` 和 `reverseTransaction(...)`，无 `transactionMapper.insert` 或直接写流水表。
 
 ## 任务 M8.8 API
 
@@ -263,7 +275,7 @@
 - [ ] 非签到审核发分可用。
 - [x] 管理员代录可用。
 - [x] 违规扣分可用。
-- [ ] 弄虚作假处理可用。
+- [x] 弄虚作假处理可用。
 
 ## M8 不通过时禁止
 

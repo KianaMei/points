@@ -10,6 +10,7 @@ import cn.iocoder.yudao.module.clubpoints.dal.dataobject.contribution.ClubPointC
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.contribution.ClubPointContributionReviewRecordDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointTransactionDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointUserYearStatusDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRuleItemDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRuleVersionDO;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.attachment.ClubAttachmentRefMapper;
@@ -21,6 +22,7 @@ import cn.iocoder.yudao.module.clubpoints.dal.mysql.contribution.ClubPointContri
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.contribution.ClubPointContributionReviewRecordMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointAccountMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointTransactionMapper;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointUserYearStatusMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.rule.ClubPointRuleItemMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.rule.ClubPointRuleVersionMapper;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointClubStatusEnum;
@@ -29,19 +31,24 @@ import cn.iocoder.yudao.module.clubpoints.enums.ClubPointContributionMaterialTyp
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointLeaderStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRuleItemTypeEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRuleVersionStatusEnum;
+import cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionSourceTypeEnum;
+import cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.service.attachment.ClubAttachmentServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.attachment.bo.ClubAttachmentBindReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionDirectCreateReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionFraudHandleReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionItemSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionMaterialSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionReviewReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionSubmitReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionViolationDeductReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.ClubPointLedgerServiceImpl;
+import cn.iocoder.yudao.module.clubpoints.service.notify.ClubNotifyServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.rule.ClubPointRuleServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeServiceImpl;
 import cn.iocoder.yudao.module.infra.service.file.FileService;
+import cn.iocoder.yudao.module.system.service.notify.NotifySendService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -56,13 +63,18 @@ import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.A
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.BIZ_TYPE_CONTRIBUTION_MATERIAL;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.STATUS_EFFECTIVE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CONTRIBUTION_DIRECT_CREATE;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CONTRIBUTION_FRAUD_HANDLE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CONTRIBUTION_REVIEW;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CONTRIBUTION_VIOLATION_DEDUCT;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubNotifyTemplateConstants.TEMPLATE_POINTS_CHANGED;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointCategoryEnum.ACTIVE_CONTRIBUTION;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointCategoryEnum.DEDUCTION;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointCategoryEnum.REVERSAL;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointContributionMaterialTypeEnum.FRAUD_HANDLE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointContributionMaterialTypeEnum.PUBLICITY_SUGGESTION;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointContributionMaterialTypeEnum.SPECIAL_CONTRIBUTION;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointContributionMaterialTypeEnum.VIOLATION_DEDUCT;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointRuleItemCodeEnum.FRAUD_CLEAR_ALL;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointRuleItemCodeEnum.VIOLATION_DEDUCT_RANGE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionDirectionEnum.DECREASE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionDirectionEnum.INCREASE;
@@ -82,9 +94,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 @Import({ClubPointContributionServiceImpl.class, ClubScopeServiceImpl.class, ClubAttachmentServiceImpl.class,
-        ClubPointRuleServiceImpl.class, ClubAuditServiceImpl.class, ClubPointLedgerServiceImpl.class})
+        ClubPointRuleServiceImpl.class, ClubAuditServiceImpl.class, ClubPointLedgerServiceImpl.class,
+        ClubNotifyServiceImpl.class})
 class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
 
     private static final LocalDateTime BASE_TIME = LocalDateTime.of(2026, 7, 15, 9, 0);
@@ -113,9 +129,13 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
     private ClubPointTransactionMapper transactionMapper;
     @Resource
     private ClubPointAccountMapper accountMapper;
+    @Resource
+    private ClubPointUserYearStatusMapper userYearStatusMapper;
 
     @MockBean
     private FileService fileService;
+    @MockBean
+    private NotifySendService notifySendService;
 
     @Test
     void createDraftShouldPersistMaterialItemsAndBindAttachments() {
@@ -624,6 +644,137 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
         assertEquals(30, accountMapper.selectByUserId(9201L).getAvailablePoints());
     }
 
+    @Test
+    void handleFraudShouldReverseOriginalDeductAvailableCancelHonorLockAuditNotifyAndBeIdempotent() {
+        ClubPointClubDO club = insertClub("CLUB-M8-7001", "Fraud Handle Club");
+        insertLeader(club.getId(), 9300L);
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-701");
+        insertRuleItem(version.getId(), PUBLICITY_SUGGESTION, 2, 10, 5);
+        insertFraudClearRuleItem(version.getId());
+        insertAccount(9301L, 20);
+        Long originalMaterialId = createSubmittedSingleUserMaterial(club.getId(), version.getId(), 9300L, 9301L, 6);
+        contributionService.reviewMaterial(buildReviewReq(originalMaterialId, true));
+        ClubPointContributionItemDO originalItem = itemMapper.selectListByMaterialId(originalMaterialId).get(0);
+        ClubPointTransactionDO originalTransaction = transactionMapper.selectById(originalItem.getTransactionId());
+        assertEquals(26, accountMapper.selectByUserId(9301L).getAvailablePoints());
+
+        Long fraudMaterialId = contributionService.handleFraud(buildFraudHandleReq("REQ-M8-7001",
+                originalMaterialId, version.getId()));
+        Long repeatedFraudMaterialId = contributionService.handleFraud(buildFraudHandleReq("REQ-M8-7001",
+                originalMaterialId, version.getId()));
+
+        assertEquals(fraudMaterialId, repeatedFraudMaterialId);
+        assertEquals(2L, materialMapper.selectCount());
+        ClubPointContributionMaterialDO fraudMaterial = materialMapper.selectById(fraudMaterialId);
+        assertEquals(club.getId(), fraudMaterial.getClubId());
+        assertEquals(FRAUD_HANDLE.getType(), fraudMaterial.getType());
+        assertEquals(ClubPointContributionMaterialStatusEnum.APPROVED.getStatus(), fraudMaterial.getStatus());
+        assertEquals(version.getId(), fraudMaterial.getRuleVersionId());
+        assertEquals("REQ-M8-7001", fraudMaterial.getRequestNo());
+        assertTrue(fraudMaterial.getLocked());
+        assertTrue(fraudMaterial.getDirectCreated());
+
+        ClubPointTransactionDO persistedOriginal = transactionMapper.selectById(originalTransaction.getId());
+        assertEquals(VALID.getStatus(), persistedOriginal.getStatus());
+        ClubPointTransactionDO reverseTransaction =
+                transactionMapper.selectByReverseOfTransactionId(originalTransaction.getId());
+        assertNotNull(reverseTransaction);
+        assertEquals("FRAUD_REVERSE:REQ-M8-7001:" + originalTransaction.getId(),
+                reverseTransaction.getTransactionNo());
+        assertEquals(ClubPointTransactionSourceTypeEnum.REVERSAL.getType(), reverseTransaction.getSourceType());
+        assertEquals(ClubPointTransactionStatusEnum.REVERSAL.getStatus(), reverseTransaction.getStatus());
+        assertEquals(REVERSAL.getCategory(), reverseTransaction.getPointCategory());
+        assertEquals(DECREASE.getDirection(), reverseTransaction.getDirection());
+        assertEquals(6, reverseTransaction.getPoints());
+
+        ClubPointContributionItemDO fraudItem = itemMapper.selectListByMaterialId(fraudMaterialId).get(0);
+        assertEquals(9301L, fraudItem.getUserId());
+        assertEquals(FRAUD_CLEAR_ALL.getCode(), fraudItem.getRuleItemCode());
+        assertEquals(DECREASE.getDirection(), fraudItem.getDirection());
+        assertEquals(DEDUCTION.getCategory(), fraudItem.getPointCategory());
+        assertEquals(20, fraudItem.getPoints());
+        assertEquals("FRAUD_CLEAR_ALL:REQ-M8-7001:9301", fraudItem.getIdempotencyKey());
+        assertNotNull(fraudItem.getTransactionId());
+
+        ClubPointTransactionDO fraudTransaction = transactionMapper.selectById(fraudItem.getTransactionId());
+        assertEquals(CONTRIBUTION_MATERIAL.getType(), fraudTransaction.getSourceType());
+        assertEquals(fraudMaterialId, fraudTransaction.getSourceId());
+        assertEquals(fraudItem.getId(), fraudTransaction.getSourceItemId());
+        assertEquals(FRAUD_CLEAR_ALL.getCode(), fraudTransaction.getPointTypeCode());
+        assertEquals(20, fraudTransaction.getPoints());
+        assertEquals(0, accountMapper.selectByUserId(9301L).getAvailablePoints());
+
+        ClubPointUserYearStatusDO yearStatus =
+                userYearStatusMapper.selectByUserIdAndYear(9301L, fraudTransaction.getBusinessYear());
+        assertNotNull(yearStatus);
+        assertFalse(yearStatus.getHonorEligible());
+        assertEquals("fraud handle", yearStatus.getHonorCancelReason());
+        assertEquals(fraudTransaction.getId(), yearStatus.getHonorCancelTransactionId());
+        assertNotNull(yearStatus.getHonorCancelTime());
+
+        assertTrue(attachmentRefMapper.selectListByBiz(BIZ_TYPE_CONTRIBUTION_MATERIAL,
+                originalMaterialId, STATUS_EFFECTIVE).get(0).getLocked());
+        assertTrue(attachmentRefMapper.selectListByBiz(BIZ_TYPE_CONTRIBUTION_MATERIAL,
+                fraudMaterialId, STATUS_EFFECTIVE).get(0).getLocked());
+
+        ClubAuditLogDO fraudAudit = auditLogMapper.selectById(fraudTransaction.getAuditLogId());
+        assertEquals(CONTRIBUTION_FRAUD_HANDLE, fraudAudit.getActionType());
+        assertEquals(BIZ_TYPE_CONTRIBUTION_MATERIAL, fraudAudit.getBizType());
+        assertEquals(fraudMaterialId, fraudAudit.getBizId());
+        assertTrue(fraudAudit.getAfterJson().contains("\"originalMaterialId\":" + originalMaterialId));
+        assertEquals(3L, transactionMapper.selectCount());
+        verify(notifySendService).sendSingleNotifyToAdmin(eq(9301L), eq(TEMPLATE_POINTS_CHANGED),
+                org.mockito.ArgumentMatchers.anyMap());
+    }
+
+    @Test
+    void handleFraudShouldRollbackWhenAuditFails() {
+        ClubPointClubDO club = insertClub("CLUB-M8-7002", "Fraud Audit Rollback Club");
+        insertLeader(club.getId(), 9400L);
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-702");
+        insertRuleItem(version.getId(), PUBLICITY_SUGGESTION, 2, 10, 5);
+        insertFraudClearRuleItem(version.getId());
+        insertAccount(9401L, 20);
+        Long originalMaterialId = createSubmittedSingleUserMaterial(club.getId(), version.getId(), 9400L, 9401L, 6);
+        contributionService.reviewMaterial(buildReviewReq(originalMaterialId, true));
+        Long originalTransactionId = itemMapper.selectListByMaterialId(originalMaterialId).get(0).getTransactionId();
+
+        assertServiceException(() -> contributionService.handleFraud(buildFraudHandleReq("REQ-M8-7002",
+                originalMaterialId, version.getId()).setOperatorNameSnapshot(null)), CLUB_AUDIT_WRITE_FAILED);
+
+        assertEquals(1L, materialMapper.selectCount());
+        assertEquals(1L, transactionMapper.selectCount());
+        assertNull(transactionMapper.selectByReverseOfTransactionId(originalTransactionId));
+        assertEquals(26, accountMapper.selectByUserId(9401L).getAvailablePoints());
+        assertNull(userYearStatusMapper.selectByUserIdAndYear(9401L, LocalDateTime.now().getYear()));
+        assertEquals(1L, auditLogMapper.selectCount());
+    }
+
+    @Test
+    void handleFraudShouldNotRollbackWhenNotifyFails() {
+        ClubPointClubDO club = insertClub("CLUB-M8-7003", "Fraud Notify Club");
+        insertLeader(club.getId(), 9500L);
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-703");
+        insertRuleItem(version.getId(), PUBLICITY_SUGGESTION, 2, 10, 5);
+        insertFraudClearRuleItem(version.getId());
+        insertAccount(9501L, 20);
+        Long originalMaterialId = createSubmittedSingleUserMaterial(club.getId(), version.getId(), 9500L, 9501L, 6);
+        contributionService.reviewMaterial(buildReviewReq(originalMaterialId, true));
+        doThrow(new IllegalStateException("notify down")).when(notifySendService)
+                .sendSingleNotifyToAdmin(eq(9501L), eq(TEMPLATE_POINTS_CHANGED),
+                        org.mockito.ArgumentMatchers.anyMap());
+
+        Long fraudMaterialId = contributionService.handleFraud(buildFraudHandleReq("REQ-M8-7003",
+                originalMaterialId, version.getId()).setReason("fraud notify failure"));
+
+        assertNotNull(fraudMaterialId);
+        assertEquals(0, accountMapper.selectByUserId(9501L).getAvailablePoints());
+        ClubPointContributionItemDO fraudItem = itemMapper.selectListByMaterialId(fraudMaterialId).get(0);
+        ClubPointTransactionDO fraudTransaction = transactionMapper.selectById(fraudItem.getTransactionId());
+        assertNotNull(userYearStatusMapper.selectByUserIdAndYear(9501L, fraudTransaction.getBusinessYear()));
+        assertEquals(3L, transactionMapper.selectCount());
+    }
+
     private ClubPointClubDO insertClub(String code, String name) {
         ClubPointClubDO club = new ClubPointClubDO()
                 .setCode(code)
@@ -678,6 +829,20 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
         return item;
     }
 
+    private ClubPointRuleItemDO insertFraudClearRuleItem(Long versionId) {
+        ClubPointRuleItemDO item = new ClubPointRuleItemDO()
+                .setRuleVersionId(versionId)
+                .setItemCode(FRAUD_CLEAR_ALL.getCode())
+                .setItemName("规则项-" + FRAUD_CLEAR_ALL.getCode())
+                .setItemType(ClubPointRuleItemTypeEnum.SWITCH.getType())
+                .setCategory(DEDUCTION.getCategory())
+                .setIntValue(1)
+                .setStatus(1)
+                .setSort(7);
+        ruleItemMapper.insert(item);
+        return item;
+    }
+
     private void insertAccount(Long userId, Integer availablePoints) {
         accountMapper.insert(new ClubPointAccountDO()
                 .setUserId(userId)
@@ -693,6 +858,16 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
     private Long createSubmittedMaterial(Long clubId, Long ruleVersionId, Long operatorUserId) {
         Long materialId = contributionService.createDraft(buildSaveReq(null, clubId, ruleVersionId,
                 operatorUserId, PUBLICITY_SUGGESTION)
+                .setAttachments(Arrays.asList(buildUrlAttachment())));
+        contributionService.submitForReview(buildSubmitReq(materialId, operatorUserId));
+        return materialId;
+    }
+
+    private Long createSubmittedSingleUserMaterial(Long clubId, Long ruleVersionId, Long operatorUserId,
+                                                   Long userId, Integer points) {
+        Long materialId = contributionService.createDraft(buildSaveReq(null, clubId, ruleVersionId,
+                operatorUserId, PUBLICITY_SUGGESTION)
+                .setItems(Arrays.asList(buildItem(userId).setPoints(points)))
                 .setAttachments(Arrays.asList(buildUrlAttachment())));
         contributionService.submitForReview(buildSubmitReq(materialId, operatorUserId));
         return materialId;
@@ -770,6 +945,22 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
                 .setPoints(10)
                 .setRuleVersionId(ruleVersionId)
                 .setReason("violation deduct")
+                .setAttachments(Arrays.asList(buildUrlAttachment()))
+                .setOperatorGlobalScope(true)
+                .setOperatorUserId(900L)
+                .setOperatorNameSnapshot("Admin")
+                .setOperatorRoleSnapshot("club_points_admin")
+                .setClientIp("127.0.0.1")
+                .setUserAgent("JUnit");
+    }
+
+    private static ClubPointContributionFraudHandleReqBO buildFraudHandleReq(String requestNo, Long originalMaterialId,
+                                                                             Long ruleVersionId) {
+        return new ClubPointContributionFraudHandleReqBO()
+                .setRequestNo(requestNo)
+                .setOriginalMaterialId(originalMaterialId)
+                .setRuleVersionId(ruleVersionId)
+                .setReason("fraud handle")
                 .setAttachments(Arrays.asList(buildUrlAttachment()))
                 .setOperatorGlobalScope(true)
                 .setOperatorUserId(900L)

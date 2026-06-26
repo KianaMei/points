@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.clubpoints.service.contribution;
 
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.contribution.ClubPointContributionMaterialDO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionDirectCreateReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionFraudHandleReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionMaterialSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionReviewReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionSubmitReqBO;
@@ -27,5 +28,7 @@ public interface ClubPointContributionService {
     Long directCreate(ClubPointContributionDirectCreateReqBO reqBO);
 
     Long violationDeduct(ClubPointContributionViolationDeductReqBO reqBO);
+
+    Long handleFraud(ClubPointContributionFraudHandleReqBO reqBO);
 
 }
