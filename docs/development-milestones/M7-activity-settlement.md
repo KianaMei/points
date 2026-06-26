@@ -1,6 +1,6 @@
 # M7 活动自动结算 Implementation Plan
 
-**Status:** `[~]` M7.1-M7.5 已完成并有 RED/GREEN 证据；当前入口是 M7.6 管理员接口。
+**Status:** `[~]` M7.1-M7.6 已完成并有 RED/GREEN 证据；当前入口是 M7.7 测试。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -182,16 +182,25 @@
 
 ## 任务 M7.6 管理员接口
 
-- [ ] 管理员查看待结算活动。
-- [ ] 管理员手动触发结算。
-- [ ] 管理员查看结算运行记录。
-- [ ] 管理员查看结算明细。
-- [ ] 手动结算写强审计。
+- [x] 管理员查看待结算活动。
+- [x] 管理员手动触发结算。
+- [x] 管理员查看结算运行记录。
+- [x] 管理员查看结算明细。
+- [x] 手动结算写强审计。
 
 验收：
 
-- [ ] 手动重跑不重复流水。
-- [ ] 非管理员不能触发全局结算。
+- [x] 手动重跑不重复流水。
+- [x] 非管理员不能触发全局结算。
+
+证据：
+
+- RED：新增 `ClubPointSettlementAdminControllerTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointSettlementAdminControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是管理员结算 Controller、VO、Admin Service 和对应包不存在，符合 M7.6 RED 预期。
+- GREEN：新增 `ClubPointSettlementAdminController`、管理员结算请求/响应 VO、`ClubPointActivitySettlementAdminService` / `Impl`、管理员结算 BO；补 `ClubPointActivitySettlementRunMapper.selectPage(...)` 和 `ClubPointTransactionMapper.selectListByActivityIdAndSourceType(...)`；手动结算先写强审计，再通过 M7.5 Job Service 触发结算。
+- 实现边界：M7.6 不直接写 `club_points_transaction`，结算明细从流水事实源查询；管理员接口统一在 `/clubpoints/settlement` 下，写接口使用 `clubpoints:settlement:run`，读接口使用 `clubpoints:settlement:query`；手动结算审计动作为 `ACTIVITY_SETTLEMENT_MANUAL`，审计失败时不会触发 Job。
+- M7.6 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointSettlementAdminControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointSettlementAdminControllerTest` 运行 `3` 个测试，失败 `0`，错误 `0`。
+- M7 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivitySettlementEnumTest,ClubPointActivitySettlementServiceImplTest,ClubPointActivitySettlementJobTest,ClubPointSettlementAdminControllerTest,ClubPointLedgerServiceImplTest,ClubPointActivityServiceImplTest,ClubPointRegistrationServiceImplTest,ClubPointAttendanceServiceImplTest,ClubPointAttendanceCorrectionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `45` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
 
 ## 任务 M7.7 测试
 

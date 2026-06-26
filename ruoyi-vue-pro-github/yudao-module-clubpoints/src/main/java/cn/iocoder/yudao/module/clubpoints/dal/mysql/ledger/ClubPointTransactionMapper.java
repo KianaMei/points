@@ -131,4 +131,13 @@ public interface ClubPointTransactionMapper extends BaseMapperX<ClubPointTransac
                 .orderByAsc(ClubPointTransactionDO::getId));
     }
 
+    default List<ClubPointTransactionDO> selectListByActivityIdAndSourceType(Long activityId, Integer sourceType) {
+        return selectList(new LambdaQueryWrapperX<ClubPointTransactionDO>()
+                .eq(ClubPointTransactionDO::getActivityId, activityId)
+                .eq(ClubPointTransactionDO::getSourceType, sourceType)
+                .in(ClubPointTransactionDO::getStatus, QUERY_EFFECTIVE_STATUSES)
+                .orderByAsc(ClubPointTransactionDO::getUserId)
+                .orderByAsc(ClubPointTransactionDO::getId));
+    }
+
 }
