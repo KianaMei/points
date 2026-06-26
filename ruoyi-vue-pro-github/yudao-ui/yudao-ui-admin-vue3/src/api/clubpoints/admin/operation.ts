@@ -116,3 +116,7 @@ export const getReportClubRankingPage = async (params: ClubPointPageParam) => {
 export const getReportBudgetPage = async (params: ClubPointPageParam) => {
   return await request.get({ url: `${REPORT_PREFIX}/budget-page`, params })
 }
+
+export const exportReportExcel = async (params: ClubPointPageParam & { reportType: number }) => {
+  return await request.download({ url: `${REPORT_PREFIX}/export-excel`, params })
+}

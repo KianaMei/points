@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.clubpoints.service.report;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.annual.ClubPointAnnualRankingRecordDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.audit.ClubAuditLogDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.budget.ClubPointBudgetRecordDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointTransactionDO;
@@ -10,23 +12,29 @@ import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRed
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionBatchDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionGiftDO;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.annual.ClubPointAnnualRankingRecordMapper;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.audit.ClubAuditLogMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.budget.ClubPointBudgetRecordMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointAccountMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointTransactionMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointRedemptionApplicationMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointRedemptionBatchMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointRedemptionGiftMapper;
+import cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointBudgetCategoryEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointBudgetSourceTypeEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointCategoryEnum;
+import cn.iocoder.yudao.module.clubpoints.enums.ClubPointReportExportTypeEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRedemptionApplicationStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionDirectionEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionSourceTypeEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionStatusEnum;
+import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportBudgetBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportBudgetPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportClubRankingBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportClubRankingPageReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportExportReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportExportResultBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportLedgerSummaryBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportLedgerSummaryPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportPointDetailBO;
@@ -41,9 +49,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Import(ClubPointReportServiceImpl.class)
+@Import({
+        ClubPointReportServiceImpl.class,
+        ClubAuditServiceImpl.class
+})
 class ClubPointReportServiceImplTest extends BaseDbUnitTest {
 
     private static final LocalDateTime BASE_TIME = LocalDateTime.of(2026, 6, 1, 10, 0);
@@ -72,6 +84,8 @@ class ClubPointReportServiceImplTest extends BaseDbUnitTest {
     private ClubPointAnnualRankingRecordMapper rankingRecordMapper;
     @Resource
     private ClubPointBudgetRecordMapper budgetRecordMapper;
+    @Resource
+    private ClubAuditLogMapper auditLogMapper;
 
     @Test
     void pointDetailReportShouldReadEffectiveTransactionsWithFilters() {
@@ -255,6 +269,55 @@ class ClubPointReportServiceImplTest extends BaseDbUnitTest {
         assertEquals(100000L, page.getList().get(0).getBudgetAmountCent());
         assertEquals(60000L, page.getList().get(0).getActualAmountCent());
         assertEquals("2026 budget", page.getList().get(0).getDescription());
+    }
+
+    @Test
+    void exportReportShouldWriteStrongAuditAndReturnRows() {
+        Long expectedId = insertTransaction("TX-RPT-EXPORT-SVC-1001", 100L, "User 100", DIRECTION_INCREASE, 12,
+                CATEGORY_BASIC, SOURCE_ACTIVITY, 400L, "Club 400", STATUS_VALID, BASE_TIME);
+
+        ClubPointReportExportResultBO exportResult = reportService.exportReport(new ClubPointReportExportReqBO()
+                .setReportType(ClubPointReportExportTypeEnum.POINT_DETAIL.getType())
+                .setUserId(100L)
+                .setClubId(400L)
+                .setYear(2026)
+                .setOperatorUserId(9001L)
+                .setOperatorNameSnapshot("Report Admin")
+                .setOperatorRoleSnapshot("admin")
+                .setClientIp("127.0.0.1")
+                .setUserAgent("JUnit")
+                .setReason("导出积分明细"));
+
+        assertEquals(ClubPointReportExportTypeEnum.POINT_DETAIL.getType(), exportResult.getReportType());
+        assertEquals("积分明细报表", exportResult.getReportName());
+        assertEquals(1, exportResult.getRows().size());
+        assertEquals(expectedId, ((ClubPointReportPointDetailBO) exportResult.getRows().get(0)).getId());
+
+        ClubAuditLogDO auditLog = auditLogMapper.selectList().get(0);
+        assertEquals(ClubAuditActionTypeConstants.REPORT_EXPORT, auditLog.getActionType());
+        assertEquals("REPORT", auditLog.getBizType());
+        assertEquals(9001L, auditLog.getOperatorUserId());
+        assertEquals("Report Admin", auditLog.getOperatorNameSnapshot());
+        assertTrue(auditLog.getTargetSnapshotJson().contains("\"reportType\":1"));
+        assertTrue(auditLog.getTargetSnapshotJson().contains("\"rowCount\":1"));
+        assertTrue(auditLog.getTargetSnapshotJson().contains("\"clubId\":400"));
+    }
+
+    @Test
+    void exportReportShouldFailWhenStrongAuditCannotBeWritten() {
+        insertTransaction("TX-RPT-EXPORT-SVC-2001", 100L, "User 100", DIRECTION_INCREASE, 12,
+                CATEGORY_BASIC, SOURCE_ACTIVITY, 400L, "Club 400", STATUS_VALID, BASE_TIME);
+
+        assertThrows(ServiceException.class, () -> reportService.exportReport(new ClubPointReportExportReqBO()
+                .setReportType(ClubPointReportExportTypeEnum.POINT_DETAIL.getType())
+                .setUserId(100L)
+                .setClubId(400L)
+                .setYear(2026)
+                .setOperatorUserId(9001L)
+                .setOperatorRoleSnapshot("admin")
+                .setReason("缺少操作人快照，强审计必须失败")));
+
+        assertEquals(0L, auditLogMapper.selectCount());
     }
 
     private Long insertTransaction(String transactionNo, Long userId, String userName, Integer direction,

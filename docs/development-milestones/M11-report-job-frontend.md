@@ -142,18 +142,31 @@ M11.3 证据：
 
 ## 任务 M11.4 报表导出
 
-- [ ] 使用芋道 Excel 能力导出。
-- [ ] 导出前校验管理员权限。
-- [ ] 导出动作写强审计。
-- [ ] 审计失败则导出失败。
-- [ ] 导出文件不落业务主表。
-- [ ] 导出字段和前端页面设计一致。
+- [x] 使用芋道 Excel 能力导出。
+- [x] 导出前校验管理员权限。
+- [x] 导出动作写强审计。
+- [x] 审计失败则导出失败。
+- [x] 导出文件不落业务主表。
+- [x] 导出字段和前端页面设计一致。
 
 验收：
 
-- [ ] 导出成功有审计记录。
-- [ ] 越权导出失败。
-- [ ] 导出不产生独立业务表。
+- [x] 导出成功有审计记录。
+- [x] 越权导出失败。
+- [x] 导出不产生独立业务表。
+
+M11.4 证据：
+
+- RED：扩展 `ClubPointReportControllerTest` 和 `ClubPointReportServiceImplTest`，新增 `/export-excel` 路径和 `clubpoints:report:export` 权限、Excel 响应、`REPORT_EXPORT` 强审计、审计失败阻断导出测试；运行 `mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointReportControllerTest,ClubPointReportServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`，失败原因为 `AdminReportExportReqVO`、`ClubPointReportExportTypeEnum`、`ClubPointReportExportReqBO`、`ClubPointReportExportResultBO` 不存在。
+- GREEN：新增报表导出类型枚举、导出 BO、导出请求 VO、`ClubPointReportService.exportReport` 和 `GET /clubpoints/report/export-excel`；Controller 使用 `ExcelUtils.write` 输出 Excel，权限为 `clubpoints:report:export`，并标记 `@ApiAccessLog(operateType = EXPORT)`。
+- 强审计：`exportReport` 按白名单导出类型取数后写 `ClubAuditService`，动作类型 `REPORT_EXPORT`、业务类型 `REPORT`，记录导出人、角色、IP、UA、导出类型、筛选条件和 `rowCount`；审计写入失败时抛出异常，Controller 不写 Excel。
+- 导出类型：`1=积分明细报表`、`2=兑换记录报表`、`3=积分总台账报表`、`4=俱乐部发放积分排名报表`、`5=预算和经费统计报表`。
+- 导出字段：五类报表响应 VO 增加 `@ExcelProperty`，导出字段与页面查询响应字段保持一致。
+- 验证：同一测试命令最终返回 `BUILD SUCCESS`；`ClubPointReportControllerTest` 2 个测试、`ClubPointReportServiceImplTest` 7 个测试，合计 9 个测试，失败 0，错误 0。
+- 前端类型验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，二次过滤 `clubpoints` 路径命中 `0` 行，判定为前端存量 TypeScript 债。
+- 质量门禁：`git diff --check` 仅 LF/CRLF 提示；M11.4 源码/测试范围 `tenant_id|TenantBaseDO`、Redis、AI 元数据扫描均 0 命中；报表导出实现没有新增导出业务主表或直接写积分流水/账户事实源。
+- 权限 seed：管理员角色继续拿到报表菜单和查询/导出按钮；员工、负责人授权列表不包含 `1300010470`、`1300012050`、`1300012058`。
+- 边界说明：导出文件直接写 HTTP 响应，不新增导出业务主表；员工和负责人没有报表导出权限，越权由后端 `@PreAuthorize` 阻断。
 
 ## 任务 M11.5 任务监控
 

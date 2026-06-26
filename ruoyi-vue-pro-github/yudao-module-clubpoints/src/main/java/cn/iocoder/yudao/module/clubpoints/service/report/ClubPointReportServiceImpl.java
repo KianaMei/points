@@ -1,6 +1,8 @@
 package cn.iocoder.yudao.module.clubpoints.service.report;
 
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.annual.ClubPointAnnualRankingRecordDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.budget.ClubPointBudgetRecordDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
@@ -11,11 +13,17 @@ import cn.iocoder.yudao.module.clubpoints.dal.mysql.budget.ClubPointBudgetRecord
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointAccountMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointTransactionMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointRedemptionApplicationMapper;
+import cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants;
+import cn.iocoder.yudao.module.clubpoints.enums.ClubPointReportExportTypeEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionDirectionEnum;
+import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditService;
+import cn.iocoder.yudao.module.clubpoints.service.audit.bo.ClubAuditCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportBudgetBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportBudgetPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportClubRankingBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportClubRankingPageReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportExportReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportExportResultBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportLedgerSummaryBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportLedgerSummaryPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportPointDetailBO;
@@ -33,8 +41,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_REPORT_EXPORT_TYPE_INVALID;
+
 @Service
 public class ClubPointReportServiceImpl implements ClubPointReportService {
+
+    private static final String BIZ_TYPE_REPORT = "REPORT";
 
     @Resource
     private ClubPointTransactionMapper transactionMapper;
@@ -46,6 +59,8 @@ public class ClubPointReportServiceImpl implements ClubPointReportService {
     private ClubPointAnnualRankingRecordMapper annualRankingRecordMapper;
     @Resource
     private ClubPointBudgetRecordMapper budgetRecordMapper;
+    @Resource
+    private ClubAuditService auditService;
 
     @Override
     @Transactional(readOnly = true)
@@ -124,6 +139,39 @@ public class ClubPointReportServiceImpl implements ClubPointReportService {
         return new PageResult<>(pageResult.getList().stream()
                 .map(ClubPointReportServiceImpl::toBudgetBO)
                 .collect(Collectors.toList()), pageResult.getTotal());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ClubPointReportExportResultBO exportReport(ClubPointReportExportReqBO reqBO) {
+        ClubPointReportExportTypeEnum exportType = ClubPointReportExportTypeEnum.typeOf(reqBO.getReportType());
+        if (exportType == null) {
+            throw exception(CLUB_REPORT_EXPORT_TYPE_INVALID);
+        }
+        List<?> rows = getExportRows(exportType, reqBO);
+        createExportAudit(reqBO, exportType, rows.size());
+        return new ClubPointReportExportResultBO()
+                .setReportType(exportType.getType())
+                .setReportName(exportType.getReportName())
+                .setSheetName(exportType.getSheetName())
+                .setRows(rows);
+    }
+
+    private List<?> getExportRows(ClubPointReportExportTypeEnum exportType, ClubPointReportExportReqBO reqBO) {
+        switch (exportType) {
+            case POINT_DETAIL:
+                return getPointDetailPage(toPointDetailPageReqBO(reqBO)).getList();
+            case REDEMPTION:
+                return getRedemptionPage(toRedemptionPageReqBO(reqBO)).getList();
+            case LEDGER_SUMMARY:
+                return getLedgerSummaryPage(toLedgerSummaryPageReqBO(reqBO)).getList();
+            case CLUB_RANKING:
+                return getClubRankingPage(toClubRankingPageReqBO(reqBO)).getList();
+            case BUDGET:
+                return getBudgetPage(toBudgetPageReqBO(reqBO)).getList();
+            default:
+                throw exception(CLUB_REPORT_EXPORT_TYPE_INVALID);
+        }
     }
 
     private static ClubPointReportPointDetailBO toPointDetailBO(ClubPointTransactionDO transaction) {
@@ -226,6 +274,102 @@ public class ClubPointReportServiceImpl implements ClubPointReportService {
                 .setSourceId(budget.getSourceId())
                 .setDescription(budget.getDescription())
                 .setRemark(budget.getRemark());
+    }
+
+    private void createExportAudit(ClubPointReportExportReqBO reqBO, ClubPointReportExportTypeEnum exportType,
+                                   int rowCount) {
+        auditService.createAuditLog(new ClubAuditCreateReqBO()
+                .setActionType(ClubAuditActionTypeConstants.REPORT_EXPORT)
+                .setBizType(BIZ_TYPE_REPORT)
+                .setOperatorUserId(reqBO.getOperatorUserId())
+                .setOperatorNameSnapshot(reqBO.getOperatorNameSnapshot())
+                .setOperatorRoleSnapshot(reqBO.getOperatorRoleSnapshot())
+                .setOperationTime(reqBO.getOperationTime() == null ? LocalDateTime.now() : reqBO.getOperationTime())
+                .setClientIp(reqBO.getClientIp())
+                .setUserAgent(reqBO.getUserAgent())
+                .setReason(reqBO.getReason())
+                .setTargetSnapshotJson(buildExportSnapshot(reqBO, exportType, rowCount))
+                .setSuccess(true));
+    }
+
+    private static String buildExportSnapshot(ClubPointReportExportReqBO reqBO,
+                                              ClubPointReportExportTypeEnum exportType, int rowCount) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("reportType", exportType.getType());
+        snapshot.put("reportName", exportType.getReportName());
+        snapshot.put("rowCount", rowCount);
+        snapshot.put("userId", reqBO.getUserId());
+        snapshot.put("clubId", reqBO.getClubId());
+        snapshot.put("year", reqBO.getYear());
+        snapshot.put("direction", reqBO.getDirection());
+        snapshot.put("pointCategory", reqBO.getPointCategory());
+        snapshot.put("sourceType", reqBO.getSourceType());
+        snapshot.put("status", reqBO.getStatus());
+        snapshot.put("category", reqBO.getCategory());
+        snapshot.put("sourceId", reqBO.getSourceId());
+        snapshot.put("startTime", reqBO.getStartTime());
+        snapshot.put("endTime", reqBO.getEndTime());
+        return JsonUtils.toJsonString(snapshot);
+    }
+
+    private static ClubPointReportPointDetailPageReqBO toPointDetailPageReqBO(ClubPointReportExportReqBO reqBO) {
+        ClubPointReportPointDetailPageReqBO pageReqBO = new ClubPointReportPointDetailPageReqBO()
+                .setUserId(reqBO.getUserId())
+                .setClubId(reqBO.getClubId())
+                .setYear(reqBO.getYear())
+                .setDirection(reqBO.getDirection())
+                .setPointCategory(reqBO.getPointCategory())
+                .setSourceType(reqBO.getSourceType())
+                .setStartTime(reqBO.getStartTime())
+                .setEndTime(reqBO.getEndTime());
+        setExportPage(pageReqBO);
+        return pageReqBO;
+    }
+
+    private static ClubPointReportLedgerSummaryPageReqBO toLedgerSummaryPageReqBO(ClubPointReportExportReqBO reqBO) {
+        ClubPointReportLedgerSummaryPageReqBO pageReqBO = new ClubPointReportLedgerSummaryPageReqBO()
+                .setUserId(reqBO.getUserId())
+                .setClubId(reqBO.getClubId())
+                .setYear(reqBO.getYear())
+                .setStartTime(reqBO.getStartTime())
+                .setEndTime(reqBO.getEndTime());
+        setExportPage(pageReqBO);
+        return pageReqBO;
+    }
+
+    private static ClubPointReportRedemptionPageReqBO toRedemptionPageReqBO(ClubPointReportExportReqBO reqBO) {
+        ClubPointReportRedemptionPageReqBO pageReqBO = new ClubPointReportRedemptionPageReqBO()
+                .setBatchId(reqBO.getSourceId())
+                .setUserId(reqBO.getUserId())
+                .setStatus(reqBO.getStatus())
+                .setYear(reqBO.getYear())
+                .setStartTime(reqBO.getStartTime())
+                .setEndTime(reqBO.getEndTime());
+        setExportPage(pageReqBO);
+        return pageReqBO;
+    }
+
+    private static ClubPointReportClubRankingPageReqBO toClubRankingPageReqBO(ClubPointReportExportReqBO reqBO) {
+        ClubPointReportClubRankingPageReqBO pageReqBO = new ClubPointReportClubRankingPageReqBO()
+                .setYear(reqBO.getYear())
+                .setClubId(reqBO.getClubId());
+        setExportPage(pageReqBO);
+        return pageReqBO;
+    }
+
+    private static ClubPointReportBudgetPageReqBO toBudgetPageReqBO(ClubPointReportExportReqBO reqBO) {
+        ClubPointReportBudgetPageReqBO pageReqBO = new ClubPointReportBudgetPageReqBO()
+                .setYear(reqBO.getYear())
+                .setCategory(reqBO.getCategory())
+                .setSourceType(reqBO.getSourceType())
+                .setSourceId(reqBO.getSourceId());
+        setExportPage(pageReqBO);
+        return pageReqBO;
+    }
+
+    private static void setExportPage(PageParam pageParam) {
+        pageParam.setPageNo(1);
+        pageParam.setPageSize(PageParam.PAGE_SIZE_NONE);
     }
 
     private static LocalDateTime resolveStartTime(Integer year, LocalDateTime startTime) {

@@ -414,10 +414,12 @@ src/views/clubpoints/
 | 积分明细表 | 是 | 是 |
 | 积分兑换记录 | 是 | 是 |
 | 积分总台账 | 是 | 是 |
-| 俱乐部发放积分排名 | 是 | 建议支持 |
-| 预算和经费使用统计 | 是 | 建议支持 |
+| 俱乐部发放积分排名 | 是 | 是 |
+| 预算和经费使用统计 | 是 | 是 |
 
 报表页面查询权限使用 `clubpoints:report:query`，导出按钮权限使用 `clubpoints:report:export`。员工和负责人菜单不能出现导出按钮。导出动作必须写强审计，记录导出人、时间、类型和筛选条件。
+
+前端 `api/clubpoints/admin/operation.ts` 统一封装 `exportReportExcel(params)` 下载接口，`reportType` 固定为：`1=积分明细`、`2=兑换记录`、`3=总台账`、`4=俱乐部排名`、`5=预算统计`。
 
 ## 7. API 模块拆分
 

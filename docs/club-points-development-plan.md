@@ -1232,7 +1232,9 @@ Lock4j 可以减少并发冲突，但数据库条件更新才是最终事实。
 
 导出必须记录导出人、时间、类型、筛选条件。第一版不新增导出业务表，导出留痕写入 `club_points_audit_log`，必要时同时复用 `system_operate_log`。
 
-M11.3 已落地页面查询接口：`/clubpoints/report/point-detail-page`、`/clubpoints/report/ledger-summary-page`、`/clubpoints/report/redemption-page`、`/clubpoints/report/club-ranking-page`、`/clubpoints/report/budget-page`。查询权限为 `clubpoints:report:query`；导出权限仍为 `clubpoints:report:export`，导出和强审计在 M11.4 处理。
+M11.3 已落地页面查询接口：`/clubpoints/report/point-detail-page`、`/clubpoints/report/ledger-summary-page`、`/clubpoints/report/redemption-page`、`/clubpoints/report/club-ranking-page`、`/clubpoints/report/budget-page`。查询权限为 `clubpoints:report:query`。
+
+M11.4 已落地 `GET /clubpoints/report/export-excel`，导出权限为 `clubpoints:report:export`，复用芋道 `ExcelUtils` 直接写 HTTP 响应。导出前按白名单 `reportType` 选择五类报表，导出动作写入 `club_points_audit_log`，强审计动作类型为 `REPORT_EXPORT`，审计内容包含导出人、角色、IP、UA、报表类型、筛选条件和行数；强审计失败则导出失败，不新增导出业务主表。
 
 ### 16.2 任务监控
 

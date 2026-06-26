@@ -83,5 +83,6 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_BUDGET_NOT_EXISTS = new ErrorCode(1_300_000_071, "预算记录不存在");
     ErrorCode CLUB_BUDGET_INVALID = new ErrorCode(1_300_000_072, "预算记录参数无效");
     ErrorCode CLUB_BUDGET_SOURCE_INVALID = new ErrorCode(1_300_000_073, "预算记录来源无效");
+    ErrorCode CLUB_REPORT_EXPORT_TYPE_INVALID = new ErrorCode(1_300_000_074, "报表导出类型无效");
 
 }

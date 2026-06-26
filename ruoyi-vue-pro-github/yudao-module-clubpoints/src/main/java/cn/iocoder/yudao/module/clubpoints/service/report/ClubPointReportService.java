@@ -5,6 +5,8 @@ import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportBudge
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportBudgetPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportClubRankingBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportClubRankingPageReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportExportReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportExportResultBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportLedgerSummaryBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportLedgerSummaryPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.report.bo.ClubPointReportPointDetailBO;
@@ -23,5 +25,7 @@ public interface ClubPointReportService {
     PageResult<ClubPointReportClubRankingBO> getClubRankingPage(ClubPointReportClubRankingPageReqBO reqBO);
 
     PageResult<ClubPointReportBudgetBO> getBudgetPage(ClubPointReportBudgetPageReqBO reqBO);
+
+    ClubPointReportExportResultBO exportReport(ClubPointReportExportReqBO reqBO);
 
 }
