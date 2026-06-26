@@ -322,16 +322,25 @@ M11.11 证据：
 
 ## 任务 M11.12 管理员运营页面
 
-- [ ] 异议处理 `/clubpoints/admin/dispute`，处理结果回写并通知员工。
-- [ ] 年度清零 `/clubpoints/admin/annual-clearing`，展示只清未冻结可用积分的提示。
-- [ ] 年度排名和激励 `/clubpoints/admin/annual-ranking`，展示排名分页和激励建议。
-- [ ] 预算记录 `/clubpoints/admin/budget`，支持预算创建、修改，附件复用附件输入组件。
-- [ ] 管理员工作台 `/clubpoints/admin/dashboard`，聚合待审核活动、材料、兑换、待处理异议、异常任务、异常撤销记录。
+- [x] 异议处理 `/clubpoints/admin/dispute`，处理结果回写并通知员工。
+- [x] 年度清零 `/clubpoints/admin/annual-clearing`，展示只清未冻结可用积分的提示。
+- [x] 年度排名和激励 `/clubpoints/admin/annual-ranking`，展示排名分页和激励建议。
+- [x] 预算记录 `/clubpoints/admin/budget`，支持预算创建、修改，附件复用附件输入组件。
+- [x] 管理员工作台 `/clubpoints/admin/dashboard`，聚合待审核活动、材料、兑换、待处理异议、异常任务、异常撤销记录。
 
 验收：
 
-- [ ] 年度清零提示存在，仅清未冻结可用积分。
-- [ ] 工作台聚合数和对应列表一致。
+- [x] 年度清零提示存在，仅清未冻结可用积分。
+- [x] 工作台聚合数和对应列表一致。
+
+M11.12 证据：
+
+- RED：运行 `Test-Path` 检查 `views/clubpoints/admin/dispute/index.vue`、`annual-clearing/index.vue`、`annual-ranking/index.vue`、`budget/index.vue`、`dashboard/index.vue`，全部返回 `False`。
+- GREEN：新增 5 个管理员运营页面，并按后端 VO 修正 `api/clubpoints/admin/operation.ts` 异议处理、年度清零响应和预算请求字段。
+- 页面口径：异议页处理回复并可关联动作 / 流水；年度清零页明确提示只清未冻结可用积分，展示总数、成功、跳过、失败和清零记录；年度排名页支持生成排名和激励建议、展示排名分页；预算页支持创建、修改和停用，并复用附件输入组件；管理员工作台聚合待审核活动、材料、兑换和待处理异议并按待办跳转。
+- 接口验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointAnnualOperationControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointAnnualOperationControllerTest` 6 个测试，失败 0，错误 0。
+- 前端类型验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，二次过滤 `clubpoints` 路径命中 `0` 行，仍为前端工程存量 TypeScript 债。
+- 质量门禁：页面范围 `request.get|post|put|delete` 无命中；精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；年度清零提示扫描命中 `年度清零只清未冻结可用积分` 和 `冻结中的兑换申请`。
 
 ## 任务 M11.13 管理员报表、审计、任务页
 

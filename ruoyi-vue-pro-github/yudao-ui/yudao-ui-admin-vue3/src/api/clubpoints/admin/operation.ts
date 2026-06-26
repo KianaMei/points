@@ -8,15 +8,36 @@ import type {
 } from '@/api/clubpoints/shared/types'
 
 export interface AdminDisputeHandleReqVO extends ClubPointReasonReqVO {
-  handleType: number
-  adjustPoints?: number
+  replyContent: string
+  relatedActionType?: number
+  relatedTransactionId?: number
+  requestNo?: string
+  transactionNo?: string
+  userId?: number
+  userNameSnapshot?: string
+  deptIdSnapshot?: number
+  deptNameSnapshot?: string
+  adjustType?: number
+  direction?: number
+  points?: number
+  issuingClubId?: number
   ruleVersionId?: number
   ruleItemCode?: string
+  materialSummary?: string
+  attachmentSnapshotJson?: string
+  occurredAt?: string | Date
 }
 
 export interface AdminAnnualClearReqVO {
   year: number
   reason: string
+}
+
+export interface AdminAnnualClearRespVO {
+  totalCount?: number
+  successCount?: number
+  skipCount?: number
+  failedCount?: number
 }
 
 export interface AdminAnnualRankingGenerateReqVO {
@@ -26,10 +47,15 @@ export interface AdminAnnualRankingGenerateReqVO {
 
 export interface AdminBudgetSaveReqVO {
   id?: number
+  category: number
+  budgetAmountCent: number
+  actualAmountCent?: number
   occurDate: string | Date
-  amountCent: number
   sourceType?: number
   sourceId?: number
+  handlerUserId?: number
+  description?: string
+  remark?: string
   reason: string
   attachments?: AttachmentInputVO[]
 }
@@ -83,7 +109,7 @@ export const handleDispute = async (data: AdminDisputeHandleReqVO) => {
   return await request.post({ url: `${DISPUTE_PREFIX}/handle`, data })
 }
 
-export const clearAnnualPoints = async (data: AdminAnnualClearReqVO) => {
+export const clearAnnualPoints = async (data: AdminAnnualClearReqVO): Promise<AdminAnnualClearRespVO> => {
   return await request.post({ url: `${ANNUAL_PREFIX}/clear`, data })
 }
 

@@ -574,3 +574,9 @@
 - 2026-06-26：M11.11 接口验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointRedemptionControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；兑换 Controller 5 个测试，失败 0，错误 0。
 - 2026-06-26：M11.11 前端验证：3 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
 - 2026-06-26：M11.11 质量验证：页面范围 `request.get|post|put|delete` 无命中；精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；扫描只命中兑换审核页只读展示字段和审核按钮，没有强确认、导出、负责人任免或移除成员入口。
+- 2026-06-26：M11.12 RED：运行 `Test-Path` 检查管理员异议处理、年度清零、年度排名和激励、预算记录、管理员工作台 5 个页面文件，全部返回 `False`，确认 M11.12 页面尚未落地。
+- 2026-06-26：M11.12 GREEN：新增 `views/clubpoints/admin/dispute/index.vue`、`annual-clearing/index.vue`、`annual-ranking/index.vue`、`budget/index.vue`、`dashboard/index.vue`；按后端 VO 修正 `api/clubpoints/admin/operation.ts` 的异议处理、年度清零响应和预算字段。
+- 2026-06-26：M11.12 交互口径：异议页处理回复并可关联动作 / 流水；年度清零页明确提示只清未冻结可用积分，展示清零结果和记录；年度排名页支持生成排名和激励建议；预算页支持创建、修改、停用并复用附件输入组件；管理员工作台按后端待办聚合跳转对应列表。
+- 2026-06-26：M11.12 接口验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointAnnualOperationControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；年度运营 Controller 6 个测试，失败 0，错误 0。
+- 2026-06-26：M11.12 前端验证：5 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
+- 2026-06-26：M11.12 质量验证：页面范围 `request.get|post|put|delete` 无命中；精确元数据模式无命中；`tenant_id|TenantBaseDO` 和 Redis 模式无命中；年度清零提示扫描命中 `年度清零只清未冻结可用积分` 和 `冻结中的兑换申请`。
