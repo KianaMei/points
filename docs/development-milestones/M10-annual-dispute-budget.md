@@ -96,18 +96,33 @@
 
 ## 任务 M10.2 年度清零模型
 
-- [ ] 创建 `ClubPointAnnualClearingRecordDO`。
-- [ ] 创建对应 Mapper。
-- [ ] 定义年度清零状态。
-- [ ] 定义年度清零流水来源类型。
-- [ ] 定义 `ANNUAL_CLEARING:{year}:{userId}` 幂等键。
-- [ ] 明确每年 1 月 1 日北京时间执行。
-- [ ] 跨年冻结兑换拒绝时释放回账户，不追加过期清零。
+- [x] 创建 `ClubPointAnnualClearingRecordDO`。
+- [x] 创建对应 Mapper。
+- [x] 定义年度清零状态。
+- [x] 定义年度清零流水来源类型。
+- [x] 定义 `ANNUAL_CLEARING:{year}:{userId}` 幂等键。
+- [x] 明确每年 1 月 1 日北京时间执行。
+- [x] 跨年冻结兑换拒绝时释放回账户，不追加过期清零。
 
 验收：
 
-- [ ] 清零规则有明确时间口径。
-- [ ] 跨年冻结释放口径固定。
+- [x] 清零规则有明确时间口径。
+- [x] 跨年冻结释放口径固定。
+
+验证记录：
+
+- RED：新增 `ClubPointAnnualClearingModelTest`，运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAnnualClearingModelTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`，失败原因为年度清零 DO、Mapper 包和类缺失。
+- GREEN：新增 `ClubPointAnnualClearingRecordDO`、`ClubPointAnnualClearingRecordMapper`、`ClubPointAnnualClearingConstants`；同一命令返回 `BUILD SUCCESS`，`ClubPointAnnualClearingModelTest` 运行 `2` 个测试，失败 `0`，错误 `0`。
+- 组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointAnnualClearingModelTest,ClubPointLedgerEnumTest,ClubPointLedgerMapperTest,ClubPointFreezeServiceImplTest,ClubPointRedemptionCancelServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `22` 个测试，失败 `0`，错误 `0`。
+- 质量验证：年度清零新增文件范围 `tenant_id|TenantBaseDO` 无命中；精确元数据模式无命中；Redis 模式无命中；年度清零主代码无直接写流水或账户命中。
+
+实现边界：
+
+- 年度清零状态复用已有 `ClubPointAnnualClearingStatusEnum`：`SUCCESS(1)`、`FAILED(2)`、`SKIPPED(3)`。
+- 年度清零流水来源类型复用已有 `ClubPointTransactionSourceTypeEnum.ANNUAL_CLEARING(5)`，流水方向固定为扣减，积分分类固定为 `ClubPointCategoryEnum.ANNUAL_CLEARING(60)`。
+- 幂等键模型固定为 `ANNUAL_CLEARING:{year}:{userId}`；时间口径固定为 `Asia/Shanghai` 下每年 `1 月 1 日 00:00`。
+- 跨年冻结兑换拒绝或取消时继续释放回账户可用分，不追加过期清零流水；该口径由 M9.9 既有跨年释放测试和 M10.2 组合验证固定。
+- M10.2 不实现年度清零 Service、Job 或 API，分别留到 M10.3、M10.4 和 M10.8。
 
 ## 任务 M10.3 年度清零 Service
 
