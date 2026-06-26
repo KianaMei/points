@@ -631,3 +631,10 @@
 - 2026-06-27：M12.7 接口组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointMvpDemoHardeningTest,ClubPointClubQueryControllerTest,ClubPointActivityControllerTest,ClubPointSettlementAdminControllerTest,ClubPointRedemptionControllerTest,ClubPointAnnualOperationControllerTest,ClubPointReportControllerTest,ClubPointReportServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；8 个测试类合计运行 36 个测试，失败 0，错误 0。
 - 2026-06-27：M12.7 编译和前端过滤验证：`mvn -pl yudao-server -am -DskipTests "-Dflatten.skip=true" compile` 返回 `BUILD SUCCESS`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 过滤 `src/api/clubpoints`、`src/views/clubpoints` 和 `clubpoints` 无输出，未发现 clubpoints 路径新增类型错误。
 - 2026-06-27：M12.7 文档同步：`M12-hardening-acceptance.md` 勾选 M12.7 并补证据，`00-index.md` 将下一入口切换到 M12.8 文档收口，`club-points-development-plan.md` 和 `club-points-api-design.md` 同步 M12.7 进度与 `force=true` 手动结算语义。
+- 2026-06-27：M12.8 RED：文档和前端 API 扫描发现 `/clubpoints/activity/delete`、`/clubpoints/contribution/delete`、`/clubpoints/leader/activity/delete`、`/clubpoints/leader/contribution/delete`、`deleteAdminActivity`、`deleteContribution` 仍存在；这些入口没有后端 Controller 支撑。
+- 2026-06-27：M12.8 RED：硬编码分值扫描发现前端活动 API 封装仍有 `basePoints: data.basePoints ?? 8` 和 `fullExtraPoints: data.fullExtraPoints ?? 0`，不满足制度分值不写死的收口要求。
+- 2026-06-27：M12.8 GREEN：移除管理员活动和管理员材料的前端死删除 API wrapper；管理员和负责人活动表单增加显式 `basePoints` / `fullExtraPoints` 输入和基础积分必填校验，前端 API 不再默认塞制度分值。
+- 2026-06-27：M12.8 GREEN：同步 API、数据库、前端页面、权限规格、PRD、架构、流程和开发计划文档；当前 MVP 仅开放俱乐部物理删除，活动物理删除、材料物理删除和负责人活动撤回不进入 MVP。
+- 2026-06-27：M12.8 文档验证：正式 SQL 与数据库设计均为 34 张 `club_points_*` 表，表名逐项一致；过期表述扫描没有 `待数据库`、`TODO`、`TBD`、`暂缓确认` 或 `索引定位` 命中，剩余 `待确认` / `尚未结束` 均为合法业务状态或业务描述。
+- 2026-06-27：M12.8 代码和接口验证：死接口扫描确认前端 API、前端页面、API 文档和前端页面设计中不再出现不存在的活动 / 材料删除接口；硬编码分值扫描确认 clubpoints 前端 API 和页面中不再出现 `basePoints ?? 8`、`fullExtraPoints ?? 0` 或 `?? 8`。
+- 2026-06-27：M12.8 里程碑同步：`M12-hardening-acceptance.md` 勾选 M12.8 和 M12 放行标准，`00-index.md` 将 M12 标为 `[x]` 并记录 M0-M12 全部里程碑已完成。

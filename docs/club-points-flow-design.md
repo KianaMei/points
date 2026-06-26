@@ -232,12 +232,12 @@ flowchart TD
     已取消状态 --> audit
 ```
 
-### 活动物理删除
+### 活动物理删除（当前 MVP 不开放，后续预留）
 
 ```mermaid
 flowchart TD
-    accTitle: 活动物理删除流程
-    accDescr: 展示活动允许物理删除，但必须先用快照保证历史活动、账本、报表和审计仍可读。
+    accTitle: 活动物理删除后续预留流程
+    accDescr: 当前 MVP 不开放活动物理删除。后续如恢复，必须先用快照保证历史活动、账本、报表和审计仍可读。
 
     delete_request["负责人或管理员发起删除"]
     permission_check{"有权限?"}
@@ -439,12 +439,12 @@ flowchart TD
     validate --> create_material --> create_ledger --> notify --> audit
 ```
 
-### 非签到材料物理删除
+### 非签到材料物理删除（当前 MVP 不开放，后续预留）
 
 ```mermaid
 flowchart TD
-    accTitle: 非签到材料删除流程
-    accDescr: 展示非签到类积分材料可以物理删除，但必须先保存快照以保证账本、报表和审计可读。
+    accTitle: 非签到材料删除后续预留流程
+    accDescr: 当前 MVP 不开放非签到材料物理删除。后续如恢复，必须先保存快照以保证账本、报表和审计可读。
 
     delete_request["负责人或管理员发起删除"]
     permission_check{"有权限?"}

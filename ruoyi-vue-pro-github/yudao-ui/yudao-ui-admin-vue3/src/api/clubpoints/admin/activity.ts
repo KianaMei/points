@@ -52,9 +52,7 @@ const withActivityDefaults = (data: AdminActivitySaveReqVO): AdminActivitySaveRe
   checkinEndTime: data.checkinEndTime ?? data.endTime,
   checkoutMode: data.checkoutMode ?? 1,
   checkoutStartTime: data.checkoutStartTime ?? data.startTime,
-  checkoutEndTime: data.checkoutEndTime ?? data.endTime,
-  basePoints: data.basePoints ?? 8,
-  fullExtraPoints: data.fullExtraPoints ?? 0
+  checkoutEndTime: data.checkoutEndTime ?? data.endTime
 })
 
 export const getAdminActivityPage = async (params: ClubPointPageParam) => {
@@ -79,10 +77,6 @@ export const reviewAdminActivity = async (data: ReviewReqVO) => {
 
 export const cancelAdminActivity = async (data: ClubPointReasonReqVO) => {
   return await request.post({ url: `${ACTIVITY_PREFIX}/cancel`, data })
-}
-
-export const deleteAdminActivity = async (id: number) => {
-  return await request.delete({ url: `${ACTIVITY_PREFIX}/delete?id=${id}` })
 }
 
 export const supplementAdminAttendance = async (data: AdminAttendanceSupplementReqVO) => {

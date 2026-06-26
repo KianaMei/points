@@ -245,8 +245,8 @@ src/views/clubpoints/
 | --- | --- |
 | 路由 | `/clubpoints/leader/activity` |
 | 组件 | `views/clubpoints/leader/activity/index.vue` |
-| API | `GET /clubpoints/leader/activity/page`、`GET /clubpoints/leader/activity/get`、`POST /clubpoints/leader/activity/create`、`PUT /clubpoints/leader/activity/update`、`POST /clubpoints/leader/activity/submit`、`POST /clubpoints/leader/activity/withdraw`、`POST /clubpoints/leader/activity/cancel`、`DELETE /clubpoints/leader/activity/delete` |
-| 权限 | 查询 `clubpoints:activity:query`；创建 `clubpoints:activity:create`；修改 `clubpoints:activity:update`；提交/撤回 `clubpoints:activity:submit`；取消 `clubpoints:activity:cancel`；删除 `clubpoints:activity:delete` |
+| API | `GET /clubpoints/leader/activity/page`、`GET /clubpoints/leader/activity/get`、`POST /clubpoints/leader/activity/create`、`PUT /clubpoints/leader/activity/update`、`POST /clubpoints/leader/activity/submit`、`POST /clubpoints/leader/activity/cancel` |
+| 权限 | 查询 `clubpoints:activity:query`；创建 `clubpoints:activity:create`；修改 `clubpoints:activity:update`；提交 `clubpoints:activity:submit`；取消 `clubpoints:activity:cancel` |
 
 表单字段：
 
@@ -261,7 +261,7 @@ src/views/clubpoints/
 | 规则版本 | 必选当前可用规则版本 |
 | 附件 | 可选 |
 
-取消活动、物理删除活动只走普通二次确认，不走强确认；后端仍写审计和快照。
+取消活动只走普通二次确认，不走强确认；当前 MVP 不提供负责人撤回活动或物理删除活动入口。
 
 ### 5.4 报名、签到和特殊缺席
 
@@ -289,8 +289,8 @@ src/views/clubpoints/
 | --- | --- |
 | 路由 | `/clubpoints/leader/contribution` |
 | 组件 | `views/clubpoints/leader/contribution/index.vue` |
-| API | `GET /clubpoints/leader/contribution/page`、`POST /clubpoints/leader/contribution/create`、`PUT /clubpoints/leader/contribution/update`、`POST /clubpoints/leader/contribution/submit`、`POST /clubpoints/leader/contribution/withdraw`、`DELETE /clubpoints/leader/contribution/delete` |
-| 权限 | 查询 `clubpoints:contribution:query`；提交 `clubpoints:contribution:submit`；撤回 `clubpoints:contribution:withdraw`；删除 `clubpoints:contribution:delete` |
+| API | `GET /clubpoints/leader/contribution/page`、`POST /clubpoints/leader/contribution/create`、`PUT /clubpoints/leader/contribution/update`、`POST /clubpoints/leader/contribution/submit`、`POST /clubpoints/leader/contribution/withdraw` |
+| 权限 | 查询 `clubpoints:contribution:query`；提交 `clubpoints:contribution:submit`；撤回 `clubpoints:contribution:withdraw` |
 
 材料表单：
 
@@ -324,7 +324,7 @@ src/views/clubpoints/
 | --- | --- |
 | 路由 | `/clubpoints/admin/club` |
 | 组件 | `views/clubpoints/admin/club/index.vue` |
-| API | `GET /clubpoints/club/page`、`GET /clubpoints/club/get`、`POST /clubpoints/club/create`、`PUT /clubpoints/club/update`、`POST /clubpoints/club/disable`、`DELETE /clubpoints/club/delete`、`POST /clubpoints/club-leader/assign`、`POST /clubpoints/club-member/add`、`POST /clubpoints/club-member/remove` |
+| API | `GET /clubpoints/club/page`、`GET /clubpoints/club/get`、`POST /clubpoints/club/create`、`PUT /clubpoints/club/update`、`POST /clubpoints/club/disable`、`DELETE /clubpoints/club/delete`、`POST /clubpoints/club-leader/assign`、`POST /clubpoints/club-leader/remove`、`POST /clubpoints/club-member/add`、`POST /clubpoints/club-member/remove` |
 | 权限 | `clubpoints:club:query`、`clubpoints:club:create`、`clubpoints:club:update`、`clubpoints:club:disable`、`clubpoints:club:delete`、`clubpoints:club-leader:update`、`clubpoints:club-member:add`、`clubpoints:club-member:remove` |
 
 强确认只出现在物理删除俱乐部：
@@ -345,8 +345,8 @@ src/views/clubpoints/
 | --- | --- |
 | 路由 | `/clubpoints/admin/activity` |
 | 组件 | `views/clubpoints/admin/activity/index.vue` |
-| API | `GET /clubpoints/activity/page`、`POST /clubpoints/activity/create`、`PUT /clubpoints/activity/update`、`POST /clubpoints/activity/publish`、`POST /clubpoints/activity/review`、`POST /clubpoints/activity/cancel`、`DELETE /clubpoints/activity/delete` |
-| 权限 | `clubpoints:activity:query`、`clubpoints:activity:create`、`clubpoints:activity:update`、`clubpoints:activity:publish`、`clubpoints:activity:review`、`clubpoints:activity:cancel`、`clubpoints:activity:delete` |
+| API | `GET /clubpoints/activity/page`、`POST /clubpoints/activity/create`、`PUT /clubpoints/activity/update`、`POST /clubpoints/activity/publish`、`POST /clubpoints/activity/review`、`POST /clubpoints/activity/cancel` |
+| 权限 | `clubpoints:activity:query`、`clubpoints:activity:create`、`clubpoints:activity:update`、`clubpoints:activity:publish`、`clubpoints:activity:review`、`clubpoints:activity:cancel` |
 
 管理员可以直接发布活动，也可以审核负责人提交的活动。审核弹窗只能通过或驳回，驳回必须填写原因。
 
@@ -375,7 +375,7 @@ src/views/clubpoints/
 
 | 页面 | 路由 | API | 权限 |
 | --- | --- | --- | --- |
-| 材料审核 | `/clubpoints/admin/contribution-review` | `GET /clubpoints/contribution/review-page`、`GET /clubpoints/contribution/get`、`POST /clubpoints/contribution/review`、`DELETE /clubpoints/contribution/delete` | `clubpoints:contribution:review`、`clubpoints:contribution:delete` |
+| 材料审核 | `/clubpoints/admin/contribution-review` | `GET /clubpoints/contribution/review-page`、`GET /clubpoints/contribution/get`、`POST /clubpoints/contribution/review` | `clubpoints:contribution:review` |
 | 管理员代录 | `/clubpoints/admin/contribution-direct` | `POST /clubpoints/contribution/direct-create` | `clubpoints:contribution:direct-create` |
 
 审核通过后不能改材料内容。管理员代录直接生效，必须填写 `requestNo`、员工、积分、规则版本、原因、附件。
@@ -468,7 +468,6 @@ src/views/clubpoints/
 | 修改活动 | 编辑 | `clubpoints:activity:update` |
 | 提交活动审核 | 提交审核 | `clubpoints:activity:submit` |
 | 取消活动 | 取消活动 | `clubpoints:activity:cancel` |
-| 删除活动 | 删除 | `clubpoints:activity:delete` |
 | 修正签到签退 | 修正 | `clubpoints:attendance:correct` |
 | 标记特殊缺席 | 特殊缺席 | `clubpoints:registration:special-absence` |
 | 提交材料 | 提交材料 | `clubpoints:contribution:submit` |

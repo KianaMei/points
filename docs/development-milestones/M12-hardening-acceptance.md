@@ -239,17 +239,28 @@
 
 ## 任务 M12.8 文档收口
 
-- [ ] 同步 API 文档实际字段。
-- [ ] 同步数据库设计和最终 SQL。
-- [ ] 同步前端页面设计和实际页面。
-- [ ] 同步开发计划里已完成状态。
-- [ ] 记录未完成项和不进入 MVP 的项。
-- [ ] 记录已知风险和后续阶段。
+- [x] 同步 API 文档实际字段。
+- [x] 同步数据库设计和最终 SQL。
+- [x] 同步前端页面设计和实际页面。
+- [x] 同步开发计划里已完成状态。
+- [x] 记录未完成项和不进入 MVP 的项。
+- [x] 记录已知风险和后续阶段。
 
 验收：
 
-- [ ] 文档不再有“待数据库设计解决”这类过期表述。
-- [ ] 文档不包含无意义索引定位套话。
+- [x] 文档不再有“待数据库设计解决”这类过期表述。
+- [x] 文档不包含无意义索引定位套话。
+
+证据：
+
+- RED：文档和前端 API 扫描发现 `/clubpoints/activity/delete`、`/clubpoints/contribution/delete`、`/clubpoints/leader/activity/delete`、`/clubpoints/leader/contribution/delete`、`deleteAdminActivity`、`deleteContribution` 仍存在；这些入口没有后端 Controller 支撑，属于 M12.6 后遗留死封装和死文档。
+- RED：分值硬编码扫描发现前端活动 API 封装存在 `basePoints: data.basePoints ?? 8` 和 `fullExtraPoints: data.fullExtraPoints ?? 0`，不满足“制度分值不写死在业务代码里”的收口要求。
+- GREEN：移除管理员活动和管理员材料的前端死删除 API wrapper；管理员和负责人活动表单补显式 `basePoints` / `fullExtraPoints` 输入和基础积分必填校验，前端 API 不再默认塞制度分值。
+- GREEN：同步 `club-points-api-design.md`、`club-points-frontend-page-design.md`、`club-points-functions-and-permissions.md`、`club-points-prd.md`、`club-points-architecture-design.md`、`club-points-flow-design.md`、`club-points-database-design.md` 和 `club-points-development-plan.md`；当前 MVP 仅开放俱乐部物理删除，活动物理删除、材料物理删除和负责人活动撤回不进入 MVP。
+- Verify：正式 SQL 与数据库设计表清单均为 34 张 `club_points_*` 表，表名逐项一致。
+- Verify：过期表述扫描 `待数据库|待.*解决|TODO|TBD|待补|待确认|后续补|索引定位|暂缓确认|暂无|暂未|尚未` 在目标文档中无业务过期命中，仅命中合法业务状态“待确认”和“尚未结束”。
+- Verify：死接口扫描确认前端 API、前端页面、API 文档和前端页面设计中不再出现上述不存在的活动 / 材料删除接口。
+- Verify：硬编码分值扫描确认 clubpoints 前端 API 和页面中不再出现 `basePoints ?? 8`、`fullExtraPoints ?? 0` 或 `?? 8`。
 
 ## M12 放行标准
 
@@ -259,7 +270,7 @@
 - [x] 年度跨年测试通过。
 - [x] 强审计测试通过。
 - [x] 前端三类角色主路径通过。
-- [ ] 文档与代码一致。
+- [x] 文档与代码一致。
 
 ## M12 不通过时禁止
 

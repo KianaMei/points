@@ -84,7 +84,3 @@ export const violationDeduct = async (data: AdminContributionViolationDeductReqV
 export const fraudHandle = async (data: AdminContributionFraudHandleReqVO) => {
   return await request.post({ url: `${PREFIX}/fraud-handle`, data })
 }
-
-export const deleteContribution = async (id: number) => {
-  return await request.delete({ url: `${PREFIX}/delete?id=${id}` })
-}

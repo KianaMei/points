@@ -47,9 +47,7 @@ const withActivityDefaults = (data: LeaderActivitySaveReqVO): LeaderActivitySave
   checkinEndTime: data.checkinEndTime ?? data.endTime,
   checkoutMode: data.checkoutMode ?? 1,
   checkoutStartTime: data.checkoutStartTime ?? data.startTime,
-  checkoutEndTime: data.checkoutEndTime ?? data.endTime,
-  basePoints: data.basePoints ?? 8,
-  fullExtraPoints: data.fullExtraPoints ?? 0
+  checkoutEndTime: data.checkoutEndTime ?? data.endTime
 })
 
 export const getLeaderActivityPage = async (

@@ -96,6 +96,12 @@
       <el-form-item label="规则版本" prop="ruleVersionId">
         <el-input-number v-model="formData.ruleVersionId" :min="1" class="!w-240px" controls-position="right" />
       </el-form-item>
+      <el-form-item label="基础积分" prop="basePoints">
+        <el-input-number v-model="formData.basePoints" :min="0" class="!w-240px" controls-position="right" />
+      </el-form-item>
+      <el-form-item label="全程额外分">
+        <el-input-number v-model="formData.fullExtraPoints" :min="0" class="!w-240px" controls-position="right" />
+      </el-form-item>
       <el-form-item label="原因">
         <el-input v-model="formData.reason" :rows="2" type="textarea" />
       </el-form-item>
@@ -146,6 +152,8 @@ const formData = reactive<ActivityApi.LeaderActivitySaveReqVO>({
   description: '',
   location: '',
   ruleVersionId: undefined as unknown as number,
+  basePoints: undefined as unknown as number,
+  fullExtraPoints: undefined,
   reason: '',
   attachments: []
 })
@@ -153,7 +161,8 @@ const formRules = {
   clubId: [{ required: true, message: '俱乐部不能为空', trigger: 'change' }],
   title: [{ required: true, message: '标题不能为空', trigger: 'blur' }],
   description: [{ required: true, message: '说明不能为空', trigger: 'blur' }],
-  ruleVersionId: [{ required: true, message: '规则版本不能为空', trigger: 'blur' }]
+  ruleVersionId: [{ required: true, message: '规则版本不能为空', trigger: 'blur' }],
+  basePoints: [{ required: true, message: '基础积分不能为空', trigger: 'blur' }]
 }
 
 const loadClubOptions = async () => {
@@ -214,6 +223,8 @@ const openForm = async (type: 'create' | 'update', row?: ActivityApi.LeaderActiv
     description: detail?.description || '',
     location: detail?.location || '',
     ruleVersionId: detail?.ruleVersionId,
+    basePoints: detail?.basePoints,
+    fullExtraPoints: detail?.fullExtraPoints,
     reason: '',
     attachments: detail?.attachments || []
   })

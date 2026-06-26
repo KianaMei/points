@@ -50,7 +50,7 @@
 | `[x]` | M9 | `M9-redemption.md` | 兑换资格、冻结、库存、审核闭环可用 |
 | `[x]` | M10 | `M10-annual-dispute-budget.md` | 异议、年度清零、排名、激励、预算闭环可用 |
 | `[x]` | M11 | `M11-report-job-frontend.md` | 报表、任务监控、通知、前端页面收口 |
-| `[~]` | M12 | `M12-hardening-acceptance.md` | 并发、权限、回归、演示验收完成 |
+| `[x]` | M12 | `M12-hardening-acceptance.md` | 并发、权限、回归、演示验收完成 |
 
 ## 依赖链
 
@@ -199,4 +199,7 @@ M0 空模块
 - M12.7 已补齐管理员俱乐部写接口供演示数据可重复准备，并固定 `force=true` 管理员手动结算语义：已发布活动可先收口到已结束，再走原 Job、结算 Service、账本和幂等链路。
 - M12.7 已通过 `mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointMvpDemoHardeningTest,ClubPointClubQueryControllerTest,ClubPointActivityControllerTest,ClubPointSettlementAdminControllerTest,ClubPointRedemptionControllerTest,ClubPointAnnualOperationControllerTest,ClubPointReportControllerTest,ClubPointReportServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`；8 个测试类合计运行 36 个测试，失败 0，错误 0。
 - M12.7 已通过 `mvn -pl yudao-server -am -DskipTests "-Dflatten.skip=true" compile`；clubpoints 前端路径类型过滤无输出。
-- M12 当前进行中；下一步入口是 M12.8 文档收口。
+- M12.8 已完成文档收口，同步 API、数据库、前端页面、权限规格、PRD、架构、流程和开发计划；当前 MVP 明确仅开放俱乐部物理删除，活动物理删除、材料物理删除和负责人活动撤回不进入 MVP。
+- M12.8 已移除前端活动 / 材料死删除 API wrapper，并把活动基础积分和全程额外分改为页面显式输入，不再由前端 API 默认硬编码制度分值。
+- M12.8 已通过文档过期表述扫描、死接口扫描、硬编码分值扫描、数据库设计 / 正式 SQL 34 张表一致性验证、clubpoints 前端路径类型过滤和 M12 关键回归组合测试。
+- M12 已放行；M0-M12 全部里程碑均已完成并有验证证据。
