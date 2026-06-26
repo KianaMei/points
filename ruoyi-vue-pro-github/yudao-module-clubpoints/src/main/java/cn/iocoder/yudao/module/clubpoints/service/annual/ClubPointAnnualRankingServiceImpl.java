@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.clubpoints.service.annual;
 
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.annual.ClubPointAnnualRankingRecordDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointTransactionDO;
@@ -75,6 +77,14 @@ public class ClubPointAnnualRankingServiceImpl implements ClubPointAnnualRanking
         for (ClubPointAnnualRankingRecordDO record : records) {
             rankingRecordMapper.insert(record);
         }
+    }
+
+    @Override
+    public PageResult<ClubPointAnnualRankingRecordDO> getRankingPage(PageParam pageParam, Integer year) {
+        if (pageParam == null || year == null) {
+            throw new IllegalArgumentException("year and pageParam are required");
+        }
+        return rankingRecordMapper.selectPageByYear(pageParam, year);
     }
 
     private List<ClubPointTransactionDO> filterAnnualPositiveTransactions(List<ClubPointTransactionDO> transactions,

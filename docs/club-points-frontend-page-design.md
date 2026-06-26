@@ -393,9 +393,9 @@ src/views/clubpoints/
 | 页面 | 路由 | API | 权限 |
 | --- | --- | --- | --- |
 | 异议处理 | `/clubpoints/admin/dispute` | `GET /clubpoints/dispute/page`、`POST /clubpoints/dispute/handle` | `clubpoints:dispute:handle` |
-| 年度清零 | `/clubpoints/admin/annual-clearing` | `POST /clubpoints/annual/clear` | `clubpoints:annual:clear` |
-| 年度排名和激励 | `/clubpoints/admin/annual-ranking` | `GET /clubpoints/annual/ranking-page`、`POST /clubpoints/annual/incentive-suggest` | `clubpoints:annual:query`、`clubpoints:annual:manage` |
-| 预算记录 | `/clubpoints/admin/budget` | `GET /clubpoints/budget/page`、`POST /clubpoints/budget/create`、`PUT /clubpoints/budget/update` | `clubpoints:budget:manage` |
+| 年度清零 | `/clubpoints/admin/annual-clearing` | `POST /clubpoints/annual/clear`、`GET /clubpoints/annual/clearing-record-page` | `clubpoints:annual:clear`、`clubpoints:annual:query` |
+| 年度排名和激励 | `/clubpoints/admin/annual-ranking` | `POST /clubpoints/annual/ranking-generate`、`GET /clubpoints/annual/ranking-page`、`POST /clubpoints/annual/incentive-suggest`、`POST /clubpoints/annual/incentive-confirm`、`POST /clubpoints/annual/incentive-cancel` | `clubpoints:annual:query`、`clubpoints:annual:manage` |
+| 预算记录 | `/clubpoints/admin/budget` | `GET /clubpoints/budget/page`、`POST /clubpoints/budget/create`、`PUT /clubpoints/budget/update`、`POST /clubpoints/budget/disable` | `clubpoints:budget:manage` |
 
 年度清零页面必须提示：只清未冻结可用积分；冻结中的兑换申请后续审核拒绝时释放回账户，不追加过期清零。
 

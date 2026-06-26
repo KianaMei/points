@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.clubpoints.service.dispute;
 
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.dispute.ClubPointDisputeDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointTransactionDO;
@@ -74,6 +76,38 @@ public class ClubPointDisputeServiceImpl implements ClubPointDisputeService {
         disputeMapper.insert(dispute);
         bindAttachments(dispute.getId(), reqBO.getUserId(), reqBO.getAttachments());
         return dispute.getId();
+    }
+
+    @Override
+    public PageResult<ClubPointDisputeDO> getMyDisputePage(Long userId, PageParam pageParam, Integer status) {
+        if (userId == null || pageParam == null) {
+            throw exception(CLUB_DISPUTE_INVALID);
+        }
+        return disputeMapper.selectMyPage(pageParam, userId, status);
+    }
+
+    @Override
+    public ClubPointDisputeDO getMyDispute(Long userId, Long id) {
+        if (userId == null || id == null) {
+            throw exception(CLUB_DISPUTE_INVALID);
+        }
+        ClubPointDisputeDO dispute = disputeMapper.selectById(id);
+        if (dispute == null) {
+            throw exception(CLUB_DISPUTE_NOT_EXISTS);
+        }
+        clubScopeService.validateSelf(userId, dispute.getUserId());
+        return dispute;
+    }
+
+    @Override
+    public PageResult<ClubPointDisputeDO> getAdminDisputePage(PageParam pageParam, Long userId, Integer status,
+                                                              Integer targetType, Long targetId,
+                                                              Boolean operatorGlobalScope) {
+        if (pageParam == null) {
+            throw exception(CLUB_DISPUTE_INVALID);
+        }
+        clubScopeService.validateGlobal(Boolean.TRUE.equals(operatorGlobalScope));
+        return disputeMapper.selectAdminPage(pageParam, userId, status, targetType, targetId);
     }
 
     @Override

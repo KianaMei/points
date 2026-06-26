@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.clubpoints.service.annual;
 
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.annual.ClubPointAnnualRankingRecordDO;
 import cn.iocoder.yudao.module.clubpoints.service.annual.bo.ClubPointAnnualRankingGenerateReqBO;
 
 /**
@@ -8,5 +11,7 @@ import cn.iocoder.yudao.module.clubpoints.service.annual.bo.ClubPointAnnualRanki
 public interface ClubPointAnnualRankingService {
 
     void generateRanking(ClubPointAnnualRankingGenerateReqBO reqBO);
+
+    PageResult<ClubPointAnnualRankingRecordDO> getRankingPage(PageParam pageParam, Integer year);
 
 }

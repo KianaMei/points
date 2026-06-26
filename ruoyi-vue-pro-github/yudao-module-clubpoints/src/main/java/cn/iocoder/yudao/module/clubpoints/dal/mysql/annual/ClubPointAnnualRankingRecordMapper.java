@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.clubpoints.dal.mysql.annual;
 
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.annual.ClubPointAnnualRankingRecordDO;
@@ -23,6 +25,13 @@ public interface ClubPointAnnualRankingRecordMapper extends BaseMapperX<ClubPoin
         return selectOne(new LambdaQueryWrapperX<ClubPointAnnualRankingRecordDO>()
                 .eq(ClubPointAnnualRankingRecordDO::getYear, year)
                 .eq(ClubPointAnnualRankingRecordDO::getClubCodeSnapshot, clubCode));
+    }
+
+    default PageResult<ClubPointAnnualRankingRecordDO> selectPageByYear(PageParam pageParam, Integer year) {
+        return selectPage(pageParam, new LambdaQueryWrapperX<ClubPointAnnualRankingRecordDO>()
+                .eq(ClubPointAnnualRankingRecordDO::getYear, year)
+                .orderByAsc(ClubPointAnnualRankingRecordDO::getRankNo)
+                .orderByAsc(ClubPointAnnualRankingRecordDO::getId));
     }
 
     @Delete("DELETE FROM club_points_annual_ranking_record WHERE `year` = #{year}")

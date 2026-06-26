@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.clubpoints.service.annual;
 
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.annual.ClubPointAnnualClearingRecordDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.annual.ClubPointAnnualClearingRecordMapper;
@@ -92,6 +94,15 @@ public class ClubPointAnnualClearingServiceImpl implements ClubPointAnnualCleari
             countResult(result, clearingRecordMapper.selectById(recordId));
         }
         return result;
+    }
+
+    @Override
+    public PageResult<ClubPointAnnualClearingRecordDO> getClearingRecordPage(PageParam pageParam, Integer year,
+                                                                             Long userId, Integer status) {
+        if (pageParam == null) {
+            throw new IllegalArgumentException("pageParam is required");
+        }
+        return clearingRecordMapper.selectPageByQuery(pageParam, year, userId, status);
     }
 
     private ClubPointAnnualClearingRecordDO insertRecordOrReturnDuplicated(ClubPointAnnualClearingRecordDO record) {

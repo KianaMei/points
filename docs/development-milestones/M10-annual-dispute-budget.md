@@ -282,21 +282,37 @@
 
 ## 任务 M10.8 API
 
-- [ ] 员工异议提交接口。
-- [ ] 员工异议列表接口。
-- [ ] 管理员异议处理接口。
-- [ ] 管理员年度清零接口。
-- [ ] 管理员年度清零记录接口。
-- [ ] 管理员排名生成接口。
-- [ ] 管理员排名查询接口。
-- [ ] 管理员激励确认接口。
-- [ ] 管理员预算管理接口。
+- [x] 员工异议提交接口。
+- [x] 员工异议列表接口。
+- [x] 管理员异议处理接口。
+- [x] 管理员年度清零接口。
+- [x] 管理员年度清零记录接口。
+- [x] 管理员排名生成接口。
+- [x] 管理员排名查询接口。
+- [x] 管理员激励确认接口。
+- [x] 管理员预算管理接口。
 
 验收：
 
-- [ ] API 路径和 `club-points-api-design.md` 一致。
-- [ ] 员工只能查本人异议。
-- [ ] 负责人不能执行年度清零。
+- [x] API 路径和 `club-points-api-design.md` 一致。
+- [x] 员工只能查本人异议。
+- [x] 负责人不能执行年度清零。
+
+验证记录：
+
+- RED：新增 `ClubPointAnnualOperationControllerTest`，运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAnnualOperationControllerTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`，失败原因为 M10.8 的员工异议、管理员异议、年度运营和预算 Controller / VO 包不存在。
+- GREEN：新增 `ClubPointDisputeAppController`、`ClubPointDisputeAdminController`、`ClubPointAnnualAdminController`、`ClubPointBudgetAdminController` 及对应 VO；补异议本人 / 管理员分页查询、年度清零记录分页和年度排名分页查询能力；同一命令返回 `BUILD SUCCESS`，`ClubPointAnnualOperationControllerTest` 运行 `6` 个测试，失败 `0`，错误 `0`。
+- 组合修复：M10.8 初次组合验证失败在旧年度清零 / 排名 / Job 测试上下文缺少 `ClubScopeService` Bean；根因是查询分页方法把后台查询权限范围校验下沉到年度核心 Service。修复为年度清零记录和年度排名分页 Service 只做查询，管理员动作权限继续由 Controller 的 `@PreAuthorize` 承担。
+- 组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointAnnualOperationControllerTest,ClubPointDisputeServiceImplTest,ClubPointAnnualClearingJobTest,ClubPointAnnualClearingServiceImplTest,ClubPointAnnualRankingServiceImplTest,ClubPointIncentiveServiceImplTest,ClubPointBudgetServiceImplTest,ClubAuditServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `36` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 LF/CRLF 警告；M10.8 源码和测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；M10.8 源码和测试范围 Redis 模式无命中；新 Controller 范围无直接写流水 / 账户表命中；本次 Service diff 无新增直接写流水 / 账户表命中。
+
+实现边界：
+
+- 员工端异议接口固定为 `/clubpoints/app/dispute/create`、`/my-page`、`/get`；当前登录人从安全上下文读取，不允许前端传 `userId`。
+- 管理员异议、年度、预算接口均使用 `@PreAuthorize`；年度清零只在 `/clubpoints/annual/clear` 使用 `clubpoints:annual:clear`，清零记录和排名查询使用 `clubpoints:annual:query`，排名生成、激励建议、激励确认 / 取消使用 `clubpoints:annual:manage`。
+- 管理员写接口统一由 Controller 注入 `operatorGlobalScope=true`、登录用户、昵称、角色快照、IP 和 UA；请求 VO 不暴露操作人字段。
+- 预算接口暴露分页、创建、修改和停用；停用仍走 M10.7 的逻辑删除 Service，不新增预算状态字段。
+- 年度清零记录和年度排名分页是管理员后台查询能力，Controller 已有动作权限；年度清零 / 年度排名核心 Service 不新增 `ClubScopeService` 依赖，避免让清零、排名、Job 等核心测试上下文被查询权限横切能力污染。
 
 ## 任务 M10.9 测试
 

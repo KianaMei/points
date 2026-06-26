@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.clubpoints.dal.mysql.annual;
 
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.annual.ClubPointAnnualClearingRecordDO;
@@ -31,6 +33,16 @@ public interface ClubPointAnnualClearingRecordMapper extends BaseMapperX<ClubPoi
         return selectList(new LambdaQueryWrapperX<ClubPointAnnualClearingRecordDO>()
                 .eq(ClubPointAnnualClearingRecordDO::getYear, year)
                 .eq(ClubPointAnnualClearingRecordDO::getStatus, status));
+    }
+
+    default PageResult<ClubPointAnnualClearingRecordDO> selectPageByQuery(PageParam pageParam, Integer year,
+                                                                          Long userId, Integer status) {
+        return selectPage(pageParam, new LambdaQueryWrapperX<ClubPointAnnualClearingRecordDO>()
+                .eqIfPresent(ClubPointAnnualClearingRecordDO::getYear, year)
+                .eqIfPresent(ClubPointAnnualClearingRecordDO::getUserId, userId)
+                .eqIfPresent(ClubPointAnnualClearingRecordDO::getStatus, status)
+                .orderByDesc(ClubPointAnnualClearingRecordDO::getClearTime)
+                .orderByDesc(ClubPointAnnualClearingRecordDO::getId));
     }
 
 }
