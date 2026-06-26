@@ -126,18 +126,25 @@
 
 ## 任务 M12.4 事务边界复查
 
-- [ ] 强审计失败时业务回滚。
-- [ ] 通知失败时业务不回滚。
-- [ ] 流水写入失败时账户缓存不更新。
-- [ ] 账户缓存更新失败时流水不提交。
-- [ ] 冻结失败时兑换申请不创建。
-- [ ] 锁库存失败时冻结释放或事务回滚。
-- [ ] 审核通过失败时冻结、库存、流水一致。
+- [x] 强审计失败时业务回滚。
+- [x] 通知失败时业务不回滚。
+- [x] 流水写入失败时账户缓存不更新。
+- [x] 账户缓存更新失败时流水不提交。
+- [x] 冻结失败时兑换申请不创建。
+- [x] 锁库存失败时冻结释放或事务回滚。
+- [x] 审核通过失败时冻结、库存、流水一致。
 
 验收：
 
-- [ ] 没有半截业务状态。
-- [ ] 异常路径数据一致。
+- [x] 没有半截业务状态。
+- [x] 异常路径数据一致。
+
+证据：
+
+- 覆盖复核：`ClubAuditServiceImplTest` 覆盖强审计同事务失败回滚；`ClubNotifyServiceImplTest` 覆盖通知失败不回滚业务事务；`ClubPointLedgerServiceImplTest` 和 `ClubPointLedgerAdjustmentServiceImplTest` 覆盖流水与账户缓存同事务、调整审计失败回滚；`ClubPointFreezeServiceImplTest` 覆盖冻结、释放和冻结转扣减的账户缓存一致性。
+- 覆盖复核：`ClubPointContributionServiceImplTest` 覆盖材料审核、管理员代录、违规扣分、弄虚作假处理的强审计失败回滚和通知失败不回滚；`ClubPointRedemptionApplicationServiceImplTest` 覆盖可用积分不足、库存不足和并发库存不足时申请、冻结、库存锁回滚；`ClubPointRedemptionReviewServiceImplTest` 覆盖兑换审核通过审计失败回滚、通知失败不回滚；`ClubPointRedemptionBatchServiceImplTest` 覆盖兑换规则审计失败回滚；`ClubPointAnnualClearingServiceImplTest` 覆盖年度清零通过账本服务同事务扣减账户。
+- Verify：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubAuditServiceImplTest,ClubNotifyServiceImplTest,ClubPointLedgerServiceImplTest,ClubPointLedgerAdjustmentServiceImplTest,ClubPointFreezeServiceImplTest,ClubPointContributionServiceImplTest,ClubPointRedemptionApplicationServiceImplTest,ClubPointRedemptionReviewServiceImplTest,ClubPointRedemptionBatchServiceImplTest,ClubPointAnnualClearingServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；10 个服务测试类合计运行 70 个测试，失败 0，错误 0。
+- 边界：M12.4 仅做异常路径硬化复核和组合验证，不新增生产代码；强审计失败仍作为业务回滚门禁，通知失败仍按非阻塞处理，未把任何异常路径降级为已知问题。
 
 ## 任务 M12.5 年度和跨年测试
 

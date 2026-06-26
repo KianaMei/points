@@ -1348,6 +1348,8 @@ src/views/clubpoints/
 5. M12.2 验证命令 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointPermissionMatrixHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；运行 2 个测试，失败 0，错误 0。
 6. M12.3 已完成幂等和并发测试复查，覆盖活动重复/并发结算、月度缺席重复统计、非签到重复审核、管理员代录幂等、兑换重复提交、兑换并发不超兑、兑换重复审核、年度清零重复执行和账本唯一键冲突处理。
 7. M12.3 验证命令 `mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivitySettlementServiceImplTest,ClubPointContributionServiceImplTest,ClubPointRedemptionApplicationServiceImplTest,ClubPointRedemptionGiftServiceImplTest,ClubPointRedemptionReviewServiceImplTest,ClubPointAnnualClearingServiceImplTest,ClubPointLedgerServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；7 个服务测试类合计运行 54 个测试，失败 0，错误 0。
+8. M12.4 已完成事务边界复查，覆盖强审计失败回滚、通知失败不回滚、流水与账户缓存同事务、冻结失败不创建兑换申请、锁库存失败事务回滚、兑换审核通过时冻结 / 库存 / 流水一致性。
+9. M12.4 验证命令 `mvn -pl yudao-module-clubpoints -am "-Dtest=ClubAuditServiceImplTest,ClubNotifyServiceImplTest,ClubPointLedgerServiceImplTest,ClubPointLedgerAdjustmentServiceImplTest,ClubPointFreezeServiceImplTest,ClubPointContributionServiceImplTest,ClubPointRedemptionApplicationServiceImplTest,ClubPointRedemptionReviewServiceImplTest,ClubPointRedemptionBatchServiceImplTest,ClubPointAnnualClearingServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；10 个服务测试类合计运行 70 个测试，失败 0，错误 0。
 
 ### 17.1 必跑测试矩阵
 
