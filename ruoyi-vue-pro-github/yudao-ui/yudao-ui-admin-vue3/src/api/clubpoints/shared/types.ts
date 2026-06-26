@@ -87,3 +87,11 @@ export interface ClubPointBaseRespVO {
   updateTime?: ClubPointDateTime
   [key: string]: any
 }
+
+export interface ClubPointDashboardTodoItemVO {
+  code: string
+  name: string
+  count: number
+  path: string
+  queryJson?: string
+}

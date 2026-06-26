@@ -97,6 +97,7 @@ src/views/clubpoints/
 | 活动卡片 | `registeredActivityCount` |
 | 兑换卡片 | `pendingRedemptionCount` |
 | 通知入口 | `unreadNotifyCount` |
+| 待办列表 | `todoCount`、`todoItems` |
 
 交互：
 
@@ -106,6 +107,7 @@ src/views/clubpoints/
 | 查看已报名活动 | `/clubpoints/app/activity` |
 | 查看兑换 | `/clubpoints/app/redemption` |
 | 查看通知 | `/clubpoints/app/notify` |
+| 点击待办 | 使用 `todoItems[].path` 跳转，并解析 `todoItems[].queryJson` 为筛选条件 |
 
 ### 4.2 我的积分
 
@@ -311,10 +313,10 @@ src/views/clubpoints/
 | --- | --- |
 | 路由 | `/clubpoints/admin/dashboard` |
 | 组件 | `views/clubpoints/admin/dashboard/index.vue` |
-| API | 复用活动审核、材料审核、兑换审核、异议、任务分页接口聚合 |
-| 权限 | 管理员菜单权限 |
+| API | `GET /clubpoints/admin/dashboard/summary` |
+| 权限 | `clubpoints:dashboard:query` |
 
-展示待审核活动、待审核材料、待审核兑换、待处理异议、异常任务、异常撤销记录。
+展示待审核活动、待审核材料、待审核兑换、待处理异议和待办列表。待办点击进入对应页面，并自动带筛选条件。
 
 ### 6.2 俱乐部和负责人
 
@@ -432,10 +434,12 @@ src/views/clubpoints/
 | `api/clubpoints/app/redemption.ts` | `/clubpoints/app/redemption` | 员工兑换 |
 | `api/clubpoints/app/dispute.ts` | `/clubpoints/app/dispute` | 我的异议 |
 | `api/clubpoints/app/notify.ts` | `/clubpoints/app/notify` | 我的通知 |
+| `api/clubpoints/leader/dashboard.ts` | `/clubpoints/leader/dashboard` | 负责人工作台 |
 | `api/clubpoints/leader/club.ts` | `/clubpoints/leader/club`、`/clubpoints/leader/member` | 负责人俱乐部和成员 |
 | `api/clubpoints/leader/activity.ts` | `/clubpoints/leader/activity` | 负责人活动 |
 | `api/clubpoints/leader/attendance.ts` | `/clubpoints/leader/registration`、`/clubpoints/leader/attendance` | 报名和签到修正 |
 | `api/clubpoints/leader/contribution.ts` | `/clubpoints/leader/contribution` | 非签到材料 |
+| `api/clubpoints/admin/dashboard.ts` | `/clubpoints/admin/dashboard` | 管理员工作台 |
 | `api/clubpoints/admin/club.ts` | `/clubpoints/club`、`/clubpoints/club-leader`、`/clubpoints/club-member` | 管理员俱乐部 |
 | `api/clubpoints/admin/activity.ts` | `/clubpoints/activity` | 管理员活动 |
 | `api/clubpoints/admin/settlement.ts` | `/clubpoints/settlement` | 活动结算 |

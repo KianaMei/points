@@ -8,9 +8,12 @@ import type {
 
 export interface AppNotifyMessageRespVO extends ClubPointBaseRespVO {
   templateCode?: string
+  templateNickname?: string
   templateContent: string
+  templateType?: number
   readStatus: boolean
   readTime?: string | Date
+  createTime?: string | Date
 }
 
 const PREFIX = '/clubpoints/app/notify'

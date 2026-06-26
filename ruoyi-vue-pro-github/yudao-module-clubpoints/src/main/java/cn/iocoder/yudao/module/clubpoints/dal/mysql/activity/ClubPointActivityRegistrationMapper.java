@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 @Mapper
@@ -62,5 +63,35 @@ public interface ClubPointActivityRegistrationMapper extends BaseMapperX<ClubPoi
                                                                             @Param("endedStatus") Integer endedStatus,
                                                                             @Param("settledStatus") Integer settledStatus,
                                                                             @Param("checkinTargetType") Integer checkinTargetType);
+
+    @Select("SELECT COUNT(1) FROM club_points_activity_registration r"
+            + " JOIN club_points_activity a ON a.id = r.activity_id"
+            + " WHERE r.user_id = #{userId}"
+            + " AND r.status = #{registrationStatus}"
+            + " AND a.end_time > #{now}")
+    Long selectRegisteredActiveCountByUserId(@Param("userId") Long userId,
+                                             @Param("registrationStatus") Integer registrationStatus,
+                                             @Param("now") LocalDateTime now);
+
+    @Select({"<script>",
+            "SELECT COUNT(1) FROM club_points_activity_registration r",
+            "JOIN club_points_activity a ON a.id = r.activity_id",
+            "LEFT JOIN club_points_attendance_record c",
+            "ON c.registration_id = r.id AND c.target_type = #{checkinTargetType}",
+            "WHERE r.club_id IN",
+            "<foreach collection='clubIds' item='clubId' open='(' separator=',' close=')'>",
+            "#{clubId}",
+            "</foreach>",
+            "AND r.status = #{registrationStatus}",
+            "AND (r.no_absence_deduct IS NULL OR r.no_absence_deduct = FALSE)",
+            "AND (r.special_absence_flag IS NULL OR r.special_absence_flag = FALSE)",
+            "AND a.status IN (#{endedStatus}, #{settledStatus})",
+            "AND c.id IS NULL",
+            "</script>"})
+    Long selectAttendanceExceptionCountByClubIds(@Param("clubIds") Collection<Long> clubIds,
+                                                 @Param("registrationStatus") Integer registrationStatus,
+                                                 @Param("endedStatus") Integer endedStatus,
+                                                 @Param("settledStatus") Integer settledStatus,
+                                                 @Param("checkinTargetType") Integer checkinTargetType);
 
 }

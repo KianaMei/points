@@ -1251,6 +1251,8 @@ M11.4 已落地 `GET /clubpoints/report/export-excel`，导出权限为 `clubpoi
 
 M11.5 已落地 `GET /clubpoints/job-run/page`、`GET /clubpoints/job-run/detail`、`POST /clubpoints/job-run/handle`。查询使用 `clubpoints:job:query`，人工处理使用 `clubpoints:job:handle`；失败任务重试写 `JOB_RUN_RETRY` 强审计，按原 `runKey` 和 `retryCount+1` 派发到活动结算或年度清零 Job，年度清零只重试 `resultJson.failedUserIds` 中的失败用户，底层 Job 幂等键继续兜底重复重试。
 
+M11.6 已落地通知和待办汇总接口：`GET /clubpoints/app/notify/my-page`、`PUT /clubpoints/app/notify/update-read`、`GET /clubpoints/app/dashboard/summary`、`GET /clubpoints/leader/dashboard/summary`、`GET /clubpoints/admin/dashboard/summary`。员工通知复用 system 站内信，不新建 clubpoints 通知表；员工和负责人入口使用当前登录人，管理员工作台权限为 `clubpoints:dashboard:query`。待办数量直接读取业务状态，负责人只统计自己有效负责俱乐部内的草稿活动、驳回活动、签到异常和待提交材料，管理员只统计待审核活动、待审核材料、待审核兑换和待处理异议。
+
 ### 16.3 前端
 
 前端从独立仓库 `github.com/yudaocode/yudao-ui-admin-vue3` 克隆完整工程，当前已落到 `C:\jobs\pointsmall\ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3`。后续 clubpoints 前端直接在这个工程内开发。页面、字段、按钮权限、接口映射和强确认口径以 `docs/club-points-frontend-page-design.md` 为准。
@@ -1298,15 +1300,14 @@ src/views/clubpoints/
 | 角色 | 待办 |
 | --- | --- |
 | 负责人 | 草稿活动、被驳回活动、签到异常、待提交非签到材料、负责俱乐部概览 |
-| 管理员 | 待审核活动、待审核非签到材料、待审核兑换、待处理异议、异常结算、异常撤销记录 |
+| 管理员 | 待审核活动、待审核非签到材料、待审核兑换、待处理异议 |
 
 通知：
 
 1. 活动审核结果。
-2. 非签到积分审核结果。
+2. 积分到账和积分变动，包括活动结算、非签到材料、手工调整等生成流水的场景。
 3. 兑换审核结果。
 4. 异议回复。
-5. 手工调整积分。
 
 ### 16.6 退出标准
 

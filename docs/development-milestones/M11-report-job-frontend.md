@@ -192,15 +192,26 @@ M11.5 证据：
 
 ## 任务 M11.6 通知和待办
 
-- [ ] 封装本人通知分页和标记已读接口。
-- [ ] 聚合待审核活动、材料、兑换和待处理异议的待办计数。
-- [ ] 活动审核结果、积分到账、兑换审核结果、异议处理结果通知可读取。
-- [ ] 待办按角色返回，点击带筛选进入对应页面。
+- [x] 封装本人通知分页和标记已读接口。
+- [x] 聚合待审核活动、材料、兑换和待处理异议的待办计数。
+- [x] 活动审核结果、积分到账、兑换审核结果、异议处理结果通知可读取。
+- [x] 待办按角色返回，点击带筛选进入对应页面。
 
 验收：
 
-- [ ] 通知失败不回滚主业务。
-- [ ] 待办数量和业务状态一致。
+- [x] 通知失败不回滚主业务。
+- [x] 待办数量和业务状态一致。
+
+M11.6 证据：
+
+- RED：新增 `ClubPointNotifyAppControllerTest` 和 `ClubPointDashboardControllerTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointNotifyAppControllerTest,ClubPointDashboardControllerTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`，失败原因为通知 App Controller、dashboard Controller、VO 和 Service 包不存在。
+- GREEN：新增员工通知分页和标记已读接口，复用 system `NotifyMessageService` 和 `system_notify_message`，不新建 clubpoints 通知表；新增员工、负责人、管理员三端工作台汇总接口和待办项 VO。
+- 权限和范围：员工通知和员工工作台使用当前登录用户；负责人工作台使用 `clubpoints:leader` 并只统计当前登录用户有效负责俱乐部；管理员工作台使用 `clubpoints:dashboard:query`，seed 同步管理员工作台菜单和查询工作台按钮，员工 / 负责人授权列表不包含该权限。
+- 待办口径：员工统计已报名未结束活动、待审核兑换、未读通知；负责人统计负责俱乐部草稿活动、驳回活动、签到异常、待提交材料；管理员统计待审核活动、待审核材料、待审核兑换、待处理异议。
+- 验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointNotifyAppControllerTest,ClubPointDashboardControllerTest,ClubNotifyServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointDashboardControllerTest` 4 个测试、`ClubPointNotifyAppControllerTest` 2 个测试、`ClubNotifyServiceImplTest` 5 个测试，合计 11 个测试，失败 0，错误 0。
+- 前端 API：`app/dashboard.ts` 字段同步后端 `AppDashboardSummaryRespVO`，`app/notify.ts` 补模板昵称、类型和创建时间；新增 `leader/dashboard.ts`、`admin/dashboard.ts`，三端工作台共用 `ClubPointDashboardTodoItemVO`。
+- 前端类型验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，二次过滤 `clubpoints` 路径命中 `0` 行，仍为前端工程存量 TypeScript 债。
+- 质量门禁：`git diff --check` 仅 LF/CRLF 提示；M11.6 源码 / 测试范围 `tenant_id|TenantBaseDO`、Redis、AI 元数据扫描均 0 命中；事实源扫描只命中 `accountMapper.selectByUserId` 读取账户缓存，没有新增流水 / 账户写入。
 
 ## 任务 M11.7 管理员基础数据页
 
@@ -309,10 +320,10 @@ M11.5 证据：
 
 ## M11 放行标准
 
-- [ ] 报表查询可用。
-- [ ] 导出写强审计。
-- [ ] 任务监控可用。
-- [ ] 通知待办可用。
+- [x] 报表查询可用。
+- [x] 导出写强审计。
+- [x] 任务监控可用。
+- [x] 通知待办可用。
 - [ ] 员工、负责人、管理员前端闭环可用。
 
 ## M11 不通过时禁止

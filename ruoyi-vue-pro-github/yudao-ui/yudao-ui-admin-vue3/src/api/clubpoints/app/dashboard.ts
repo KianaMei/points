@@ -1,13 +1,16 @@
 import request from '@/config/axios'
+import type { ClubPointDashboardTodoItemVO } from '@/api/clubpoints/shared/types'
 
 export interface AppDashboardSummaryRespVO {
   availablePoints: number
   frozenPoints: number
-  totalPoints: number
-  clubCount: number
-  todoCount: number
+  totalEarnedPoints: number
+  joinedClubCount: number
+  registeredActivityCount: number
+  pendingRedemptionCount: number
   unreadNotifyCount: number
-  [key: string]: any
+  todoCount: number
+  todoItems: ClubPointDashboardTodoItemVO[]
 }
 
 export const getAppDashboardSummary = async (): Promise<AppDashboardSummaryRespVO> => {

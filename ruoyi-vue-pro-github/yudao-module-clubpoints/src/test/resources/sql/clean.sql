@@ -1,4 +1,5 @@
 DELETE FROM "club_points_job_run";
+DELETE FROM "system_notify_message";
 DELETE FROM "club_points_audit_log";
 DELETE FROM "club_points_attachment_ref";
 DELETE FROM "club_points_budget_record";
