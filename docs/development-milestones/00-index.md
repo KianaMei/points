@@ -48,7 +48,7 @@
 | `[x]` | M7 | `M7-activity-settlement.md` | 活动积分和缺席扣分可幂等结算 |
 | `[x]` | M8 | `M8-contribution-violation.md` | 非签到积分、违规扣分、弄虚作假闭环可用 |
 | `[x]` | M9 | `M9-redemption.md` | 兑换资格、冻结、库存、审核闭环可用 |
-| `[~]` | M10 | `M10-annual-dispute-budget.md` | 异议、年度清零、排名、激励、预算闭环可用 |
+| `[x]` | M10 | `M10-annual-dispute-budget.md` | 异议、年度清零、排名、激励、预算闭环可用 |
 | `[ ]` | M11 | `M11-report-job-frontend.md` | 报表、任务监控、通知、前端页面收口 |
 | `[ ]` | M12 | `M12-hardening-acceptance.md` | 并发、权限、回归、演示验收完成 |
 
@@ -82,7 +82,7 @@ M0 空模块
 
 ## 当前最近入口
 
-当前最近入口是 M10：
+当前最近入口是 M11：
 
 - M0 已创建 `ruoyi-vue-pro-github/yudao-module-clubpoints` 空模块。
 - M0 已在根 POM 和 `yudao-server/pom.xml` 接入 `yudao-module-clubpoints`。
@@ -166,3 +166,5 @@ M0 空模块
 - M10.6 已完成激励记录 DO、Mapper、激励建议生成、管理员确认、管理员取消和确认 / 取消强审计；激励建议不自动登记预算、不生成积分流水、不更新账户，并通过 RED/GREEN、M10.6 组合验证和质量门禁；下一步入口是 M10.7 预算记录。
 - M10.7 已完成预算记录 DO、Mapper、预算新增、修改、停用、查询、激励来源回链和预算创建 / 修改 / 停用强审计；预算年度按 `occur_date` 统计，俱乐部来源通过激励 `source_type/source_id` 追溯，停用使用逻辑删除，并通过 RED/GREEN、M10.7 组合验证和质量门禁；下一步入口是 M10.8 API。
 - M10.8 已完成员工异议、管理员异议处理、年度清零和清零记录、排名生成和查询、激励建议 / 确认 / 取消、预算分页 / 创建 / 修改 / 停用 API；路径和 `club-points-api-design.md` 已同步，并通过 RED/GREEN Controller 测试、M10.8 组合验证和质量门禁；下一步入口是 M10.9 测试收口。
+- M10.9 已完成年度运营测试收口，覆盖异议提交处理、异议调整走账本、年度清零、重复清零幂等、冻结积分不清零、跨年冻结释放、年度排名不受兑换影响、激励确认和预算修改强审计，并通过 M10 收口组合验证。
+- M10 已放行；下一步入口是 M11 报表、任务监控、通知、前端页面收口。

@@ -316,30 +316,36 @@
 
 ## 任务 M10.9 测试
 
-- [ ] 测试异议提交和处理。
-- [ ] 测试异议调整积分走账本。
-- [ ] 测试年度清零。
-- [ ] 测试重复清零幂等。
-- [ ] 测试冻结积分不清零。
-- [ ] 测试跨年冻结释放。
-- [ ] 测试年度排名不受兑换影响。
-- [ ] 测试激励确认。
-- [ ] 测试预算修改强审计。
+- [x] 测试异议提交和处理。
+- [x] 测试异议调整积分走账本。
+- [x] 测试年度清零。
+- [x] 测试重复清零幂等。
+- [x] 测试冻结积分不清零。
+- [x] 测试跨年冻结释放。
+- [x] 测试年度排名不受兑换影响。
+- [x] 测试激励确认。
+- [x] 测试预算修改强审计。
 
 验收：
 
-- [ ] 年度运营测试通过。
-- [ ] 清零、排名、激励、预算事实一致。
+- [x] 年度运营测试通过。
+- [x] 清零、排名、激励、预算事实一致。
+
+证据：
+
+- 收口复核：异议提交、处理、调整和撤销由 `ClubPointDisputeServiceImplTest` 覆盖；年度清零、重复清零幂等、冻结积分不清零由 `ClubPointAnnualClearingServiceImplTest` 覆盖；年度清零 Job、人工审计、失败重试由 `ClubPointAnnualClearingJobTest` 覆盖；跨年冻结释放由 `ClubPointRedemptionCancelServiceImplTest` 覆盖；排名不受兑换和清零影响由 `ClubPointAnnualRankingServiceImplTest` 覆盖；激励确认由 `ClubPointIncentiveServiceImplTest` 覆盖；预算修改强审计由 `ClubPointBudgetServiceImplTest` 覆盖；M10.8 接口由 `ClubPointAnnualOperationControllerTest` 覆盖。
+- M10 收口组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointAnnualOperationControllerTest,ClubPointDisputeServiceImplTest,ClubPointAnnualClearingJobTest,ClubPointAnnualClearingServiceImplTest,ClubPointAnnualRankingServiceImplTest,ClubPointIncentiveServiceImplTest,ClubPointBudgetServiceImplTest,ClubPointRedemptionCancelServiceImplTest,ClubAuditServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `41` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 LF/CRLF 警告；M10.9 文档和 M10 范围源码 / 测试精确元数据模式无命中；M10 范围源码 / 测试 `tenant_id|TenantBaseDO` 无命中；M10 范围源码 / 测试 Redis 模式无命中。
 
 ## M10 放行标准
 
-- [ ] 异议闭环可用。
-- [ ] 年度清零可用且幂等。
-- [ ] 年度排名可用。
-- [ ] 激励建议和确认可用。
-- [ ] 预算记录可用。
+- [x] 异议闭环可用。
+- [x] 年度清零可用且幂等。
+- [x] 年度排名可用。
+- [x] 激励建议和确认可用。
+- [x] 预算记录可用。
 
 ## M10 不通过时禁止
 
-- [ ] 禁止做最终 MVP 验收。
-- [ ] 禁止输出“年度闭环完成”结论。
+- [x] 禁止做最终 MVP 验收。
+- [x] 禁止输出“年度闭环完成”结论。
