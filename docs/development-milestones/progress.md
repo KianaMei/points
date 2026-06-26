@@ -352,3 +352,10 @@
 - 2026-06-26：M8 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointContributionMapperTest,ClubPointContributionEnumTest,ClubPointContributionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `10` 个测试，失败 `0`，错误 `0`。
 - 2026-06-26：M8.3 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；M8.3 contribution 主实现范围 `ClubPointLedgerService|createTransaction|club_points_transaction` 无命中。
 - 2026-06-26：M8.3 文档同步：`M8-contribution-violation.md` 勾选 M8.3 并补 RED/GREEN/组合证据，`00-index.md` 当前入口切换到 M8.4 管理员审核材料。
+- 2026-06-26：M8.4 RED：在 `ClubPointContributionServiceImplTest` 增加待审核列表、审核通过、审核驳回和审计失败回滚测试；运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`，原因是 `ClubPointContributionReviewReqBO`、`listPendingReviewMaterials(boolean)`、`reviewMaterial(...)` 和 `CONTRIBUTION_REVIEW` 不存在。
+- 2026-06-26：M8.4 GREEN：新增审核请求 BO、待审核列表接口、审核 Service、材料 `selectByIdForUpdate(...)`、待审核状态查询和 `CONTRIBUTION_REVIEW` 强审计动作；管理员审核要求全局范围，通过时逐明细调用 `ClubPointLedgerService.createTransaction(...)` 生成流水，驳回不生成流水。
+- 2026-06-26：M8.4 事务边界：审核通过同事务写材料状态、明细 `transactionId`、积分流水、附件锁定、强审计和审核记录；强审计失败测试验证材料仍为 `PENDING_REVIEW`，审核记录、流水、审计和附件锁定均未写入。
+- 2026-06-26：M8.4 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointContributionServiceImplTest` 运行 `9` 个测试，失败 `0`，错误 `0`。
+- 2026-06-26：M8 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointContributionMapperTest,ClubPointContributionEnumTest,ClubPointContributionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `14` 个测试，失败 `0`，错误 `0`。
+- 2026-06-26：M8.4 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中。
+- 2026-06-26：M8.4 文档同步：`M8-contribution-violation.md` 勾选 M8.4 并补 RED/GREEN/组合/质量证据，`00-index.md` 当前入口切换到 M8.5 管理员代录。

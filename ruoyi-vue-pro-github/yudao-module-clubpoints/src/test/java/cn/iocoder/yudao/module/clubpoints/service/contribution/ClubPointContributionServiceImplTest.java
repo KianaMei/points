@@ -2,17 +2,24 @@ package cn.iocoder.yudao.module.clubpoints.service.contribution;
 
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.attachment.ClubAttachmentRefDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.audit.ClubAuditLogDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubLeaderDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubPointClubDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.contribution.ClubPointContributionItemDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.contribution.ClubPointContributionMaterialDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.contribution.ClubPointContributionReviewRecordDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointTransactionDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRuleItemDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRuleVersionDO;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.attachment.ClubAttachmentRefMapper;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.audit.ClubAuditLogMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.club.ClubLeaderMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.club.ClubPointClubMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.contribution.ClubPointContributionItemMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.contribution.ClubPointContributionMaterialMapper;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.contribution.ClubPointContributionReviewRecordMapper;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointAccountMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointTransactionMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.rule.ClubPointRuleItemMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.rule.ClubPointRuleVersionMapper;
@@ -27,7 +34,9 @@ import cn.iocoder.yudao.module.clubpoints.service.attachment.bo.ClubAttachmentBi
 import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionItemSaveReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionMaterialSaveReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionReviewReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.contribution.bo.ClubPointContributionSubmitReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.ledger.ClubPointLedgerServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.rule.ClubPointRuleServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeServiceImpl;
 import cn.iocoder.yudao.module.infra.service.file.FileService;
@@ -44,11 +53,16 @@ import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServic
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.ATTACHMENT_TYPE_URL;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.BIZ_TYPE_CONTRIBUTION_MATERIAL;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.STATUS_EFFECTIVE;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CONTRIBUTION_REVIEW;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointCategoryEnum.ACTIVE_CONTRIBUTION;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointContributionMaterialTypeEnum.PUBLICITY_SUGGESTION;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointContributionMaterialTypeEnum.SPECIAL_CONTRIBUTION;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionDirectionEnum.INCREASE;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionSourceTypeEnum.CONTRIBUTION_MATERIAL;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionStatusEnum.VALID;
+import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_AUDIT_WRITE_FAILED;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_CONTRIBUTION_ATTACHMENT_REQUIRED;
+import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_CONTRIBUTION_REVIEW_DENIED;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_CONTRIBUTION_RULE_VALUE_OUT_OF_RANGE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_CONTRIBUTION_STATUS_INVALID;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_RULE_ITEM_NOT_EXISTS;
@@ -60,7 +74,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Import({ClubPointContributionServiceImpl.class, ClubScopeServiceImpl.class, ClubAttachmentServiceImpl.class,
-        ClubPointRuleServiceImpl.class, ClubAuditServiceImpl.class})
+        ClubPointRuleServiceImpl.class, ClubAuditServiceImpl.class, ClubPointLedgerServiceImpl.class})
 class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
 
     private static final LocalDateTime BASE_TIME = LocalDateTime.of(2026, 7, 15, 9, 0);
@@ -72,7 +86,11 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
     @Resource
     private ClubPointContributionItemMapper itemMapper;
     @Resource
+    private ClubPointContributionReviewRecordMapper reviewRecordMapper;
+    @Resource
     private ClubAttachmentRefMapper attachmentRefMapper;
+    @Resource
+    private ClubAuditLogMapper auditLogMapper;
     @Resource
     private ClubPointClubMapper clubMapper;
     @Resource
@@ -83,6 +101,8 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
     private ClubPointRuleItemMapper ruleItemMapper;
     @Resource
     private ClubPointTransactionMapper transactionMapper;
+    @Resource
+    private ClubPointAccountMapper accountMapper;
 
     @MockBean
     private FileService fileService;
@@ -219,6 +239,146 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
         assertEquals(0L, itemMapper.selectCount());
     }
 
+    @Test
+    void listPendingReviewMaterialsShouldRequireGlobalScopeAndReturnPendingMaterialsOnly() {
+        ClubPointClubDO club = insertClub("CLUB-M8-4001", "Pending Review Club");
+        insertLeader(club.getId(), 8100L);
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-401");
+        insertRuleItem(version.getId(), PUBLICITY_SUGGESTION, 2, 10, 5);
+        Long pendingMaterialId = createSubmittedMaterial(club.getId(), version.getId(), 8100L);
+        contributionService.createDraft(buildSaveReq(null, club.getId(), version.getId(), 8100L,
+                PUBLICITY_SUGGESTION));
+
+        assertServiceException(() -> contributionService.listPendingReviewMaterials(false),
+                CLUB_CONTRIBUTION_REVIEW_DENIED);
+
+        List<ClubPointContributionMaterialDO> pendingMaterials =
+                contributionService.listPendingReviewMaterials(true);
+
+        assertEquals(1, pendingMaterials.size());
+        assertEquals(pendingMaterialId, pendingMaterials.get(0).getId());
+        assertEquals(ClubPointContributionMaterialStatusEnum.PENDING_REVIEW.getStatus(),
+                pendingMaterials.get(0).getStatus());
+    }
+
+    @Test
+    void approveReviewShouldCreateTransactionsLockAttachmentsWriteAuditAndReviewRecord() {
+        ClubPointClubDO club = insertClub("CLUB-M8-4002", "Approve Review Club");
+        insertLeader(club.getId(), 8200L);
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-402");
+        insertRuleItem(version.getId(), PUBLICITY_SUGGESTION, 2, 10, 5);
+        Long materialId = createSubmittedMaterial(club.getId(), version.getId(), 8200L);
+
+        contributionService.reviewMaterial(buildReviewReq(materialId, true));
+
+        ClubPointContributionMaterialDO material = materialMapper.selectById(materialId);
+        assertEquals(ClubPointContributionMaterialStatusEnum.APPROVED.getStatus(), material.getStatus());
+        assertEquals(900L, material.getReviewerUserId());
+        assertNotNull(material.getReviewTime());
+        assertEquals("approve contribution", material.getReviewReason());
+        assertTrue(material.getLocked());
+
+        List<ClubPointContributionItemDO> items = itemMapper.selectListByMaterialId(materialId);
+        assertEquals(2, items.size());
+        for (ClubPointContributionItemDO item : items) {
+            assertNotNull(item.getTransactionId());
+            ClubPointTransactionDO transaction = transactionMapper.selectById(item.getTransactionId());
+            assertEquals(item.getUserId(), transaction.getUserId());
+            assertEquals(item.getUserNameSnapshot(), transaction.getUserNameSnapshot());
+            assertEquals(INCREASE.getDirection(), transaction.getDirection());
+            assertEquals(item.getPoints(), transaction.getPoints());
+            assertEquals(ACTIVE_CONTRIBUTION.getCategory(), transaction.getPointCategory());
+            assertEquals(VALID.getStatus(), transaction.getStatus());
+            assertEquals(CONTRIBUTION_MATERIAL.getType(), transaction.getSourceType());
+            assertEquals(materialId, transaction.getSourceId());
+            assertEquals(item.getId(), transaction.getSourceItemId());
+            assertEquals(material.getTitle(), transaction.getSourceTitleSnapshot());
+            assertEquals(club.getId(), transaction.getIssuingClubId());
+            assertEquals(club.getName(), transaction.getIssuingClubNameSnapshot());
+            assertEquals(item.getRuleItemCode(), transaction.getRuleItemCodeSnapshot());
+            assertEquals(item.getIdempotencyKey(), transaction.getIdempotencyKey());
+            assertEquals(900L, transaction.getOperatorUserId());
+            assertNotNull(transaction.getAuditLogId());
+        }
+
+        ClubPointAccountDO firstAccount = accountMapper.selectByUserId(7101L);
+        assertEquals(6, firstAccount.getAvailablePoints());
+        ClubPointAccountDO secondAccount = accountMapper.selectByUserId(7102L);
+        assertEquals(8, secondAccount.getAvailablePoints());
+
+        List<ClubAttachmentRefDO> attachments = attachmentRefMapper.selectListByBiz(
+                BIZ_TYPE_CONTRIBUTION_MATERIAL, materialId, STATUS_EFFECTIVE);
+        assertEquals(1, attachments.size());
+        assertTrue(attachments.get(0).getLocked());
+        assertNotNull(attachments.get(0).getLockTime());
+
+        ClubPointContributionReviewRecordDO reviewRecord =
+                reviewRecordMapper.selectListByMaterialId(materialId).get(0);
+        assertEquals(1, reviewRecord.getResult());
+        assertEquals(2, reviewRecord.getCreatedTransactionCount());
+        assertEquals(900L, reviewRecord.getReviewerUserId());
+        assertNotNull(reviewRecord.getAuditLogId());
+        assertTrue(reviewRecord.getMaterialSnapshotJson().contains("\"status\":5"));
+        ClubAuditLogDO auditLog = auditLogMapper.selectById(reviewRecord.getAuditLogId());
+        assertEquals(CONTRIBUTION_REVIEW, auditLog.getActionType());
+        assertEquals("CONTRIBUTION_MATERIAL", auditLog.getBizType());
+        assertEquals(materialId, auditLog.getBizId());
+        assertTrue(auditLog.getAfterJson().contains("\"result\":1"));
+
+        assertServiceException(() -> contributionService.reviewMaterial(buildReviewReq(materialId, true)),
+                CLUB_CONTRIBUTION_STATUS_INVALID);
+        assertEquals(2L, transactionMapper.selectCount());
+    }
+
+    @Test
+    void rejectReviewShouldWriteAuditAndReviewRecordWithoutCreatingTransactions() {
+        ClubPointClubDO club = insertClub("CLUB-M8-4003", "Reject Review Club");
+        insertLeader(club.getId(), 8300L);
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-403");
+        insertRuleItem(version.getId(), PUBLICITY_SUGGESTION, 2, 10, 5);
+        Long materialId = createSubmittedMaterial(club.getId(), version.getId(), 8300L);
+
+        contributionService.reviewMaterial(buildReviewReq(materialId, false).setReason("proof insufficient"));
+
+        ClubPointContributionMaterialDO material = materialMapper.selectById(materialId);
+        assertEquals(ClubPointContributionMaterialStatusEnum.REJECTED.getStatus(), material.getStatus());
+        assertEquals("proof insufficient", material.getReviewReason());
+        assertFalse(material.getLocked());
+        assertEquals(0L, transactionMapper.selectCount());
+
+        ClubPointContributionReviewRecordDO reviewRecord =
+                reviewRecordMapper.selectListByMaterialId(materialId).get(0);
+        assertEquals(2, reviewRecord.getResult());
+        assertEquals(0, reviewRecord.getCreatedTransactionCount());
+        assertEquals("proof insufficient", reviewRecord.getReason());
+        assertNotNull(reviewRecord.getAuditLogId());
+        ClubAuditLogDO auditLog = auditLogMapper.selectById(reviewRecord.getAuditLogId());
+        assertEquals(CONTRIBUTION_REVIEW, auditLog.getActionType());
+        assertTrue(auditLog.getAfterJson().contains("\"result\":2"));
+    }
+
+    @Test
+    void approveReviewShouldRollbackWhenAuditFails() {
+        ClubPointClubDO club = insertClub("CLUB-M8-4004", "Rollback Review Club");
+        insertLeader(club.getId(), 8400L);
+        ClubPointRuleVersionDO version = insertPublishedRuleVersion("M8-RULE-404");
+        insertRuleItem(version.getId(), PUBLICITY_SUGGESTION, 2, 10, 5);
+        Long materialId = createSubmittedMaterial(club.getId(), version.getId(), 8400L);
+
+        assertServiceException(() -> contributionService.reviewMaterial(
+                buildReviewReq(materialId, true).setOperatorNameSnapshot(null)), CLUB_AUDIT_WRITE_FAILED);
+
+        ClubPointContributionMaterialDO material = materialMapper.selectById(materialId);
+        assertEquals(ClubPointContributionMaterialStatusEnum.PENDING_REVIEW.getStatus(), material.getStatus());
+        assertNull(material.getReviewerUserId());
+        assertNull(material.getReviewTime());
+        assertEquals(0L, reviewRecordMapper.selectCount());
+        assertEquals(0L, transactionMapper.selectCount());
+        assertEquals(0L, auditLogMapper.selectCount());
+        assertFalse(attachmentRefMapper.selectListByBiz(BIZ_TYPE_CONTRIBUTION_MATERIAL,
+                materialId, STATUS_EFFECTIVE).get(0).getLocked());
+    }
+
     private ClubPointClubDO insertClub(String code, String name) {
         ClubPointClubDO club = new ClubPointClubDO()
                 .setCode(code)
@@ -273,6 +433,14 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
         return item;
     }
 
+    private Long createSubmittedMaterial(Long clubId, Long ruleVersionId, Long operatorUserId) {
+        Long materialId = contributionService.createDraft(buildSaveReq(null, clubId, ruleVersionId,
+                operatorUserId, PUBLICITY_SUGGESTION)
+                .setAttachments(Arrays.asList(buildUrlAttachment())));
+        contributionService.submitForReview(buildSubmitReq(materialId, operatorUserId));
+        return materialId;
+    }
+
     private static ClubPointContributionMaterialSaveReqBO buildSaveReq(Long id, Long clubId, Long ruleVersionId,
                                                                        Long operatorUserId,
                                                                        ClubPointContributionMaterialTypeEnum type) {
@@ -319,6 +487,19 @@ class ClubPointContributionServiceImplTest extends BaseDbUnitTest {
                 .setClientIp("127.0.0.1")
                 .setUserAgent("JUnit")
                 .setReason("submit contribution");
+    }
+
+    private static ClubPointContributionReviewReqBO buildReviewReq(Long materialId, boolean approved) {
+        return new ClubPointContributionReviewReqBO()
+                .setId(materialId)
+                .setResult(approved ? 1 : 2)
+                .setReason(approved ? "approve contribution" : "reject contribution")
+                .setOperatorGlobalScope(true)
+                .setOperatorUserId(900L)
+                .setOperatorNameSnapshot("Admin")
+                .setOperatorRoleSnapshot("club_points_admin")
+                .setClientIp("127.0.0.1")
+                .setUserAgent("JUnit");
     }
 
 }
