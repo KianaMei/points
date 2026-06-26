@@ -158,18 +158,34 @@
 
 ## 任务 M10.4 年度清零 Job
 
-- [ ] 创建年度清零 Job Handler。
-- [ ] Job 只调 Service。
-- [ ] 写 `club_points_job_run`。
-- [ ] 失败记录错误摘要。
-- [ ] 支持人工重跑失败用户。
-- [ ] 人工处理写强审计。
+- [x] 创建年度清零 Job Handler。
+- [x] Job 只调 Service。
+- [x] 写 `club_points_job_run`。
+- [x] 失败记录错误摘要。
+- [x] 支持人工重跑失败用户。
+- [x] 人工处理写强审计。
 
 验收：
 
-- [ ] Job 可手动触发。
-- [ ] Job 重跑幂等。
-- [ ] 失败用户可定位。
+- [x] Job 可手动触发。
+- [x] Job 重跑幂等。
+- [x] 失败用户可定位。
+
+验证记录：
+
+- RED：新增 `ClubPointAnnualClearingJobTest`，运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointAnnualClearingJobTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`，失败原因为 `ClubPointAnnualClearingJob`、`ClubPointAnnualClearingJobService` 和 `ClubPointAnnualClearingJobReqBO` 缺失。
+- GREEN：新增 `ClubPointAnnualClearingJob`、`ClubPointAnnualClearingJobService`、`ClubPointAnnualClearingJobReqBO`；同一命令返回 `BUILD SUCCESS`，`ClubPointAnnualClearingJobTest` 运行 `4` 个测试，失败 `0`，错误 `0`。
+- 组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointAnnualClearingJobTest,ClubPointAnnualClearingServiceImplTest,ClubPointAnnualClearingModelTest,ClubPointLedgerServiceImplTest,ClubPointLedgerMapperTest,ClubAuditServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `22` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无输出；年度清零 Job / Service / 测试范围 `tenant_id|TenantBaseDO` 无命中；精确元数据模式无命中；Redis 模式无命中；年度清零 Job / Service 范围无 `transactionMapper`、账户直接更新或删除历史记录命中。
+
+实现边界：
+
+- `ClubPointAnnualClearingJob` 只解析 JSON 参数并调用 `ClubPointAnnualClearingJobService`，Bean 名固定为 seed 中的 `clubPointsAnnualClearingJob`。
+- Job 幂等键固定为 `ANNUAL_CLEARING_JOB:{runKey}:{retryCount}`；同一运行键和重试次数重复触发直接返回既有 `club_points_job_run`，不会重复清零或重复流水。
+- 全量任务默认扫描积分账户；人工重跑失败用户可通过 `userIds` 指定目标用户，只对这些用户逐个调用 `ClubPointAnnualClearingService.clearUser(...)`。
+- 每个用户单独调用清零 Service；单用户失败不会阻断其他用户，失败用户 ID 和错误摘要写入 `club_points_job_run.result_json`、`error_type`、`error_message`，任务状态置为 `RETRYABLE_FAILED` 并设置 `next_retry_time`。
+- 手动触发或重试触发会先写 `ANNUAL_CLEARING_MANUAL` 强审计；审计失败时不创建 Job Run、不调用年度清零 Service、不生成流水。
+- M10.4 不实现管理员 API；年度清零触发和记录查询接口进入 M10.8。
 
 ## 任务 M10.5 年度排名
 
