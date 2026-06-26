@@ -103,20 +103,26 @@
 
 ## 任务 M12.3 幂等和并发测试
 
-- [ ] 活动重复结算不重复发分。
-- [ ] 活动并发结算不重复发分。
-- [ ] 月度缺席重复统计不重复扣分。
-- [ ] 非签到材料重复审核不重复发分。
-- [ ] 管理员代录重复提交不重复发分。
-- [ ] 兑换重复提交不重复冻结。
-- [ ] 兑换并发申请不超兑。
-- [ ] 兑换重复审核不重复扣分。
-- [ ] 年度清零重复执行不重复扣分。
+- [x] 活动重复结算不重复发分。
+- [x] 活动并发结算不重复发分。
+- [x] 月度缺席重复统计不重复扣分。
+- [x] 非签到材料重复审核不重复发分。
+- [x] 管理员代录重复提交不重复发分。
+- [x] 兑换重复提交不重复冻结。
+- [x] 兑换并发申请不超兑。
+- [x] 兑换重复审核不重复扣分。
+- [x] 年度清零重复执行不重复扣分。
 
 验收：
 
-- [ ] 高风险并发场景全部通过。
-- [ ] 数据库唯一键冲突处理符合预期。
+- [x] 高风险并发场景全部通过。
+- [x] 数据库唯一键冲突处理符合预期。
+
+证据：
+
+- 覆盖复核：活动重复结算、并发结算和月度累计缺席扣分由 `ClubPointActivitySettlementServiceImplTest` 覆盖；非签到材料重复审核和管理员代录幂等由 `ClubPointContributionServiceImplTest` 覆盖；兑换重复提交和并发申请不超兑由 `ClubPointRedemptionApplicationServiceImplTest`、`ClubPointRedemptionGiftServiceImplTest` 覆盖；兑换重复审核不重复扣分由 `ClubPointRedemptionReviewServiceImplTest` 覆盖；年度清零重复执行不重复扣分由 `ClubPointAnnualClearingServiceImplTest` 覆盖；账本层数据库唯一键冲突和幂等复用由 `ClubPointLedgerServiceImplTest` 覆盖。
+- Verify：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivitySettlementServiceImplTest,ClubPointContributionServiceImplTest,ClubPointRedemptionApplicationServiceImplTest,ClubPointRedemptionGiftServiceImplTest,ClubPointRedemptionReviewServiceImplTest,ClubPointAnnualClearingServiceImplTest,ClubPointLedgerServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；7 个服务测试类合计运行 54 个测试，失败 0，错误 0。
+- 边界：M12.3 仅做硬化复核和组合验证，不新增生产代码；库存、流水、冻结、年度清零仍由数据库唯一键、条件更新和事务兜底，不使用缓存替代事实约束。
 
 ## 任务 M12.4 事务边界复查
 
