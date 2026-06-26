@@ -21,6 +21,8 @@ import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRedemptionApplicationSt
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRedemptionBatchStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRedemptionGiftStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointStockLockStatusEnum;
+import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditService;
+import cn.iocoder.yudao.module.clubpoints.service.audit.bo.ClubAuditCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.ClubPointFreezeServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.ClubPointLedgerService;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointAccountRebuildAllReqBO;
@@ -28,6 +30,7 @@ import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointAccountRebu
 import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointLedgerAdjustReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointLedgerCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointLedgerReverseReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.notify.ClubNotifyService;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionApplyReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeServiceImpl;
 import org.junit.jupiter.api.Test;
@@ -47,7 +50,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Import({ClubPointRedemptionApplicationServiceImpl.class, ClubPointRedemptionEligibilityServiceImpl.class,
         ClubPointRedemptionGiftServiceImpl.class, ClubPointFreezeServiceImpl.class, ClubScopeServiceImpl.class,
-        ClubPointRedemptionApplicationServiceImplTest.TestLedgerService.class})
+        ClubPointRedemptionApplicationServiceImplTest.TestLedgerService.class,
+        ClubPointRedemptionApplicationServiceImplTest.TestAuditService.class,
+        ClubPointRedemptionApplicationServiceImplTest.TestNotifyService.class})
 class ClubPointRedemptionApplicationServiceImplTest extends BaseDbUnitTest {
 
     private static final LocalDateTime BASE_TIME = LocalDateTime.of(2026, 8, 1, 9, 0);
@@ -304,6 +309,36 @@ class ClubPointRedemptionApplicationServiceImplTest extends BaseDbUnitTest {
         @Override
         public Long rebuildAllAccounts(ClubPointAccountRebuildAllReqBO reqBO) {
             throw new UnsupportedOperationException();
+        }
+
+    }
+
+    static class TestAuditService implements ClubAuditService {
+
+        @Override
+        public Long createAuditLog(ClubAuditCreateReqBO reqBO) {
+            return 1L;
+        }
+
+    }
+
+    static class TestNotifyService implements ClubNotifyService {
+
+        @Override
+        public void notifyActivityReviewResult(Long userId, String activityTitle, String result, String reason) {
+        }
+
+        @Override
+        public void notifyPointsChanged(Long userId, String reason, String direction, Integer points,
+                                        Integer availablePoints) {
+        }
+
+        @Override
+        public void notifyRedemptionReviewResult(Long userId, String applicationNo, String result, String reason) {
+        }
+
+        @Override
+        public void notifyDisputeReplied(Long userId, String title, String replyContent) {
         }
 
     }

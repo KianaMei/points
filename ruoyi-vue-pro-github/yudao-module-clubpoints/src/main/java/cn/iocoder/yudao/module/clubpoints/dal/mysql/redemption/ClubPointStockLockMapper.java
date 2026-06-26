@@ -8,6 +8,11 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ClubPointStockLockMapper extends BaseMapperX<ClubPointStockLockDO> {
 
+    default ClubPointStockLockDO selectByApplicationIdForUpdate(Long applicationId) {
+        return selectOneForUpdate(new LambdaQueryWrapperX<ClubPointStockLockDO>()
+                .eq(ClubPointStockLockDO::getApplicationId, applicationId));
+    }
+
     default ClubPointStockLockDO selectByApplicationId(Long applicationId) {
         return selectOne(new LambdaQueryWrapperX<ClubPointStockLockDO>()
                 .eq(ClubPointStockLockDO::getApplicationId, applicationId));

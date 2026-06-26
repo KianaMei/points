@@ -2,24 +2,38 @@ package cn.iocoder.yudao.module.clubpoints.service.redemption;
 
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointFreezeDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionApplicationDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionBatchDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionEligibilitySnapshotDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionGiftDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointRedemptionReviewRecordDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.redemption.ClubPointStockLockDO;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointAccountMapper;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointFreezeMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointRedemptionApplicationMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointRedemptionBatchMapper;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointRedemptionEligibilitySnapshotMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointRedemptionGiftMapper;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointRedemptionReviewRecordMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.redemption.ClubPointStockLockMapper;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointFreezeSourceTypeEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRedemptionApplicationStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRedemptionBatchStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRedemptionGiftStatusEnum;
+import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRedemptionReviewResultEnum;
+import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRuleItemCodeEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointStockLockStatusEnum;
+import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditService;
+import cn.iocoder.yudao.module.clubpoints.service.audit.bo.ClubAuditCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.ClubPointFreezeService;
+import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointFreezeConvertReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointFreezeCreateReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.ledger.bo.ClubPointFreezeReleaseReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.notify.ClubNotifyService;
 import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionApplyReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.redemption.bo.ClubPointRedemptionReviewReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeService;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,8 +46,11 @@ import java.util.List;
 import java.util.Map;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.REDEMPTION_REVIEW;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_REDEMPTION_BATCH_CLOSED;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_REDEMPTION_BATCH_NOT_EXISTS;
+import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_REDEMPTION_APPLICATION_NOT_EXISTS;
+import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_REDEMPTION_APPLICATION_STATUS_INVALID;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_REDEMPTION_GIFT_INVALID;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_REDEMPTION_GIFT_NOT_EXISTS;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_REDEMPTION_GIFT_STATUS_INVALID;
@@ -49,6 +66,8 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
     private static final String FREEZE_NO_PREFIX = "RDF-";
     private static final String APPLICATION_IDEMPOTENCY_PREFIX = "REDEMPTION_APPLY:";
     private static final String STOCK_LOCK_IDEMPOTENCY_PREFIX = "STOCK_LOCK:";
+    private static final String BIZ_TYPE_REDEMPTION_APPLICATION = "REDEMPTION_APPLICATION";
+    private static final String REDEMPTION_APPROVE_PREFIX = "REDEMPTION_APPROVE:";
 
     @Resource
     private ClubPointRedemptionEligibilityService eligibilityService;
@@ -57,15 +76,27 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
     @Resource
     private ClubPointFreezeService freezeService;
     @Resource
+    private ClubAuditService clubAuditService;
+    @Resource
+    private ClubNotifyService clubNotifyService;
+    @Resource
+    private ClubScopeService clubScopeService;
+    @Resource
     private ClubPointRedemptionBatchMapper batchMapper;
     @Resource
     private ClubPointRedemptionGiftMapper giftMapper;
+    @Resource
+    private ClubPointRedemptionEligibilitySnapshotMapper eligibilitySnapshotMapper;
     @Resource
     private ClubPointRedemptionApplicationMapper applicationMapper;
     @Resource
     private ClubPointStockLockMapper stockLockMapper;
     @Resource
+    private ClubPointRedemptionReviewRecordMapper reviewRecordMapper;
+    @Resource
     private ClubPointAccountMapper accountMapper;
+    @Resource
+    private ClubPointFreezeMapper freezeMapper;
 
     @Override
     public List<ClubPointRedemptionGiftDO> listAvailableGifts(Long batchId, Long userId) {
@@ -111,6 +142,71 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
         return application.getId();
     }
 
+    @Override
+    public List<ClubPointRedemptionApplicationDO> listPendingReviewApplications(boolean operatorGlobalScope) {
+        clubScopeService.validateGlobal(operatorGlobalScope);
+        return applicationMapper.selectListByStatus(ClubPointRedemptionApplicationStatusEnum.PENDING_REVIEW.getStatus());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void review(ClubPointRedemptionReviewReqBO reqBO) {
+        ClubPointRedemptionReviewResultEnum result = validateReviewReq(reqBO);
+        clubScopeService.validateGlobal(Boolean.TRUE.equals(reqBO.getOperatorGlobalScope()));
+        ClubPointRedemptionApplicationDO application = validateApplicationExistsForReview(reqBO.getId());
+        if (handleReviewedIdempotently(application, result)) {
+            return;
+        }
+        validateReviewable(application);
+        ClubPointStockLockDO stockLock = validateStockLockForReview(application);
+        LocalDateTime reviewTime = LocalDateTime.now();
+        String beforeJson = applicationSnapshot(application);
+        Long auditLogId = createReviewAudit(reqBO, application, result, beforeJson, reviewTime);
+
+        if (result == ClubPointRedemptionReviewResultEnum.APPROVED) {
+            approveApplication(application, stockLock, reqBO, reviewTime, auditLogId);
+        } else {
+            rejectApplication(application, stockLock, reqBO, reviewTime);
+        }
+        ClubPointFreezeDO freeze = freezeMapper.selectById(application.getFreezeId());
+        ClubPointStockLockDO reviewedStockLock = stockLockMapper.selectById(stockLock.getId());
+        applicationMapper.updateById(application);
+        insertReviewRecord(application, reqBO, result, reviewTime, freeze, reviewedStockLock, auditLogId);
+        notifyReviewResult(application, result, reqBO.getReason());
+    }
+
+    private void approveApplication(ClubPointRedemptionApplicationDO application, ClubPointStockLockDO stockLock,
+                                    ClubPointRedemptionReviewReqBO reqBO, LocalDateTime reviewTime,
+                                    Long auditLogId) {
+        Long transactionId = freezeService.convertFreezeToDeduction(
+                buildFreezeConvertReq(application, reqBO, reviewTime, auditLogId));
+        giftService.useLockedStock(application.getGiftId(), application.getQuantity());
+        stockLock.setStatus(ClubPointStockLockStatusEnum.USED.getStatus())
+                .setUsedTime(reviewTime);
+        stockLockMapper.updateById(stockLock);
+        ClubPointAccountDO afterAccount = accountMapper.selectByUserId(application.getUserId());
+        applyReviewedApplication(application, reqBO, reviewTime, afterAccount)
+                .setStatus(ClubPointRedemptionApplicationStatusEnum.APPROVED_AND_ISSUED.getStatus())
+                .setDeductTransactionId(transactionId)
+                .setDirectIssueTime(reviewTime);
+    }
+
+    private void rejectApplication(ClubPointRedemptionApplicationDO application, ClubPointStockLockDO stockLock,
+                                   ClubPointRedemptionReviewReqBO reqBO, LocalDateTime reviewTime) {
+        freezeService.releaseFreeze(new ClubPointFreezeReleaseReqBO()
+                .setFreezeId(application.getFreezeId())
+                .setReleasedAt(reviewTime)
+                .setReleaseReason(reqBO.getReason()));
+        giftService.releaseLockedStock(application.getGiftId(), application.getQuantity());
+        stockLock.setStatus(ClubPointStockLockStatusEnum.RELEASED.getStatus())
+                .setReleasedTime(reviewTime)
+                .setReleaseReason(reqBO.getReason());
+        stockLockMapper.updateById(stockLock);
+        ClubPointAccountDO afterAccount = accountMapper.selectByUserId(application.getUserId());
+        applyReviewedApplication(application, reqBO, reviewTime, afterAccount)
+                .setStatus(ClubPointRedemptionApplicationStatusEnum.REJECTED.getStatus());
+    }
+
     private ClubPointRedemptionBatchDO validateBatchOpenForApply(Long batchId) {
         ClubPointRedemptionBatchDO batch = batchMapper.selectById(batchId);
         if (batch == null) {
@@ -133,6 +229,47 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
         return gift;
     }
 
+    private ClubPointRedemptionApplicationDO validateApplicationExistsForReview(Long applicationId) {
+        ClubPointRedemptionApplicationDO application = applicationMapper.selectByIdForUpdate(applicationId);
+        if (application == null) {
+            throw exception(CLUB_REDEMPTION_APPLICATION_NOT_EXISTS);
+        }
+        return application;
+    }
+
+    private static void validateReviewable(ClubPointRedemptionApplicationDO application) {
+        if (!ClubPointRedemptionApplicationStatusEnum.PENDING_REVIEW.getStatus().equals(application.getStatus())
+                || application.getFreezeId() == null || application.getStockLockId() == null) {
+            throw exception(CLUB_REDEMPTION_APPLICATION_STATUS_INVALID);
+        }
+    }
+
+    private ClubPointStockLockDO validateStockLockForReview(ClubPointRedemptionApplicationDO application) {
+        ClubPointStockLockDO stockLock = stockLockMapper.selectByApplicationIdForUpdate(application.getId());
+        if (stockLock == null || !application.getStockLockId().equals(stockLock.getId())
+                || !ClubPointStockLockStatusEnum.LOCKED.getStatus().equals(stockLock.getStatus())) {
+            throw exception(CLUB_REDEMPTION_APPLICATION_STATUS_INVALID);
+        }
+        return stockLock;
+    }
+
+    private static boolean handleReviewedIdempotently(ClubPointRedemptionApplicationDO application,
+                                                      ClubPointRedemptionReviewResultEnum result) {
+        if (result == ClubPointRedemptionReviewResultEnum.APPROVED
+                && ClubPointRedemptionApplicationStatusEnum.APPROVED_AND_ISSUED.getStatus()
+                .equals(application.getStatus())) {
+            return true;
+        }
+        if (result == ClubPointRedemptionReviewResultEnum.REJECTED
+                && ClubPointRedemptionApplicationStatusEnum.REJECTED.getStatus().equals(application.getStatus())) {
+            return true;
+        }
+        if (!ClubPointRedemptionApplicationStatusEnum.PENDING_REVIEW.getStatus().equals(application.getStatus())) {
+            throw exception(CLUB_REDEMPTION_APPLICATION_STATUS_INVALID);
+        }
+        return false;
+    }
+
     private Long createStockLock(ClubPointRedemptionApplyReqBO reqBO, ClubPointRedemptionGiftDO gift,
                                  Long applicationId) {
         ClubPointStockLockDO stockLock = new ClubPointStockLockDO()
@@ -145,6 +282,80 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
                 .setIdempotencyKey(STOCK_LOCK_IDEMPOTENCY_PREFIX + applicationId);
         stockLockMapper.insert(stockLock);
         return stockLock.getId();
+    }
+
+    private Long createReviewAudit(ClubPointRedemptionReviewReqBO reqBO,
+                                   ClubPointRedemptionApplicationDO application,
+                                   ClubPointRedemptionReviewResultEnum result,
+                                   String beforeJson,
+                                   LocalDateTime reviewTime) {
+        return clubAuditService.createAuditLog(new ClubAuditCreateReqBO()
+                .setActionType(REDEMPTION_REVIEW)
+                .setBizType(BIZ_TYPE_REDEMPTION_APPLICATION)
+                .setBizId(application.getId())
+                .setOperatorUserId(reqBO.getOperatorUserId())
+                .setOperatorNameSnapshot(reqBO.getOperatorNameSnapshot())
+                .setOperatorRoleSnapshot(reqBO.getOperatorRoleSnapshot())
+                .setOperationTime(reviewTime)
+                .setClientIp(reqBO.getClientIp())
+                .setUserAgent(reqBO.getUserAgent())
+                .setReason(reqBO.getReason())
+                .setBeforeJson(beforeJson)
+                .setAfterJson(reviewAuditSnapshot(application, reqBO, result, reviewTime))
+                .setTargetSnapshotJson(beforeJson)
+                .setSuccess(true));
+    }
+
+    private void insertReviewRecord(ClubPointRedemptionApplicationDO application,
+                                    ClubPointRedemptionReviewReqBO reqBO,
+                                    ClubPointRedemptionReviewResultEnum result,
+                                    LocalDateTime reviewTime,
+                                    ClubPointFreezeDO freeze,
+                                    ClubPointStockLockDO stockLock,
+                                    Long auditLogId) {
+        reviewRecordMapper.insert(new ClubPointRedemptionReviewRecordDO()
+                .setApplicationId(application.getId())
+                .setReviewerUserId(reqBO.getOperatorUserId())
+                .setResult(result.getResult())
+                .setReason(reqBO.getReason())
+                .setReviewTime(reviewTime)
+                .setApplicationSnapshotJson(applicationSnapshot(application))
+                .setFreezeSnapshotJson(freezeSnapshot(freeze))
+                .setStockSnapshotJson(stockSnapshot(stockLock))
+                .setAuditLogId(auditLogId));
+    }
+
+    private void notifyReviewResult(ClubPointRedemptionApplicationDO application,
+                                    ClubPointRedemptionReviewResultEnum result,
+                                    String reason) {
+        try {
+            clubNotifyService.notifyRedemptionReviewResult(application.getUserId(), application.getApplicationNo(),
+                    result.getName(), reason);
+        } catch (Exception ignored) {
+            // 通知是告知链路，失败不能回滚兑换审核业务。
+        }
+    }
+
+    private ClubPointFreezeConvertReqBO buildFreezeConvertReq(ClubPointRedemptionApplicationDO application,
+                                                              ClubPointRedemptionReviewReqBO reqBO,
+                                                              LocalDateTime reviewTime,
+                                                              Long auditLogId) {
+        ClubPointRedemptionEligibilitySnapshotDO eligibilitySnapshot =
+                eligibilitySnapshotMapper.selectById(application.getEligibilitySnapshotId());
+        String transactionKey = REDEMPTION_APPROVE_PREFIX + application.getId();
+        return new ClubPointFreezeConvertReqBO()
+                .setFreezeId(application.getFreezeId())
+                .setTransactionNo(transactionKey)
+                .setTransactionIdempotencyKey(transactionKey)
+                .setUserNameSnapshot(userNameSnapshot(application, eligibilitySnapshot))
+                .setDeptNameSnapshot(eligibilitySnapshot == null ? null : eligibilitySnapshot.getDeptNameSnapshot())
+                .setSourceTitleSnapshot("兑换审核通过")
+                .setReason(reqBO.getReason())
+                .setConvertedAt(reviewTime)
+                .setRuleItemCode(ClubPointRuleItemCodeEnum.REDEMPTION_MIN_POINTS.getCode())
+                .setSourceSnapshotJson(applicationSnapshot(application))
+                .setOperatorUserId(reqBO.getOperatorUserId())
+                .setAuditLogId(auditLogId);
     }
 
     private static ClubPointFreezeCreateReqBO buildFreezeReq(ClubPointRedemptionApplyReqBO reqBO,
@@ -184,6 +395,17 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
                 .setIdempotencyKey(idempotencyKey);
     }
 
+    private static ClubPointRedemptionApplicationDO applyReviewedApplication(
+            ClubPointRedemptionApplicationDO application, ClubPointRedemptionReviewReqBO reqBO,
+            LocalDateTime reviewTime, ClubPointAccountDO afterAccount) {
+        return application.setReviewerUserId(reqBO.getOperatorUserId())
+                .setReviewTime(reviewTime)
+                .setReviewReason(reqBO.getReason())
+                .setAfterNetPoints(accountNetPoints(afterAccount))
+                .setAfterFrozenPoints(accountFrozenPoints(afterAccount))
+                .setAfterAvailablePoints(accountAvailablePoints(afterAccount));
+    }
+
     private static String batchSnapshot(ClubPointRedemptionBatchDO batch) {
         Map<String, Object> snapshot = new LinkedHashMap<>();
         snapshot.put("id", batch.getId());
@@ -213,12 +435,90 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
         return JsonUtils.toJsonString(snapshot);
     }
 
+    private static String applicationSnapshot(ClubPointRedemptionApplicationDO application) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("id", application.getId());
+        snapshot.put("applicationNo", application.getApplicationNo());
+        snapshot.put("requestNo", application.getRequestNo());
+        snapshot.put("batchId", application.getBatchId());
+        snapshot.put("giftId", application.getGiftId());
+        snapshot.put("userId", application.getUserId());
+        snapshot.put("status", application.getStatus());
+        snapshot.put("pointsCost", application.getPointsCost());
+        snapshot.put("quantity", application.getQuantity());
+        snapshot.put("freezeId", application.getFreezeId());
+        snapshot.put("stockLockId", application.getStockLockId());
+        snapshot.put("deductTransactionId", application.getDeductTransactionId());
+        snapshot.put("reviewerUserId", application.getReviewerUserId());
+        snapshot.put("reviewTime", application.getReviewTime());
+        snapshot.put("reviewReason", application.getReviewReason());
+        snapshot.put("directIssueTime", application.getDirectIssueTime());
+        return JsonUtils.toJsonString(snapshot);
+    }
+
+    private static String freezeSnapshot(ClubPointFreezeDO freeze) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("id", freeze.getId());
+        snapshot.put("freezeNo", freeze.getFreezeNo());
+        snapshot.put("userId", freeze.getUserId());
+        snapshot.put("points", freeze.getPoints());
+        snapshot.put("status", freeze.getStatus());
+        snapshot.put("sourceType", freeze.getSourceType());
+        snapshot.put("sourceId", freeze.getSourceId());
+        snapshot.put("convertedTransactionId", freeze.getConvertedTransactionId());
+        snapshot.put("releasedAt", freeze.getReleasedAt());
+        snapshot.put("releaseReason", freeze.getReleaseReason());
+        return JsonUtils.toJsonString(snapshot);
+    }
+
+    private static String stockSnapshot(ClubPointStockLockDO stockLock) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("id", stockLock.getId());
+        snapshot.put("giftId", stockLock.getGiftId());
+        snapshot.put("applicationId", stockLock.getApplicationId());
+        snapshot.put("userId", stockLock.getUserId());
+        snapshot.put("quantity", stockLock.getQuantity());
+        snapshot.put("status", stockLock.getStatus());
+        snapshot.put("usedTime", stockLock.getUsedTime());
+        snapshot.put("releasedTime", stockLock.getReleasedTime());
+        snapshot.put("releaseReason", stockLock.getReleaseReason());
+        return JsonUtils.toJsonString(snapshot);
+    }
+
+    private static String reviewAuditSnapshot(ClubPointRedemptionApplicationDO application,
+                                              ClubPointRedemptionReviewReqBO reqBO,
+                                              ClubPointRedemptionReviewResultEnum result,
+                                              LocalDateTime reviewTime) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("id", application.getId());
+        snapshot.put("applicationNo", application.getApplicationNo());
+        snapshot.put("result", result.getResult());
+        snapshot.put("reviewerUserId", reqBO.getOperatorUserId());
+        snapshot.put("reviewTime", reviewTime);
+        snapshot.put("reason", reqBO.getReason());
+        return JsonUtils.toJsonString(snapshot);
+    }
+
     private static void validateApplyReq(ClubPointRedemptionApplyReqBO reqBO) {
         if (reqBO == null || reqBO.getBatchId() == null || reqBO.getGiftId() == null
                 || reqBO.getUserId() == null || !APPLY_QUANTITY.equals(reqBO.getQuantity())
                 || !StringUtils.hasText(reqBO.getRequestNo())) {
             throw exception(CLUB_REDEMPTION_GIFT_INVALID);
         }
+    }
+
+    private static ClubPointRedemptionReviewResultEnum validateReviewReq(ClubPointRedemptionReviewReqBO reqBO) {
+        if (reqBO == null || reqBO.getId() == null || reqBO.getOperatorUserId() == null) {
+            throw exception(CLUB_REDEMPTION_APPLICATION_STATUS_INVALID);
+        }
+        ClubPointRedemptionReviewResultEnum result = ClubPointRedemptionReviewResultEnum.of(reqBO.getResult());
+        if (result == null) {
+            throw exception(CLUB_REDEMPTION_APPLICATION_STATUS_INVALID);
+        }
+        if (result == ClubPointRedemptionReviewResultEnum.REJECTED && !StringUtils.hasText(reqBO.getReason())) {
+            throw exception(CLUB_REDEMPTION_APPLICATION_STATUS_INVALID);
+        }
+        return result;
     }
 
     private static String buildApplicationIdempotencyKey(ClubPointRedemptionApplyReqBO reqBO) {
@@ -228,6 +528,14 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
 
     private static LocalDateTime applyTime(ClubPointRedemptionApplyReqBO reqBO) {
         return reqBO.getApplyTime() == null ? LocalDateTime.now() : reqBO.getApplyTime();
+    }
+
+    private static String userNameSnapshot(ClubPointRedemptionApplicationDO application,
+                                           ClubPointRedemptionEligibilitySnapshotDO eligibilitySnapshot) {
+        if (eligibilitySnapshot != null && StringUtils.hasText(eligibilitySnapshot.getUserNameSnapshot())) {
+            return eligibilitySnapshot.getUserNameSnapshot();
+        }
+        return "用户" + application.getUserId();
     }
 
     private static int accountNetPoints(ClubPointAccountDO account) {

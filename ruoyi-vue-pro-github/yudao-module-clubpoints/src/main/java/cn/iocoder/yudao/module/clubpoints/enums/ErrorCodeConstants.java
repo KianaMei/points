@@ -72,5 +72,7 @@ public interface ErrorCodeConstants {
     ErrorCode CLUB_REDEMPTION_GIFT_STOCK_NOT_ENOUGH = new ErrorCode(1_300_000_060, "兑换礼品库存不足");
     ErrorCode CLUB_REDEMPTION_ELIGIBILITY_NOT_EXISTS = new ErrorCode(1_300_000_061, "兑换资格快照不存在");
     ErrorCode CLUB_REDEMPTION_ELIGIBILITY_NOT_QUALIFIED = new ErrorCode(1_300_000_062, "不具备本批次兑换资格");
+    ErrorCode CLUB_REDEMPTION_APPLICATION_NOT_EXISTS = new ErrorCode(1_300_000_063, "兑换申请不存在");
+    ErrorCode CLUB_REDEMPTION_APPLICATION_STATUS_INVALID = new ErrorCode(1_300_000_064, "兑换申请状态不允许当前操作");
 
 }
