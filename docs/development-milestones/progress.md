@@ -600,3 +600,8 @@
 - 2026-06-26：M12.1 验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointSchemaHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointSchemaHardeningTest` 运行 2 个测试，失败 0，错误 0。
 - 2026-06-26：M12.1 质量验证：禁用元数据扫描无命中；新增 hardening 测试范围内 `tenant_id|TenantBaseDO|Redis|redisTemplate|StringRedisTemplate|Redisson` 扫描无命中。
 - 2026-06-26：M12.1 文档同步：`M12-hardening-acceptance.md` 勾选 M12.1，`00-index.md` 将 M12 标为 `[~]` 并把下一入口切换到 M12.2 权限矩阵复查，`club-points-development-plan.md` 记录 M12.1 当前硬化事实。
+- 2026-06-26：M12.2 RED：运行 `Test-Path ruoyi-vue-pro-github\yudao-module-clubpoints\src\test\java\cn\iocoder\yudao\module\clubpoints\hardening\ClubPointPermissionMatrixHardeningTest.java` 返回 `False`，确认缺少集中权限矩阵硬化测试入口。
+- 2026-06-26：M12.2 GREEN：新增 `ClubPointPermissionMatrixHardeningTest`，用真实账本 Controller、Service 和 Mapper 验证员工本人积分可查、他人积分不暴露，负责人只能查询负责俱乐部发放来源流水和成员摘要，负责人查询其他俱乐部被 `CLUB_SCOPE_DENIED` 拒绝，管理员账本查询可见全局账户和流水。
+- 2026-06-26：M12.2 管理员专属权限验证：测试反射校验兑换审核和报表导出接口均有后端 `@PreAuthorize`，并解析 seed 确认负责人角色未授予 `clubpoints:redemption:review` 和 `clubpoints:report:export`，后端拦截不依赖前端按钮隐藏。
+- 2026-06-26：M12.2 验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointPermissionMatrixHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointPermissionMatrixHardeningTest` 运行 2 个测试，失败 0，错误 0。
+- 2026-06-26：M12.2 文档同步：`M12-hardening-acceptance.md` 勾选 M12.2，`00-index.md` 将下一入口切换到 M12.3 幂等和并发测试，`club-points-development-plan.md` 记录 M12.2 当前硬化事实。

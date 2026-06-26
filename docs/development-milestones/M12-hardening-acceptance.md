@@ -81,18 +81,25 @@
 
 ## 任务 M12.2 权限矩阵复查
 
-- [ ] 员工访问本人数据成功。
-- [ ] 员工访问他人数据失败。
-- [ ] 负责人访问负责俱乐部成功。
-- [ ] 负责人访问其他俱乐部失败。
-- [ ] 负责人访问全局兑换审核失败。
-- [ ] 负责人访问报表导出失败。
-- [ ] 管理员访问全局功能成功。
+- [x] 员工访问本人数据成功。
+- [x] 员工访问他人数据失败。
+- [x] 负责人访问负责俱乐部成功。
+- [x] 负责人访问其他俱乐部失败。
+- [x] 负责人访问全局兑换审核失败。
+- [x] 负责人访问报表导出失败。
+- [x] 管理员访问全局功能成功。
 
 验收：
 
-- [ ] 每类越权场景有接口验证。
-- [ ] 后端拦截独立于前端按钮隐藏。
+- [x] 每类越权场景有接口验证。
+- [x] 后端拦截独立于前端按钮隐藏。
+
+证据：
+
+- RED：`Test-Path ruoyi-vue-pro-github\yudao-module-clubpoints\src\test\java\cn\iocoder\yudao\module\clubpoints\hardening\ClubPointPermissionMatrixHardeningTest.java` 返回 `False`，确认 M12.2 缺少集中权限矩阵硬化测试。
+- GREEN：新增 `ClubPointPermissionMatrixHardeningTest`，用真实账本 Controller、Service 和 Mapper 验证员工只能取本人积分数据、负责人只能取负责俱乐部发放来源的流水与成员摘要、负责人访问其他俱乐部被 `CLUB_SCOPE_DENIED` 拒绝、管理员账本查询可见全局账户与流水。
+- GREEN：同一测试通过反射校验兑换审核和报表导出接口的后端 `@PreAuthorize`，并解析 seed 确认负责人角色未被授予 `clubpoints:redemption:review` 与 `clubpoints:report:export`。
+- Verify：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointPermissionMatrixHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointPermissionMatrixHardeningTest` 运行 2 个测试，失败 0，错误 0。
 
 ## 任务 M12.3 幂等和并发测试
 

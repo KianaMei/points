@@ -185,4 +185,6 @@ M0 空模块
 - M11 已放行；下一步入口是 M12 硬化验收。
 - M12.1 已完成数据库约束复查，新增 `ClubPointSchemaHardeningTest` 复核正式 schema 与测试 DDL 的 `club_points_*` 表、主键、字段、`deleted` 字段和唯一键。
 - M12.1 已通过 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointSchemaHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`；`ClubPointSchemaHardeningTest` 运行 2 个测试，失败 0，错误 0。
-- M12 当前进行中；下一步入口是 M12.2 权限矩阵复查。
+- M12.2 已完成权限矩阵复查，新增 `ClubPointPermissionMatrixHardeningTest` 验证员工本人、员工他人隔离、负责人负责俱乐部、负责人其他俱乐部拒绝、负责人禁止兑换审核和报表导出、管理员全局账本可见。
+- M12.2 已通过 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointPermissionMatrixHardeningTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`；`ClubPointPermissionMatrixHardeningTest` 运行 2 个测试，失败 0，错误 0。
+- M12 当前进行中；下一步入口是 M12.3 幂等和并发测试。
