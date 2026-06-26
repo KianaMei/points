@@ -1,5 +1,7 @@
 # M9 兑换闭环 Implementation Plan
 
+**Status:** `[~]` M9.1 已完成并有 RED/GREEN 证据；当前入口是 M9.2 批次 Service。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 实现兑换批次、礼品、资格快照、申请、冻结、库存锁、审核发放，保证并发不超兑、重复提交不重复扣分。
@@ -61,19 +63,28 @@
 
 ## 任务 M9.1 DO 和 Mapper
 
-- [ ] 创建 `ClubPointRedemptionBatchDO`。
-- [ ] 创建 `ClubPointRedemptionGiftDO`。
-- [ ] 创建 `ClubPointRedemptionEligibilitySnapshotDO`。
-- [ ] 创建 `ClubPointRedemptionApplicationDO`。
-- [ ] 创建 `ClubPointStockLockDO`。
-- [ ] 创建 `ClubPointRedemptionReviewRecordDO`。
-- [ ] 创建对应 Mapper。
-- [ ] 字段和 M1 DDL 一致。
+- [x] 创建 `ClubPointRedemptionBatchDO`。
+- [x] 创建 `ClubPointRedemptionGiftDO`。
+- [x] 创建 `ClubPointRedemptionEligibilitySnapshotDO`。
+- [x] 创建 `ClubPointRedemptionApplicationDO`。
+- [x] 创建 `ClubPointStockLockDO`。
+- [x] 创建 `ClubPointRedemptionReviewRecordDO`。
+- [x] 创建对应 Mapper。
+- [x] 字段和 M1 DDL 一致。
 
 验收：
 
-- [ ] 批次、礼品、资格、申请、库存锁、审核记录都可落库。
-- [ ] 申请幂等键存在。
+- [x] 批次、礼品、资格、申请、库存锁、审核记录都可落库。
+- [x] 申请幂等键存在。
+
+证据：
+
+- RED：新增 `ClubPointRedemptionMapperTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `dal.dataobject.redemption` 包、6 个兑换 DO 和 6 个兑换 Mapper 不存在，符合 M9.1 RED 预期。
+- GREEN：新增兑换批次、礼品、资格快照、兑换申请、库存锁、审核记录 6 个 DO 和对应 Mapper；字段按 M1 DDL 映射，JSON 字段按字符串承载，DO 继承 `BaseDO`，未新增 `tenant_id` 或 `TenantBaseDO`。
+- H2 兼容修正：`club_points_redemption_batch.year` 是正式 schema 字段，H2 测试库把 `year` 视为保留字；本次复用既有 `ClubPointUserYearStatusDO` 模式，在 `ClubPointRedemptionBatchDO#year` 加反引号列名映射，不改正式 schema。
+- 实现边界：M9.1 只落 DO/Mapper 和映射测试，不实现批次状态机、资格生成、库存条件更新、积分冻结、审核扣分、释放或 API；没有引入 Redis 库存事实源。
+- M9.1 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointRedemptionMapperTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointRedemptionMapperTest` 运行 `1` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；redemption DO/Mapper/Test 范围 `tenant_id|TenantBaseDO` 无命中；redemption DO/Mapper/Test 精确元数据模式无命中；本次无 `service/redemption`、LedgerService、冻结 Service 或 Redis 库存实现。
 
 ## 任务 M9.2 批次 Service
 
