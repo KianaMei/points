@@ -1,6 +1,6 @@
 # M8 非签到积分、违规扣分、弄虚作假 Implementation Plan
 
-**Status:** `[~]` M8.1-M8.2 已完成并有 RED/GREEN 证据；当前入口是 M8.3 负责人提交材料。
+**Status:** `[~]` M8.1-M8.3 已完成并有 RED/GREEN 证据；当前入口是 M8.4 管理员审核材料。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -106,20 +106,30 @@
 
 ## 任务 M8.3 负责人提交材料
 
-- [ ] 负责人创建材料草稿。
-- [ ] 负责人添加积分明细。
-- [ ] 负责人上传附件。
-- [ ] 负责人提交审核。
-- [ ] 校验负责人数据范围。
-- [ ] 校验规则项存在。
-- [ ] 校验录入分值在规则区间内。
-- [ ] 提交后锁定提交内容。
+- [x] 负责人创建材料草稿。
+- [x] 负责人添加积分明细。
+- [x] 负责人上传附件。
+- [x] 负责人提交审核。
+- [x] 校验负责人数据范围。
+- [x] 校验规则项存在。
+- [x] 校验录入分值在规则区间内。
+- [x] 提交后锁定提交内容。
 
 验收：
 
-- [ ] 负责人不能给非负责俱乐部提交材料。
-- [ ] 分值越界失败。
-- [ ] 附件缺失按规则失败。
+- [x] 负责人不能给非负责俱乐部提交材料。
+- [x] 分值越界失败。
+- [x] 附件缺失按规则失败。
+
+证据：
+
+- RED：新增 `ClubPointContributionServiceImplTest` 后运行 `mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD FAILURE`；失败原因是 `ClubPointContributionService` / `ClubPointContributionServiceImpl`、材料保存/提交 BO 和 `ClubPointContributionMaterialTypeEnum` 不存在，符合 M8.3 RED 预期。
+- GREEN：新增 `ClubPointContributionService` / `ClubPointContributionServiceImpl`、`ClubPointContributionMaterialSaveReqBO`、`ClubPointContributionItemSaveReqBO`、`ClubPointContributionSubmitReqBO` 和 `ClubPointContributionMaterialTypeEnum`；负责人范围使用 `ClubScopeService.validateManagedClub(...)`，草稿保存材料主表和多条明细，附件通过 `ClubAttachmentService.bindAttachment(...)` 绑定到 `BIZ_TYPE_CONTRIBUTION_MATERIAL + materialId`，提交审核将状态从 `DRAFT(1)` 推进到 `PENDING_REVIEW(2)`。
+- 规则边界：材料类型映射当前正向非签到积分规则项 `MONTHLY_DUTY`、`PLAN_EXECUTION`、`PUBLICITY_SUGGESTION`、`AWARD_REWARD`、`SPECIAL_CONTRIBUTION`；规则项缺失保留 `CLUB_RULE_ITEM_NOT_EXISTS`，分值越界转换为 contribution 专用 `CLUB_CONTRIBUTION_RULE_VALUE_OUT_OF_RANGE`。
+- 实现边界：M8.3 不生成审核记录、不锁定附件、不调用 LedgerService、不写 `club_points_transaction`；提交后锁定按状态机语义实现为 `PENDING_REVIEW` 不允许 `updateDraft(...)` 修改内容，审核通过后的材料/附件实际锁定进入 M8.4。
+- M8.3 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest=ClubPointContributionServiceImplTest "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointContributionServiceImplTest` 运行 `5` 个测试，失败 `0`，错误 `0`。
+- M8 当前组合验证：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointContributionMapperTest,ClubPointContributionEnumTest,ClubPointContributionServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；合计 `10` 个测试，失败 `0`，错误 `0`。
+- 质量验证：`git diff --check` 无空白错误，仅 CRLF 提示；源码与测试范围 `tenant_id|TenantBaseDO` 无命中；源码、测试和本次文档范围精确元数据模式无命中；M8.3 contribution 主实现范围 `ClubPointLedgerService|createTransaction|club_points_transaction` 无命中。
 
 ## 任务 M8.4 管理员审核材料
 

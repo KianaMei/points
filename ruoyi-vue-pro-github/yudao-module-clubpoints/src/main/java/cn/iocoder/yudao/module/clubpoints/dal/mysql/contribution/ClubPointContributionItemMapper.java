@@ -26,4 +26,9 @@ public interface ClubPointContributionItemMapper extends BaseMapperX<ClubPointCo
                 .eq(ClubPointContributionItemDO::getEffectiveUniqueKey, effectiveUniqueKey));
     }
 
+    default int deleteByMaterialId(Long materialId) {
+        return delete(new LambdaQueryWrapperX<ClubPointContributionItemDO>()
+                .eq(ClubPointContributionItemDO::getMaterialId, materialId));
+    }
+
 }
