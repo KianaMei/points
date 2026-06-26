@@ -1253,6 +1253,8 @@ M11.5 已落地 `GET /clubpoints/job-run/page`、`GET /clubpoints/job-run/detail
 
 M11.6 已落地通知和待办汇总接口：`GET /clubpoints/app/notify/my-page`、`PUT /clubpoints/app/notify/update-read`、`GET /clubpoints/app/dashboard/summary`、`GET /clubpoints/leader/dashboard/summary`、`GET /clubpoints/admin/dashboard/summary`。员工通知复用 system 站内信，不新建 clubpoints 通知表；员工和负责人入口使用当前登录人，管理员工作台权限为 `clubpoints:dashboard:query`。待办数量直接读取业务状态，负责人只统计自己有效负责俱乐部内的草稿活动、驳回活动、签到异常和待提交材料，管理员只统计待审核活动、待审核材料、待审核兑换和待处理异议。
 
+M11.7 已落地管理员基础数据页面：`/clubpoints/admin/rule`、`/clubpoints/admin/club`、`/clubpoints/admin/ledger/account`、`/clubpoints/admin/ledger/transaction`、`/clubpoints/admin/settlement`。页面只调用已封装 API；强确认只出现在物理删除俱乐部；积分调整必须带 `requestNo`；撤销必须从原流水发起并填原因；手动结算重跑不在前端判断重复发分，继续由后端幂等兜底。
+
 ### 16.3 前端
 
 前端从独立仓库 `github.com/yudaocode/yudao-ui-admin-vue3` 克隆完整工程，当前已落到 `C:\jobs\pointsmall\ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3`。后续 clubpoints 前端直接在这个工程内开发。页面、字段、按钮权限、接口映射和强确认口径以 `docs/club-points-frontend-page-design.md` 为准。

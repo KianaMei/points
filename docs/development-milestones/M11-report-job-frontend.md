@@ -215,17 +215,25 @@ M11.6 证据：
 
 ## 任务 M11.7 管理员基础数据页
 
-- [ ] 规则版本页 `/clubpoints/admin/rule`，展示版本、规则项、状态、生效时间、附件，发布、撤回、停用二次确认并填原因，按钮权限 `clubpoints:rule:manage`。
-- [ ] 俱乐部和负责人页 `/clubpoints/admin/club`，支持增改、停用、删除、设置负责人、增删成员；物理删除走强确认弹窗，其他操作普通确认加原因。
-- [ ] 积分账户页 `/clubpoints/admin/ledger/account`，分页查询可用、冻结、累计，按钮权限 `clubpoints:ledger:query`。
-- [ ] 积分流水页 `/clubpoints/admin/ledger/transaction`，支持流水分页、调整、撤销；调整带 `requestNo`、规则版本、原因、附件，撤销选原流水加原因。
-- [ ] 活动结算页 `/clubpoints/admin/settlement`，手动触发结算并查看结算运行记录，按钮权限 `clubpoints:settlement:run`、`clubpoints:settlement:query`。
+- [x] 规则版本页 `/clubpoints/admin/rule`，展示版本、规则项、状态、生效时间、附件，发布、撤回、停用二次确认并填原因，按钮权限 `clubpoints:rule:manage`。
+- [x] 俱乐部和负责人页 `/clubpoints/admin/club`，支持增改、停用、删除、设置负责人、增删成员；物理删除走强确认弹窗，其他操作普通确认加原因。
+- [x] 积分账户页 `/clubpoints/admin/ledger/account`，分页查询可用、冻结、累计，按钮权限 `clubpoints:ledger:query`。
+- [x] 积分流水页 `/clubpoints/admin/ledger/transaction`，支持流水分页、调整、撤销；调整带 `requestNo`、规则版本、原因、附件，撤销选原流水并填原因。
+- [x] 活动结算页 `/clubpoints/admin/settlement`，手动触发结算并查看结算运行记录，按钮权限 `clubpoints:settlement:run`、`clubpoints:settlement:query`。
 
 验收：
 
-- [ ] 强确认只出现在物理删除俱乐部，其他删除只有普通确认。
-- [ ] 调整带请求号，撤销必须选原流水并填原因。
-- [ ] 手动重跑结算不重复发分。
+- [x] 强确认只出现在物理删除俱乐部，其他删除只有普通确认。
+- [x] 调整带请求号，撤销必须选原流水并填原因。
+- [x] 手动重跑结算不重复发分。
+
+M11.7 证据：
+
+- RED：运行 `Test-Path` 检查 `views/clubpoints/admin/rule/index.vue`、`club/index.vue`、`ledger/account/index.vue`、`ledger/transaction/index.vue`、`settlement/index.vue`，全部返回 `False`。
+- GREEN：新增 5 个管理员基础页面；页面复用 `api/clubpoints/admin/rule.ts`、`club.ts`、`ledger.ts`、`settlement.ts`，没有在页面散写后端业务 URL。
+- 页面口径：规则页展示规则版本和规则项，发布 / 撤回 / 停用必须填原因；俱乐部页支持增改停用、成员和负责人维护，只有物理删除俱乐部使用 `StrongConfirmDialog`；账户页只读分页展示可用、冻结、累计积分；流水页调整积分生成 `requestNo`，撤销只能从原流水操作并填原因；结算页提示幂等由后端兜底，前端只发起运行请求。
+- 前端类型验证：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，二次过滤 `clubpoints` 路径命中 `0` 行，仍为前端工程存量 TypeScript 债。
+- 质量门禁：强确认扫描只命中管理员俱乐部删除页；`requestNo` 扫描命中积分调整页；页面范围 `request.get|post|put|delete` 无命中；新增页面不触碰后端事实源、租户字段或 Redis。
 
 ## 任务 M11.8 员工前端页面
 

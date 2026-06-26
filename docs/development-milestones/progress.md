@@ -547,3 +547,8 @@
 - 2026-06-26：M11.6 单测验证：`mvn -pl yudao-module-clubpoints -am -Dtest="ClubPointNotifyAppControllerTest,ClubPointDashboardControllerTest,ClubNotifyServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；`ClubPointDashboardControllerTest` 4 个测试、`ClubPointNotifyAppControllerTest` 2 个测试、`ClubNotifyServiceImplTest` 5 个测试，合计 11 个测试，失败 0，错误 0。
 - 2026-06-26：M11.6 前端验证：`app/dashboard.ts` 同步 `availablePoints/frozenPoints/totalEarnedPoints/joinedClubCount/registeredActivityCount/pendingRedemptionCount/unreadNotifyCount/todoCount/todoItems`；新增 `leader/dashboard.ts` 和 `admin/dashboard.ts`；`vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
 - 2026-06-26：M11.6 质量验证：`git diff --check` 仅 LF/CRLF 提示；M11.6 源码 / 测试范围 `tenant_id|TenantBaseDO`、Redis、AI 元数据扫描均 0 命中；事实源扫描只命中 `accountMapper.selectByUserId` 读取账户缓存，没有新增流水 / 账户写入。
+- 2026-06-26：M11.7 RED：运行 `Test-Path` 检查管理员规则版本、俱乐部、积分账户、积分流水、活动结算 5 个页面文件，全部返回 `False`，确认页面尚未落地。
+- 2026-06-26：M11.7 GREEN：新增 `views/clubpoints/admin/rule/index.vue`、`club/index.vue`、`ledger/account/index.vue`、`ledger/transaction/index.vue`、`settlement/index.vue`；页面全部复用 `api/clubpoints/admin/*` 请求封装，不在页面散写业务 URL。
+- 2026-06-26：M11.7 交互口径：规则版本发布 / 撤回 / 停用必须填原因；俱乐部物理删除才使用 `StrongConfirmDialog`，停用、移除成员、设置负责人只用普通原因确认；积分调整使用 `resetLedgerAdjustRequestNo('admin-ledger-adjust')` 生成请求号，失败重试保留同号；撤销必须从原流水操作并填写原因；结算页提示重复发分由后端幂等兜底。
+- 2026-06-26：M11.7 前端验证：5 个页面 `Test-Path` 全部返回 `True`；`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 退出码 `1`，过滤 `clubpoints` 路径命中 `0`，属于前端存量 TypeScript 债。
+- 2026-06-26：M11.7 质量验证：强确认扫描只命中管理员俱乐部删除页；`requestNo` 扫描命中积分调整页；页面范围 `request.get|post|put|delete` 无命中；新增页面没有后端事实源、租户字段或 Redis 改动。

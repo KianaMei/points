@@ -174,3 +174,4 @@ M0 空模块
 - M11.4 已完成管理员报表导出接口，支持五类报表 Excel 导出、`clubpoints:report:export` 权限、`REPORT_EXPORT` 强审计、审计失败阻断导出和前端下载封装；已通过 RED/GREEN Controller / Service 测试。下一步入口是 M11.5 任务监控。
 - M11.5 已完成管理员任务运行列表、详情和失败任务人工重试接口；`clubpoints:job:query` 查询、`clubpoints:job:handle` 处理，重试写 `JOB_RUN_RETRY` 强审计，并按原 `runKey + retryCount+1` 派发活动结算或年度清零 Job 保持幂等；已通过 RED/GREEN Controller / Service 测试。下一步入口是 M11.6 通知和待办。
 - M11.6 已完成员工通知分页和标记已读、员工 / 负责人 / 管理员工作台待办汇总；员工通知复用 system 站内信，负责人只统计有效负责俱乐部内待办，管理员工作台权限为 `clubpoints:dashboard:query`；已通过 RED/GREEN Controller 测试、通知失败不回滚测试、前端类型过滤验证和质量门禁。下一步入口是 M11.7 管理员基础数据页。
+- M11.7 已完成管理员规则版本、俱乐部和负责人、积分账户、积分流水、活动结算 5 个基础页面；强确认只用于物理删除俱乐部，积分调整带请求号，撤销从原流水发起，结算重跑幂等继续由后端兜底；已通过 RED/GREEN 文件验证、前端类型过滤验证和页面权限 / URL 扫描。下一步入口是 M11.8 员工前端页面。
