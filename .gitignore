@@ -11,6 +11,8 @@
 **/*.log
 *.log
 .m2-tmp/
+.tmp/
+.playwright-cli/
 
 # IDE and OS files
 .idea/
