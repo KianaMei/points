@@ -57,6 +57,8 @@ public class ClubPointLedgerServiceImpl implements ClubPointLedgerService {
     private static final String JOB_BIZ_ALL_ACCOUNT = "ALL_ACCOUNT";
     private static final String ANNUAL_CLEARING_RULE_ITEM_CODE = "ANNUAL_CLEARING";
     private static final String ANNUAL_CLEARING_RULE_ITEM_NAME = "年度清零";
+    private static final String REDEMPTION_DEDUCTION_RULE_ITEM_CODE = "REDEMPTION_DEDUCTION";
+    private static final String REDEMPTION_DEDUCTION_RULE_ITEM_NAME = "兑换扣减";
     private static final Integer JOB_STATUS_SUCCESS = 3;
     private static final Integer DEFAULT_MANUAL_TRIGGER_SOURCE = 2;
 
@@ -216,6 +218,9 @@ public class ClubPointLedgerServiceImpl implements ClubPointLedgerService {
         if (isAnnualClearing(reqBO)) {
             return buildAnnualClearingRuleSnapshot(reqBO);
         }
+        if (isRedemptionDeduction(reqBO)) {
+            return buildRedemptionDeductionRuleSnapshot(reqBO);
+        }
         if (reqBO.getRuleVersionId() != null) {
             return ruleResolveService.snapshotRuleItem(reqBO.getRuleVersionId(), reqBO.getRuleItemCode(), reqBO.getPoints());
         }
@@ -234,6 +239,17 @@ public class ClubPointLedgerServiceImpl implements ClubPointLedgerService {
         return snapshot.setRuleSnapshotJson(JsonUtils.toJsonString(toAnnualClearingRuleSnapshotMap(snapshot)));
     }
 
+    private ClubPointRuleSnapshotBO buildRedemptionDeductionRuleSnapshot(ClubPointLedgerCreateReqBO reqBO) {
+        ClubPointRuleVersionDO version = ruleResolveService.getEffectiveVersion(reqBO.getOccurredAt());
+        ClubPointRuleSnapshotBO snapshot = new ClubPointRuleSnapshotBO()
+                .setRuleVersionId(version.getId())
+                .setRuleVersionNo(version.getVersionNo())
+                .setRuleItemCode(REDEMPTION_DEDUCTION_RULE_ITEM_CODE)
+                .setRuleItemName(REDEMPTION_DEDUCTION_RULE_ITEM_NAME)
+                .setPointsSnapshot(reqBO.getPoints());
+        return snapshot.setRuleSnapshotJson(JsonUtils.toJsonString(toRedemptionDeductionRuleSnapshotMap(snapshot)));
+    }
+
     private static Map<String, Object> toAnnualClearingRuleSnapshotMap(ClubPointRuleSnapshotBO snapshot) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("ruleVersionId", snapshot.getRuleVersionId());
@@ -241,6 +257,17 @@ public class ClubPointLedgerServiceImpl implements ClubPointLedgerService {
         map.put("ruleItemCode", snapshot.getRuleItemCode());
         map.put("ruleItemName", snapshot.getRuleItemName());
         map.put("pointsSnapshot", snapshot.getPointsSnapshot());
+        return map;
+    }
+
+    private static Map<String, Object> toRedemptionDeductionRuleSnapshotMap(ClubPointRuleSnapshotBO snapshot) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("ruleVersionId", snapshot.getRuleVersionId());
+        map.put("ruleVersionNo", snapshot.getRuleVersionNo());
+        map.put("ruleItemCode", snapshot.getRuleItemCode());
+        map.put("ruleItemName", snapshot.getRuleItemName());
+        map.put("pointsSnapshot", snapshot.getPointsSnapshot());
+        map.put("source", "giftPointsCost");
         return map;
     }
 
@@ -590,6 +617,12 @@ public class ClubPointLedgerServiceImpl implements ClubPointLedgerService {
 
     private static boolean isAnnualClearing(ClubPointLedgerCreateReqBO reqBO) {
         return ClubPointTransactionSourceTypeEnum.ANNUAL_CLEARING.getType().equals(reqBO.getSourceType());
+    }
+
+    private static boolean isRedemptionDeduction(ClubPointLedgerCreateReqBO reqBO) {
+        return ClubPointTransactionDirectionEnum.DECREASE.getDirection().equals(reqBO.getDirection())
+                && ClubPointTransactionSourceTypeEnum.REDEMPTION.getType().equals(reqBO.getSourceType())
+                && ClubPointCategoryEnum.REDEMPTION_DEDUCTION.getCategory().equals(reqBO.getPointCategory());
     }
 
     private static Integer getAvailablePoints(ClubPointAccountDO account) {

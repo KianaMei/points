@@ -314,6 +314,24 @@ class ClubPointRedemptionControllerTest extends BaseDbUnitTest {
     }
 
     @Test
+    void appGiftPageShouldReturnEmptyWhenEligibilitySnapshotMissingOrNotQualified() {
+        ClubPointRedemptionBatchDO batch = insertOpenBatch();
+        insertGift(batch.getId(), ClubPointRedemptionGiftStatusEnum.ON_SHELF.getStatus());
+
+        login(USER_ID, "Employee");
+        PageResult<AppRedemptionGiftRespVO> noSnapshotPage = appController.getGiftPage(appGiftPage(batch.getId()))
+                .getCheckedData();
+        assertEquals(0L, noSnapshotPage.getTotal());
+        assertTrue(noSnapshotPage.getList().isEmpty());
+
+        insertEligibility(batch.getId(), USER_ID, false, 101);
+        PageResult<AppRedemptionGiftRespVO> notQualifiedPage = appController.getGiftPage(appGiftPage(batch.getId()))
+                .getCheckedData();
+        assertEquals(0L, notQualifiedPage.getTotal());
+        assertTrue(notQualifiedPage.getList().isEmpty());
+    }
+
+    @Test
     void adminApplicationEndpointShouldListAndReviewWithGlobalPermissionBoundary() {
         ClubPointRedemptionBatchDO batch = insertOpenBatch();
         ClubPointRedemptionGiftDO gift = insertGift(batch.getId(), ClubPointRedemptionGiftStatusEnum.ON_SHELF.getStatus());

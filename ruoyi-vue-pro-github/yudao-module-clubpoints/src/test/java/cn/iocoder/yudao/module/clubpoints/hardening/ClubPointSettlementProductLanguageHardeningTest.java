@@ -120,6 +120,15 @@ class ClubPointSettlementProductLanguageHardeningTest {
         assertTrue(violations.isEmpty(), "Settlement page product language is not aligned: " + violations);
     }
 
+    @Test
+    void frontendManualSettlementShouldForcePublishedActivityIntoSettlementFlow() throws Exception {
+        String content = Files.readString(settlementViewPath(), StandardCharsets.UTF_8);
+
+        assertTrue(content.contains("force: true"),
+                "Manual activity point issuance must pass force=true, otherwise published activities cannot be "
+                        + "closed and issued through the real business UI");
+    }
+
     private static void assertOperationSummary(String methodName, Class<?>[] parameterTypes,
                                                String expectedSummary) throws NoSuchMethodException {
         Method method = ClubPointSettlementAdminController.class.getMethod(methodName, parameterTypes);

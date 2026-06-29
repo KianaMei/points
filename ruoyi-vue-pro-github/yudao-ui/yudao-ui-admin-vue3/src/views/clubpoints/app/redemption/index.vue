@@ -150,6 +150,7 @@ const selectedGift = ref<RedemptionApi.AppRedemptionGiftRespVO>()
 const applyForm = reactive<RedemptionApi.AppRedemptionApplyReqVO>({
   batchId: 0,
   giftId: 0,
+  quantity: 1,
   requestNo: '',
   remark: ''
 })
@@ -205,6 +206,7 @@ const openApplyDialog = (row: RedemptionApi.AppRedemptionGiftRespVO) => {
   Object.assign(applyForm, {
     batchId: row.batchId,
     giftId: row.id,
+    quantity: 1,
     requestNo: RedemptionApi.resetRedemptionApplyRequestNo(contextKey),
     remark: ''
   })

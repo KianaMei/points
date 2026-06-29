@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.clubpoints.enums.ClubPointActivityStatusEnum;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -43,7 +44,9 @@ public interface ClubPointActivityMapper extends BaseMapperX<ClubPointActivityDO
                 .eqIfPresent(ClubPointActivityDO::getClubId, clubId)
                 .likeIfPresent(ClubPointActivityDO::getClubNameSnapshot, clubName)
                 .likeIfPresent(ClubPointActivityDO::getTitle, activityTitle)
-                .eq(ClubPointActivityDO::getStatus, ClubPointActivityStatusEnum.ENDED.getStatus())
+                .inIfPresent(ClubPointActivityDO::getStatus, Arrays.asList(
+                        ClubPointActivityStatusEnum.PUBLISHED.getStatus(),
+                        ClubPointActivityStatusEnum.ENDED.getStatus()))
                 .geIfPresent(ClubPointActivityDO::getStartTime, startTime)
                 .leIfPresent(ClubPointActivityDO::getEndTime, endTime)
                 .orderByDesc(ClubPointActivityDO::getStartTime)

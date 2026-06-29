@@ -170,6 +170,21 @@ class ClubPointRedemptionReviewServiceImplTest extends BaseDbUnitTest {
     }
 
     @Test
+    void approveShouldUseGiftCostInsteadOfRedemptionMinimumRuleRange() {
+        insertPublishedRedemptionRule(50, 50);
+        RedemptionFixture fixture = insertPendingApplication("REQ-M9-6010", 5);
+
+        redemptionApplicationService.review(buildReviewReq(fixture.application.getId(),
+                ClubPointRedemptionReviewResultEnum.APPROVED.getResult(), "审核通过"));
+
+        ClubPointRedemptionApplicationDO application = applicationMapper.selectById(fixture.application.getId());
+        ClubPointTransactionDO transaction = transactionMapper.selectById(application.getDeductTransactionId());
+        assertEquals(ClubPointRedemptionApplicationStatusEnum.APPROVED_AND_ISSUED.getStatus(), application.getStatus());
+        assertEquals(5, transaction.getPoints());
+        assertEquals(ClubPointCategoryEnum.REDEMPTION_DEDUCTION.getCategory(), transaction.getPointCategory());
+    }
+
+    @Test
     void rejectShouldReleaseFreezeAndStockWithoutCreatingTransaction() {
         RedemptionFixture fixture = insertPendingApplication("REQ-M9-6004");
 
@@ -261,9 +276,13 @@ class ClubPointRedemptionReviewServiceImplTest extends BaseDbUnitTest {
     }
 
     private RedemptionFixture insertPendingApplication(String requestNo) {
+        return insertPendingApplication(requestNo, 60);
+    }
+
+    private RedemptionFixture insertPendingApplication(String requestNo, Integer pointsCost) {
         Long userId = USER_ID + nextUserOffset++;
-        insertAccount(userId);
-        ClubPointRedemptionGiftDO gift = insertGift();
+        insertAccount(userId, pointsCost);
+        ClubPointRedemptionGiftDO gift = insertGift(pointsCost);
         ClubPointRedemptionEligibilitySnapshotDO eligibilitySnapshot = insertEligibility(userId);
         ClubPointRedemptionApplicationDO application = new ClubPointRedemptionApplicationDO()
                 .setApplicationNo("RDA-" + requestNo)
@@ -273,7 +292,7 @@ class ClubPointRedemptionReviewServiceImplTest extends BaseDbUnitTest {
                 .setEligibilitySnapshotId(eligibilitySnapshot.getId())
                 .setUserId(userId)
                 .setStatus(ClubPointRedemptionApplicationStatusEnum.PENDING_REVIEW.getStatus())
-                .setPointsCost(60)
+                .setPointsCost(pointsCost)
                 .setQuantity(1)
                 .setQualificationRankSnapshot(1)
                 .setBeforeNetPoints(100)
@@ -288,7 +307,7 @@ class ClubPointRedemptionReviewServiceImplTest extends BaseDbUnitTest {
         ClubPointFreezeDO freeze = new ClubPointFreezeDO()
                 .setFreezeNo("RDF-" + requestNo)
                 .setUserId(userId)
-                .setPoints(60)
+                .setPoints(pointsCost)
                 .setStatus(ClubPointFreezeStatusEnum.FROZEN.getStatus())
                 .setSourceType(ClubPointFreezeSourceTypeEnum.REDEMPTION_APPLICATION.getType())
                 .setSourceId(application.getId())
@@ -312,23 +331,31 @@ class ClubPointRedemptionReviewServiceImplTest extends BaseDbUnitTest {
     }
 
     private void insertAccount(Long userId) {
+        insertAccount(userId, 60);
+    }
+
+    private void insertAccount(Long userId, Integer frozenPoints) {
         accountMapper.insert(new ClubPointAccountDO()
                 .setUserId(userId)
                 .setTotalPositivePoints(100)
                 .setTotalNegativePoints(0)
                 .setNetPoints(100)
-                .setFrozenPoints(60)
-                .setAvailablePoints(40)
+                .setFrozenPoints(frozenPoints)
+                .setAvailablePoints(Math.max(100 - frozenPoints, 0))
                 .setAnnualEarnedPoints(100)
                 .setVersion(1));
     }
 
     private ClubPointRedemptionGiftDO insertGift() {
+        return insertGift(60);
+    }
+
+    private ClubPointRedemptionGiftDO insertGift(Integer pointsCost) {
         ClubPointRedemptionGiftDO gift = new ClubPointRedemptionGiftDO()
                 .setBatchId(3001L)
                 .setName("运动水杯")
                 .setDescription("礼品说明")
-                .setPointsCost(60)
+                .setPointsCost(pointsCost)
                 .setTierMinPoints(50)
                 .setTierMaxPoints(100)
                 .setReferenceAmountCent(1999L)
@@ -363,6 +390,10 @@ class ClubPointRedemptionReviewServiceImplTest extends BaseDbUnitTest {
     }
 
     private void insertPublishedRedemptionRule() {
+        insertPublishedRedemptionRule(1, 100);
+    }
+
+    private void insertPublishedRedemptionRule(Integer minPoints, Integer maxPoints) {
         ClubPointRuleVersionDO version = new ClubPointRuleVersionDO()
                 .setVersionNo("V-M9-6")
                 .setName("M9.6 规则")
@@ -380,8 +411,8 @@ class ClubPointRedemptionReviewServiceImplTest extends BaseDbUnitTest {
                 .setItemName("兑换最低可用积分")
                 .setItemType(1)
                 .setCategory(ClubPointCategoryEnum.REDEMPTION_DEDUCTION.getCategory())
-                .setMinPoints(1)
-                .setMaxPoints(100)
+                .setMinPoints(minPoints)
+                .setMaxPoints(maxPoints)
                 .setDefaultPoints(50)
                 .setStatus(RULE_ITEM_ENABLED)
                 .setSort(1));

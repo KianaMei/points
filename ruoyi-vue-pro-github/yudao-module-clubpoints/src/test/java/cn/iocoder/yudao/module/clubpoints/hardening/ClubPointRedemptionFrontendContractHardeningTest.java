@@ -31,6 +31,18 @@ class ClubPointRedemptionFrontendContractHardeningTest {
                 "App redemption gift view must not read missing field pointPrice");
     }
 
+    @Test
+    void appRedemptionApplyPayloadShouldSendRequiredQuantity() throws Exception {
+        Path frontendRoot = findRuoyiRoot().resolve("yudao-ui/yudao-ui-admin-vue3");
+        String appRedemptionApi = read(frontendRoot.resolve("src/api/clubpoints/app/redemption.ts"));
+        String appRedemptionView = read(frontendRoot.resolve("src/views/clubpoints/app/redemption/index.vue"));
+
+        assertTrue(appRedemptionApi.contains("quantity: number"),
+                "App redemption apply API type must include backend-required quantity");
+        assertTrue(appRedemptionView.contains("quantity: 1"),
+                "App redemption apply form must submit backend-required fixed quantity=1");
+    }
+
     private static String read(Path file) throws IOException {
         return new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
     }

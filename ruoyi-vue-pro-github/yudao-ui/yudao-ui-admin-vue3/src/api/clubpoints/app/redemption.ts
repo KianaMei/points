@@ -31,6 +31,7 @@ export interface AppRedemptionGiftRespVO extends ClubPointBaseRespVO {
 export interface AppRedemptionApplyReqVO {
   batchId: number
   giftId: number
+  quantity: number
   requestNo: string
   remark?: string
 }

@@ -188,6 +188,22 @@ class ClubPointSettlementAdminControllerTest extends BaseDbUnitTest {
     }
 
     @Test
+    void pendingActivityPageShouldIncludePublishedActivityForForcedManualIssuance() throws Exception {
+        login(1L, "管理员");
+        ClubPointRuleVersionDO ruleVersion = seedSettlementRules();
+        ClubPointClubDO club = insertClub("CLUB-M7-API-PUBLISHED", "M7 API Published Club");
+        ClubPointActivityDO activity = insertPublishedActivity(club, "M7 API Published Activity");
+        insertConfigVersion(activity, ruleVersion);
+
+        PageResult<AdminSettlementPendingActivityRespVO> pendingPage = adminController.getPendingActivityPage(
+                buildPendingActivityBusinessPageReq(null, "Published Activity", null, null)).getCheckedData();
+
+        assertEquals(1L, pendingPage.getTotal());
+        assertEquals(activity.getId(), pendingPage.getList().get(0).getId());
+        assertEquals(ClubPointActivityStatusEnum.PUBLISHED.getStatus(), pendingPage.getList().get(0).getStatus());
+    }
+
+    @Test
     void adminSettlementPagesShouldUseBusinessFiltersAndBusinessResponseFields() throws Exception {
         login(1L, "管理员");
         ClubPointRuleVersionDO ruleVersion = seedSettlementRules();
@@ -397,6 +413,13 @@ class ClubPointSettlementAdminControllerTest extends BaseDbUnitTest {
                 .setRemark("activity remark");
         activityMapper.insert(activity);
         return activity;
+    }
+
+    private ClubPointActivityDO insertPublishedActivity(ClubPointClubDO club, String title) {
+        ClubPointActivityDO activity = insertEndedActivity(club, title)
+                .setStatus(ClubPointActivityStatusEnum.PUBLISHED.getStatus());
+        activityMapper.updateById(activity);
+        return activityMapper.selectById(activity.getId());
     }
 
     private void insertConfigVersion(ClubPointActivityDO activity, ClubPointRuleVersionDO ruleVersion) {

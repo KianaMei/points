@@ -393,6 +393,7 @@ const submitManualSettlement = async () => {
   try {
     const result = await SettlementApi.runSettlement({
       activityId: currentActivity.value.id,
+      force: true,
       reason
     })
     const detail = await tryLoadManualResult(result)

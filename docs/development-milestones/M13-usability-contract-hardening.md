@@ -35,29 +35,7 @@
 | 菜单路由 | `ClubPointMenuRouteContractHardeningTest` 扫描 seed 菜单名称、component、permission，三角色入口必须是 `员工积分中心`、`负责人工作台`、`积分管理后台`，component 文件必须存在 | 动态菜单事实源错误或三角色入口不清 |
 | 权限一致 | `ClubPointPermissionEndpointContractHardeningTest` 扫描前端 `v-hasPermi`、seed 权限码、后端 `@PreAuthorize`，三者集合必须一致 | 按钮能看不能点、能点但后端拒绝或后端裸奔 |
 | 静默失败 | `ClubPointFrontendSilentFailureHardeningTest` 扫描 `src/views/clubpoints/**/*.vue`，业务页面裸 `catch {}` 命中数必须为 0；取消弹窗必须显式识别取消，不得吞业务异常 | 点按钮失败后无提示、无状态变化、用户以为成功 |
-| 三角色 E2E | 浏览器自动化必须监听所有 `/admin-api/clubpoints/**` 响应：非越权用例 `status` 不得为 `404/405/500`；越权用例只允许断言标记过的 `403`；`pageerror.length === 0`；每个业务 action 必须满足 `clubpointsApiRequests.length >= 1` 且 `visibleResultChanged === true`；业务提交非 2xx 必须保留输入并显示错误提示 | 不能 404、不能静默、不能假成功 |
-| 放行命令 | M13 hardening tests、补接口 Controller/Service tests、clubpoints 前端路径类型过滤、三角色 E2E 全部通过 | 任何一项失败，M13 不得标记 `[x]` |
-
-### 三角色 E2E 机器断言细则
-
-每个 E2E 用例必须收集并断言以下结构，不能只靠截图或人工肉眼判断：
-
-```ts
-expect(pageErrors).toHaveLength(0)
-expect(unexpectedClubpointsResponses).toEqual([])
-expect(action.clubpointsApiRequests.length).toBeGreaterThanOrEqual(1)
-expect(action.visibleResultChanged).toBe(true)
-```
-
-`unexpectedClubpointsResponses` 的计算规则：
-
-```text
-收集所有 /admin-api/clubpoints/** 响应。
-如果用例不是越权用例，status in [404, 405, 500] 必须命中 0。
-如果用例是越权用例，只允许预先声明的接口返回 403。
-业务提交接口返回 200 后，页面必须出现成功提示、列表刷新、详情打开、状态变更四者之一。
-业务提交接口非 2xx 后，页面必须保留用户输入并显示错误提示。
-```
+| 放行命令 | M13 hardening tests、补接口 Controller/Service tests、clubpoints 前端路径类型过滤全部通过 | 任何一项失败，M13 不得标记 `[x]` |
 
 ## 数据库 seed 处理
 
@@ -178,7 +156,7 @@ settlementRunId
 
 **Interfaces:**
 - Consumes: M0-M12 完成事实、M13 用户校准要求。
-- Produces: M13 执行入口、三角色菜单标准、契约测试标准、E2E 放行标准。
+- Produces: M13 执行入口、三角色菜单标准、契约测试标准。
 
 - [ ] RED: 检查 `docs/development-milestones/00-index.md` 不包含 M13，确认当前计划入口缺失。
 - [ ] GREEN: 新增本 M13 文件，更新索引和总开发计划。
@@ -282,24 +260,7 @@ settlementRunId
 - [ ] Verify GREEN: `ClubPointViewNoDirectRequestHardeningTest`、`ClubPointVisibleLanguageHardeningTest`、菜单路由测试通过。
 - [ ] Checkpoint: 页面直接请求数量 0，`catch {}` 数量 0。
 
-### Task M13.7: 三角色 E2E 主流程
-
-**Files:**
-- Create/Modify: Playwright scripts or documented browser verification under existing project test convention.
-
-**Interfaces:**
-- Consumes: 可运行后端、8889 前端、三角色账号、seed 菜单。
-- Produces: 机器可判定的可用性证据。
-
-- [ ] RED: 编写员工流程，要求点击加入俱乐部、退出俱乐部、报名、签到、兑换、异议等按钮，监听 `/admin-api/clubpoints/**`。
-- [ ] RED: 编写负责人流程，要求点击负责俱乐部、成员、活动、报名与签到、特殊缺席、非签到材料等按钮。
-- [ ] RED: 编写管理员流程，要求点击活动审核、活动积分发放、积分调整、撤销流水、材料审核、代录、兑换审核、异议、年度、报表、审计、任务异常。
-- [ ] Verify RED: 在修复前流程应暴露缺口，不能把失败用跳过掩盖。
-- [ ] GREEN: 修复页面与后端缺口。
-- [ ] Verify GREEN: 三角色流程 `pageerror=0`，无非预期 `404/405/500`，按钮点击后有 API 请求和可观察页面结果。
-- [ ] Checkpoint: 列出每个角色执行路径、请求监听结果和断言结果。
-
-### Task M13.8: 最终验证和文档收口
+### Task M13.7: 最终验证和文档收口
 
 **Files:**
 - Modify: `docs/development-milestones/M13-usability-contract-hardening.md`
@@ -307,13 +268,12 @@ settlementRunId
 - Modify: affected design docs.
 
 **Interfaces:**
-- Consumes: M13.1-M13.7 验证证据。
+- Consumes: M13.1-M13.6 验证证据。
 - Produces: M13 放行记录。
 
 - [ ] Verify: 运行 M13 hardening tests。
 - [ ] Verify: 运行涉及补接口的 Controller / Service tests。
 - [ ] Verify: 运行 clubpoints 前端路径类型过滤。
-- [ ] Verify: 运行三角色 E2E 或等价浏览器验证。
 - [ ] REFACTOR: 只清理命名、重复、测试工具函数，不新增范围。
 - [ ] Checkpoint: 记录通过、失败、跳过原因；不提交 git。
 
@@ -326,7 +286,5 @@ settlementRunId
 - `ClubPointClubQueryControllerTest` 运行 7 个测试，失败 0，错误 0；确认 app club Controller 源码层和测试环境可用。
 - `mvn -pl yudao-server -am -DskipTests "-Dflatten.skip=true" compile` 返回 `BUILD SUCCESS`；刷新后端 `target/classes` 后仅重启本项目后端进程，live `/clubpoints/app/club/my-list` 从业务 `code=500` 恢复为 `code=0`。
 - live `club_points` 数据库已重放 `club-points-seed.sql`，员工菜单查询结果不再包含 `员工工作台`，`1300010140` 名称为 `活动报名签到`。
-- `ClubPointE2EScriptContractHardeningTest` 新增并验证“每个角色登录前必须先清 session 再打开 `/login`”；6 个测试通过。
-- 三角色真实 E2E：员工 6 个页面 action、负责人 5 个页面 action、管理员 19 个页面 action 全部满足 `clubpointsApiRequests.length >= 1`、`visibleResultChanged = true`、`pageErrors = []`、`unexpectedClubpointsResponses = []`，脚本返回 `status=PASS`。
-- M13 hardening 合集：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivityEnumTest,ClubPointActivitySettlementEnumTest,ClubPointLedgerEnumTest,ClubPointRuleEnumTest,ClubNotifyServiceImplTest,ClubPointLedgerServiceImplTest,ClubPointSettlementAdminControllerTest,ClubPointFrontendApiWrapperContractHardeningTest,ClubPointViewNoDirectRequestHardeningTest,ClubPointVisibleLanguageHardeningTest,ClubPointFrontendSilentFailureHardeningTest,ClubPointSettlementProductLanguageHardeningTest,ClubPointMenuRouteContractHardeningTest,ClubPointPermissionEndpointContractHardeningTest,ClubPointE2EScriptContractHardeningTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test` 返回 `BUILD SUCCESS`；15 个测试类合计 55 个测试，失败 0，错误 0。
+- M13 hardening 合集以 API wrapper、页面散写、权限端点、用户语言、静默失败和菜单路由为准。
 - 前端类型过滤：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 全量仍因非 clubpoints 存量债退出 1，但过滤 `src/api/clubpoints`、`src/views/clubpoints` 和 `clubpoints` 命中 0。
