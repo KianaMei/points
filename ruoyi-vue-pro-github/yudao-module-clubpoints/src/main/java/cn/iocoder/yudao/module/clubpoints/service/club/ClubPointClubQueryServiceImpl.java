@@ -109,6 +109,15 @@ public class ClubPointClubQueryServiceImpl implements ClubPointClubQueryService 
 
     @Override
     @Transactional(readOnly = true)
+    public PageResult<ClubPointClubMemberBO> getLeaderMemberPage(Long loginUserId,
+                                                                 ClubPointClubMemberPageReqBO reqBO) {
+        clubScopeService.validateManagedClub(loginUserId, reqBO.getClubId());
+        return toMemberPage(memberMapper.selectPageByClubIdAndStatus(reqBO, reqBO.getClubId(), MEMBER_ACTIVE,
+                reqBO.getUserId()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PageResult<ClubPointClubInfoBO> getAdminClubPage(ClubPointClubPageReqBO reqBO) {
         return toClubInfoPage(clubMapper.selectPage(reqBO, reqBO.getKeyword(), reqBO.getStatus()),
                 false, Collections.emptyMap());

@@ -13,6 +13,7 @@
 .m2-tmp/
 .tmp/
 .playwright-cli/
+.omc/
 
 # IDE and OS files
 .idea/

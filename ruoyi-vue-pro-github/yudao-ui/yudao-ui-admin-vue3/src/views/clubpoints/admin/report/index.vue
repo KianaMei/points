@@ -19,10 +19,10 @@
       <el-form-item v-if="showField('year')" label="年度" prop="year">
         <el-input-number v-model="queryParams.year" :min="2000" class="!w-160px" controls-position="right" />
       </el-form-item>
-      <el-form-item v-if="showField('userId')" label="员工ID" prop="userId">
+      <el-form-item v-if="showField('userId')" label="员工" prop="userId">
         <el-input-number v-model="queryParams.userId" :min="1" class="!w-180px" controls-position="right" />
       </el-form-item>
-      <el-form-item v-if="showField('clubId')" label="俱乐部ID" prop="clubId">
+      <el-form-item v-if="showField('clubId')" label="俱乐部" prop="clubId">
         <el-input-number v-model="queryParams.clubId" :min="1" class="!w-180px" controls-position="right" />
       </el-form-item>
       <el-form-item v-if="showField('batchId')" label="批次ID" prop="batchId">
@@ -100,7 +100,7 @@
   <ContentWrap>
     <el-table v-loading="loading" :data="list">
       <template v-if="activeReport === 'pointDetail'">
-        <el-table-column align="center" label="流水ID" prop="id" width="100" />
+        <el-table-column align="center" label="流水编号" prop="id" width="100" />
         <el-table-column label="流水号" min-width="180" prop="transactionNo" show-overflow-tooltip />
         <el-table-column label="员工" min-width="150" prop="userNameSnapshot" show-overflow-tooltip />
         <el-table-column align="center" label="方向" prop="direction" width="110">
@@ -123,7 +123,7 @@
       <template v-else-if="activeReport === 'redemption'">
         <el-table-column align="center" label="申请ID" prop="id" width="100" />
         <el-table-column label="申请号" min-width="180" prop="applicationNo" show-overflow-tooltip />
-        <el-table-column align="center" label="员工ID" prop="userId" width="110" />
+        <el-table-column align="center" label="员工" prop="userId" width="110" />
         <el-table-column align="center" label="状态" prop="status" width="120">
           <template #default="{ row }">
             <StatusTag :type="DICT_TYPE.CLUB_POINTS_REDEMPTION_APPLICATION_STATUS" :value="row.status" />
@@ -135,7 +135,7 @@
         <el-table-column :formatter="dateFormatter" align="center" label="审核时间" prop="reviewTime" width="180" />
       </template>
       <template v-else-if="activeReport === 'ledgerSummary'">
-        <el-table-column align="center" label="员工ID" prop="userId" width="110" />
+        <el-table-column align="center" label="员工" prop="userId" width="110" />
         <el-table-column label="员工" min-width="150" prop="userNameSnapshot" show-overflow-tooltip />
         <el-table-column align="center" label="报表正向" prop="reportPositivePoints" width="120" />
         <el-table-column align="center" label="报表负向" prop="reportNegativePoints" width="120" />

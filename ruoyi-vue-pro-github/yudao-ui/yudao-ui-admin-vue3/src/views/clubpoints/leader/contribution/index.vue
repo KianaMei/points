@@ -282,7 +282,11 @@ const submitMaterial = async (row: ContributionApi.LeaderContributionRespVO) => 
     await ContributionApi.submitLeaderContribution({ id: row.id, reason: result.value })
     message.success('已提交')
     await getList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('提交材料失败，请重试')
+    }
+  }
 }
 
 const withdrawMaterial = async (row: ContributionApi.LeaderContributionRespVO) => {
@@ -291,7 +295,11 @@ const withdrawMaterial = async (row: ContributionApi.LeaderContributionRespVO) =
     await ContributionApi.withdrawLeaderContribution({ id: row.id, reason: result.value })
     message.success('已撤回')
     await getList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('撤回材料失败，请重试')
+    }
+  }
 }
 
 onMounted(getList)

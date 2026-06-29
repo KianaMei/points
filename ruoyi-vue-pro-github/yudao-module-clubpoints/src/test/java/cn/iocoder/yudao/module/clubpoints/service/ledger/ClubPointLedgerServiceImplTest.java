@@ -192,7 +192,7 @@ class ClubPointLedgerServiceImplTest extends BaseDbUnitTest {
                 .setSourceType(ClubPointTransactionSourceTypeEnum.ACTIVITY_SETTLEMENT.getType())
                 .setSourceId(300L)
                 .setSourceItemId(301L)
-                .setSourceTitleSnapshot("活动结算")
+                .setSourceTitleSnapshot("活动积分发放")
                 .setIssuingClubId(400L)
                 .setIssuingClubCodeSnapshot("CLUB001")
                 .setIssuingClubNameSnapshot("篮球俱乐部")

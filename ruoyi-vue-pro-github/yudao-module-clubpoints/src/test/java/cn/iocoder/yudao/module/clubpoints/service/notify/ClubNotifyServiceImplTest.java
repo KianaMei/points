@@ -50,10 +50,10 @@ class ClubNotifyServiceImplTest extends BaseDbUnitTest {
 
     @Test
     void notifyPointsChangedShouldUseSystemNotifyTemplate() {
-        clubNotifyService.notifyPointsChanged(100L, "活动结算", "+", 20, 120);
+        clubNotifyService.notifyPointsChanged(100L, "活动积分发放", "+", 20, 120);
 
         Map<String, Object> params = captureParams(TEMPLATE_POINTS_CHANGED);
-        assertEquals("活动结算", params.get("reason"));
+        assertEquals("活动积分发放", params.get("reason"));
         assertEquals("+", params.get("direction"));
         assertEquals(20, params.get("points"));
         assertEquals(120, params.get("availablePoints"));
@@ -118,7 +118,7 @@ class ClubNotifyServiceImplTest extends BaseDbUnitTest {
                     .setStatus(1)
                     .setJoinTime(LocalDateTime.now())
                     .setActiveUniqueKey("1:" + userId));
-            clubNotifyService.notifyPointsChanged(userId, "活动结算", "+", 20, 120);
+            clubNotifyService.notifyPointsChanged(userId, "活动积分发放", "+", 20, 120);
         }
 
     }

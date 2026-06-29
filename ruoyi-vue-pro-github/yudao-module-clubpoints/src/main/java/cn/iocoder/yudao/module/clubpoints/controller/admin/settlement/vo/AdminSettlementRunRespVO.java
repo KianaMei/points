@@ -11,6 +11,11 @@ public class AdminSettlementRunRespVO {
 
     private Long id;
     private Long activityId;
+    private Long clubId;
+    private String activityTitle;
+    private String clubName;
+    private LocalDateTime activityStartTime;
+    private LocalDateTime activityEndTime;
     private Long jobRunId;
     private String runKey;
     private Integer status;

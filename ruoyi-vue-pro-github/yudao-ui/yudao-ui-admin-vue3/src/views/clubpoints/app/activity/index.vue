@@ -214,7 +214,11 @@ const cancelActivity = async (row: any) => {
     await ActivityApi.cancelRegistration({ id: registrationId, reason: result.value })
     message.success('取消报名成功')
     await Promise.all([getActivityList(), getRegistrationList()])
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('取消报名失败，请重试')
+    }
+  }
 }
 
 const check = async (row: any, type: 'in' | 'out') => {

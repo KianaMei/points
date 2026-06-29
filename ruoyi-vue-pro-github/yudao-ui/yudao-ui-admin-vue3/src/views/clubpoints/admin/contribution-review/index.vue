@@ -18,7 +18,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="俱乐部ID" prop="clubId">
+      <el-form-item label="俱乐部" prop="clubId">
         <el-input-number v-model="queryParams.clubId" :min="1" class="!w-180px" controls-position="right" />
       </el-form-item>
       <el-form-item>

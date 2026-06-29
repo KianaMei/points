@@ -3,11 +3,14 @@ package cn.iocoder.yudao.module.clubpoints.service.activity;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActivityDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActivityRegistrationDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubLeaderDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubMemberDO;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.activity.ClubPointActivityMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.activity.ClubPointActivityRegistrationMapper;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.club.ClubLeaderMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.club.ClubMemberMapper;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointActivityStatusEnum;
+import cn.iocoder.yudao.module.clubpoints.enums.ClubPointLeaderStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointMemberStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRegistrationCancelReasonEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRegistrationStatusEnum;
@@ -22,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_ACTIVITY_CANCEL_WINDOW_CLOSED;
@@ -39,6 +44,7 @@ import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_S
 public class ClubPointRegistrationServiceImpl implements ClubPointRegistrationService {
 
     private static final Integer MEMBER_ACTIVE = ClubPointMemberStatusEnum.ACTIVE.getStatus();
+    private static final Integer LEADER_ACTIVE = ClubPointLeaderStatusEnum.ACTIVE.getStatus();
     private static final Integer REGISTRATION_ACTIVE = ClubPointRegistrationStatusEnum.REGISTERED.getStatus();
     private static final Integer REGISTRATION_CANCELED = ClubPointRegistrationStatusEnum.CANCELED.getStatus();
 
@@ -48,6 +54,8 @@ public class ClubPointRegistrationServiceImpl implements ClubPointRegistrationSe
     private ClubPointActivityRegistrationMapper registrationMapper;
     @Resource
     private ClubMemberMapper memberMapper;
+    @Resource
+    private ClubLeaderMapper leaderMapper;
     @Resource
     private ClubScopeService clubScopeService;
 
@@ -109,8 +117,16 @@ public class ClubPointRegistrationServiceImpl implements ClubPointRegistrationSe
     @Transactional(readOnly = true)
     public PageResult<ClubPointActivityRegistrationDO> getLeaderRegistrationPage(Long loginUserId,
                                                                                  ClubPointRegistrationPageReqBO reqBO) {
-        clubScopeService.validateManagedClub(loginUserId, reqBO.getClubId());
-        return registrationMapper.selectPage(reqBO, reqBO.getClubId(), reqBO.getActivityId(),
+        if (reqBO.getClubId() != null) {
+            clubScopeService.validateManagedClub(loginUserId, reqBO.getClubId());
+            return registrationMapper.selectPage(reqBO, reqBO.getClubId(), reqBO.getActivityId(),
+                    reqBO.getStatus(), reqBO.getUserId());
+        }
+        List<Long> managedClubIds = getManagedClubIds(loginUserId);
+        if (managedClubIds.isEmpty()) {
+            return PageResult.empty();
+        }
+        return registrationMapper.selectPageByClubIds(reqBO, managedClubIds, reqBO.getActivityId(),
                 reqBO.getStatus(), reqBO.getUserId());
     }
 
@@ -176,6 +192,12 @@ public class ClubPointRegistrationServiceImpl implements ClubPointRegistrationSe
 
     private static LocalDateTime operationTime(LocalDateTime operationTime) {
         return operationTime != null ? operationTime : LocalDateTime.now();
+    }
+
+    private List<Long> getManagedClubIds(Long loginUserId) {
+        return leaderMapper.selectActiveListByUserId(loginUserId, LEADER_ACTIVE).stream()
+                .map(ClubLeaderDO::getClubId)
+                .collect(Collectors.toList());
     }
 
     private static String buildActiveUniqueKey(Long activityId, Long userId) {

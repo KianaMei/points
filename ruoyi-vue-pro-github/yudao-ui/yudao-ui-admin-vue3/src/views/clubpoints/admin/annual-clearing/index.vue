@@ -28,7 +28,7 @@
       <el-form-item label="年度" prop="year">
         <el-input-number v-model="queryParams.year" :min="2000" class="!w-160px" controls-position="right" />
       </el-form-item>
-      <el-form-item label="员工ID" prop="userId">
+      <el-form-item label="员工" prop="userId">
         <el-input-number v-model="queryParams.userId" :min="1" class="!w-180px" controls-position="right" />
       </el-form-item>
       <el-form-item label="状态" prop="status">
@@ -53,7 +53,7 @@
     <el-table v-loading="loading" :data="list" class="mt-20px">
       <el-table-column align="center" label="记录ID" prop="id" width="100" />
       <el-table-column align="center" label="年度" prop="year" width="90" />
-      <el-table-column align="center" label="员工ID" prop="userId" width="110" />
+      <el-table-column align="center" label="员工" prop="userId" width="110" />
       <el-table-column align="center" label="清零前可用" prop="availablePointsBefore" width="120" />
       <el-table-column align="center" label="冻结积分" prop="frozenPointsBefore" width="120" />
       <el-table-column align="center" label="可清积分" prop="clearablePoints" width="120" />

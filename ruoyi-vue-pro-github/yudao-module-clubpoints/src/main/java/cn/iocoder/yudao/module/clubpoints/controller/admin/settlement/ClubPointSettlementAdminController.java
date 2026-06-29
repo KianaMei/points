@@ -37,7 +37,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserNickname;
 
-@Tag(name = "管理后台 - 活动结算")
+@Tag(name = "管理后台 - 活动积分发放")
 @RestController
 @RequestMapping("/clubpoints/settlement")
 @Validated
@@ -47,7 +47,7 @@ public class ClubPointSettlementAdminController {
     private ClubPointActivitySettlementAdminService settlementAdminService;
 
     @GetMapping("/pending-activity-page")
-    @Operation(summary = "待结算活动分页")
+    @Operation(summary = "待自动发放活动分页")
     @PreAuthorize("@ss.hasPermission('clubpoints:settlement:query')")
     public CommonResult<PageResult<AdminSettlementPendingActivityRespVO>> getPendingActivityPage(
             @Valid AdminSettlementPendingActivityPageReqVO pageReqVO) {
@@ -58,7 +58,7 @@ public class ClubPointSettlementAdminController {
     }
 
     @PostMapping("/run")
-    @Operation(summary = "手动触发活动结算")
+    @Operation(summary = "异常补发或重跑活动积分")
     @PreAuthorize("@ss.hasPermission('clubpoints:settlement:run')")
     public CommonResult<String> runSettlement(@RequestBody @Valid AdminSettlementRunReqVO reqVO) throws Exception {
         return success(settlementAdminService.runSettlement(new ClubPointSettlementManualRunReqBO()
@@ -73,7 +73,7 @@ public class ClubPointSettlementAdminController {
     }
 
     @GetMapping("/page")
-    @Operation(summary = "结算运行记录分页")
+    @Operation(summary = "活动积分发放记录分页")
     @PreAuthorize("@ss.hasPermission('clubpoints:settlement:query')")
     public CommonResult<PageResult<AdminSettlementRunRespVO>> getRunPage(
             @Valid AdminSettlementRunPageReqVO pageReqVO) {
@@ -84,8 +84,8 @@ public class ClubPointSettlementAdminController {
     }
 
     @GetMapping("/detail")
-    @Operation(summary = "结算明细")
-    @Parameter(name = "id", description = "结算运行记录 ID", required = true, example = "1")
+    @Operation(summary = "活动积分发放明细")
+    @Parameter(name = "id", description = "发放记录 ID", required = true, example = "1")
     @PreAuthorize("@ss.hasPermission('clubpoints:settlement:query')")
     public CommonResult<AdminSettlementDetailRespVO> getDetail(@RequestParam("id") Long id) {
         ClubPointSettlementDetailBO detailBO = settlementAdminService.getDetail(id);
@@ -99,7 +99,11 @@ public class ClubPointSettlementAdminController {
             AdminSettlementPendingActivityPageReqVO reqVO) {
         ClubPointSettlementPendingActivityPageReqBO reqBO = new ClubPointSettlementPendingActivityPageReqBO()
                 .setClubId(reqVO.getClubId())
-                .setKeyword(reqVO.getKeyword());
+                .setKeyword(reqVO.getKeyword())
+                .setClubName(reqVO.getClubName())
+                .setActivityTitle(reqVO.getActivityTitle())
+                .setStartTime(reqVO.getStartTime())
+                .setEndTime(reqVO.getEndTime());
         reqBO.setPageNo(reqVO.getPageNo());
         reqBO.setPageSize(reqVO.getPageSize());
         return reqBO;
@@ -108,7 +112,11 @@ public class ClubPointSettlementAdminController {
     private static ClubPointSettlementRunPageReqBO toRunPageReqBO(AdminSettlementRunPageReqVO reqVO) {
         ClubPointSettlementRunPageReqBO reqBO = new ClubPointSettlementRunPageReqBO()
                 .setActivityId(reqVO.getActivityId())
-                .setStatus(reqVO.getStatus());
+                .setClubName(reqVO.getClubName())
+                .setActivityTitle(reqVO.getActivityTitle())
+                .setStatus(reqVO.getStatus())
+                .setStartTime(reqVO.getStartTime())
+                .setEndTime(reqVO.getEndTime());
         reqBO.setPageNo(reqVO.getPageNo());
         reqBO.setPageSize(reqVO.getPageSize());
         return reqBO;

@@ -169,6 +169,34 @@ class ClubPointActivitySettlementJobTest extends BaseDbUnitTest {
         assertNotNull(jobRun.getErrorMessage());
     }
 
+    @Test
+    void executeBlankParamShouldScanEndedActivitiesAndSettleAutomatically() throws Exception {
+        ClubPointRuleVersionDO ruleVersion = seedSettlementRules();
+        ClubPointClubDO club = insertClub();
+        ClubPointActivityDO first = insertEndedActivity(club);
+        insertConfigVersion(first, ruleVersion);
+        ClubPointActivityRegistrationDO firstRegistration = insertRegistration(first, 7304L, "Auto User A");
+        insertAttendance(firstRegistration, ClubPointAttendanceTargetTypeEnum.CHECK_IN.getTargetType(),
+                first.getStartTime());
+        ClubPointActivityDO second = insertEndedActivity(club);
+        insertConfigVersion(second, ruleVersion);
+        ClubPointActivityRegistrationDO secondRegistration = insertRegistration(second, 7305L, "Auto User B");
+        insertAttendance(secondRegistration, ClubPointAttendanceTargetTypeEnum.CHECK_IN.getTargetType(),
+                second.getStartTime());
+
+        String result = job.execute("");
+
+        assertTrue(result.contains("\"successCount\":2"));
+        assertEquals(2L, jobRunMapper.selectList().size());
+        assertEquals(2L, settlementRunMapper.selectList().size());
+        assertEquals(1L, countSettlementTransactions(first.getId()));
+        assertEquals(1L, countSettlementTransactions(second.getId()));
+        assertEquals(ClubPointActivityStatusEnum.SETTLED.getStatus(),
+                activityMapper.selectById(first.getId()).getStatus());
+        assertEquals(ClubPointActivityStatusEnum.SETTLED.getStatus(),
+                activityMapper.selectById(second.getId()).getStatus());
+    }
+
     private String executeJob(String runKey, Long activityId, Integer triggerSource, Integer retryCount)
             throws Exception {
         return job.execute(JsonUtils.toJsonString(new ClubPointActivitySettlementJobReqBO()

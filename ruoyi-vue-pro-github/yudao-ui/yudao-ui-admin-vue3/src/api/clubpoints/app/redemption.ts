@@ -21,7 +21,7 @@ export interface AppRedemptionBatchRespVO extends ClubPointBaseRespVO {
 export interface AppRedemptionGiftRespVO extends ClubPointBaseRespVO {
   batchId: number
   name: string
-  pointPrice: number
+  pointsCost: number
   stockTotal?: number
   stockLocked?: number
   stockUsed?: number

@@ -22,10 +22,15 @@ import cn.iocoder.yudao.module.clubpoints.controller.admin.club.vo.AdminClubSave
 import cn.iocoder.yudao.module.clubpoints.controller.app.club.ClubPointClubAppController;
 import cn.iocoder.yudao.module.clubpoints.controller.app.club.vo.AppClubMemberPageReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.app.club.vo.AppClubMemberRespVO;
+import cn.iocoder.yudao.module.clubpoints.controller.app.club.vo.AppClubOperationReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.app.club.vo.AppClubPageReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.app.club.vo.AppClubRespVO;
 import cn.iocoder.yudao.module.clubpoints.controller.leader.club.ClubPointClubLeaderController;
+import cn.iocoder.yudao.module.clubpoints.controller.leader.club.ClubPointClubMemberLeaderController;
+import cn.iocoder.yudao.module.clubpoints.controller.leader.club.vo.LeaderClubMemberPageReqVO;
+import cn.iocoder.yudao.module.clubpoints.controller.leader.club.vo.LeaderClubMemberRespVO;
 import cn.iocoder.yudao.module.clubpoints.controller.leader.club.vo.LeaderClubRespVO;
+import cn.iocoder.yudao.module.clubpoints.controller.leader.club.vo.LeaderClubSaveReqVO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubLeaderDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubMemberDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubPointClubDO;
@@ -74,6 +79,8 @@ import static cn.iocoder.yudao.framework.security.core.LoginUser.INFO_KEY_NICKNA
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CLUB_DISABLE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CLUB_LEADER_ASSIGN;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CLUB_MEMBER_ADD;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CLUB_MEMBER_EXIT;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CLUB_MEMBER_JOIN;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.CLUB_UPDATE;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_SCOPE_DENIED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -88,6 +95,7 @@ import static org.mockito.Mockito.when;
 @Import({
         ClubPointClubAppController.class,
         ClubPointClubLeaderController.class,
+        ClubPointClubMemberLeaderController.class,
         ClubPointClubAdminController.class,
         ClubPointClubMemberAdminController.class,
         ClubPointClubLeaderAdminController.class,
@@ -104,6 +112,8 @@ class ClubPointClubQueryControllerTest extends BaseDbUnitTest {
     private ClubPointClubAppController appController;
     @Resource
     private ClubPointClubLeaderController leaderController;
+    @Resource
+    private ClubPointClubMemberLeaderController leaderMemberController;
     @Resource
     private ClubPointClubAdminController adminController;
     @Resource
@@ -183,6 +193,32 @@ class ClubPointClubQueryControllerTest extends BaseDbUnitTest {
     }
 
     @Test
+    void appClubJoinAndExitEndpointsShouldWriteMembershipAndAuditAsCurrentUser() {
+        login(1002L, "员工1002");
+        mockUser(1002L, "员工1002", 301L, "员工部", "13900001002");
+        ClubPointClubDO club = insertClub("CLUB-M13-6101", "员工可加入俱乐部",
+                ClubPointClubStatusEnum.ENABLED.getStatus(), 10);
+
+        Long memberId = appController.joinClub(new AppClubOperationReqVO()
+                .setId(club.getId())
+                .setReason("员工主动加入")).getCheckedData();
+        appController.exitClub(new AppClubOperationReqVO()
+                .setId(club.getId())
+                .setReason("员工主动退出")).checkError();
+
+        ClubMemberDO member = memberMapper.selectById(memberId);
+        assertEquals(ClubPointMemberStatusEnum.SELF_EXITED.getStatus(), member.getStatus());
+        assertEquals("员工1002", member.getUserNameSnapshot());
+        assertEquals("员工部", member.getDeptNameSnapshot());
+        assertEquals("员工主动退出", member.getLeaveReason());
+        Set<String> auditActions = auditLogMapper.selectList().stream()
+                .map(ClubAuditLogDO::getActionType)
+                .collect(Collectors.toSet());
+        assertTrue(auditActions.contains(CLUB_MEMBER_JOIN));
+        assertTrue(auditActions.contains(CLUB_MEMBER_EXIT));
+    }
+
+    @Test
     void leaderClubEndpointsShouldUseManagedClubScope() {
         login(900L, "负责人");
         ClubPointClubDO managedClub = insertClub("CLUB-M5-6011", "负责俱乐部",
@@ -199,6 +235,49 @@ class ClubPointClubQueryControllerTest extends BaseDbUnitTest {
         LeaderClubRespVO detail = leaderController.getClub(managedClub.getId()).getCheckedData();
         assertEquals("负责俱乐部", detail.getName());
         assertServiceException(() -> leaderController.getClub(otherClub.getId()), CLUB_SCOPE_DENIED);
+    }
+
+    @Test
+    void leaderClubUpdateAndMemberPageShouldUseManagedClubScope() {
+        login(9002L, "负责人9002");
+        ClubPointClubDO managedClub = insertClub("CLUB-M13-6111", "负责人可改俱乐部",
+                ClubPointClubStatusEnum.ENABLED.getStatus(), 10);
+        ClubPointClubDO otherClub = insertClub("CLUB-M13-6112", "负责人不可改俱乐部",
+                ClubPointClubStatusEnum.ENABLED.getStatus(), 20);
+        leaderMapper.insert(buildLeader(managedClub, 9002L, "负责人9002", ClubPointLeaderStatusEnum.ACTIVE.getStatus()));
+        memberMapper.insert(buildMember(managedClub, 1003L, "员工1003", ClubPointMemberStatusEnum.ACTIVE.getStatus()));
+        memberMapper.insert(buildMember(otherClub, 1004L, "员工1004", ClubPointMemberStatusEnum.ACTIVE.getStatus()));
+
+        leaderController.updateClub(new LeaderClubSaveReqVO()
+                .setId(managedClub.getId())
+                .setName("负责人修改后的俱乐部")
+                .setDescription("负责人维护介绍")
+                .setContactText("leader-contact")
+                .setReason("负责人维护资料")).checkError();
+
+        ClubPointClubDO updated = clubMapper.selectById(managedClub.getId());
+        assertEquals("CLUB-M13-6111", updated.getCode());
+        assertEquals("负责人修改后的俱乐部", updated.getName());
+        assertEquals("leader-contact", updated.getContactText());
+
+        LeaderClubMemberPageReqVO memberReqVO = new LeaderClubMemberPageReqVO();
+        memberReqVO.setPageNo(1);
+        memberReqVO.setPageSize(10);
+        memberReqVO.setClubId(managedClub.getId());
+        PageResult<LeaderClubMemberRespVO> memberPage = leaderMemberController.getMemberPage(memberReqVO)
+                .getCheckedData();
+        assertEquals(1L, memberPage.getTotal());
+        assertEquals(1003L, memberPage.getList().get(0).getUserId());
+
+        assertServiceException(() -> leaderController.updateClub(new LeaderClubSaveReqVO()
+                .setId(otherClub.getId())
+                .setName("越权修改")
+                .setReason("越权")), CLUB_SCOPE_DENIED);
+        LeaderClubMemberPageReqVO deniedReqVO = new LeaderClubMemberPageReqVO();
+        deniedReqVO.setPageNo(1);
+        deniedReqVO.setPageSize(10);
+        deniedReqVO.setClubId(otherClub.getId());
+        assertServiceException(() -> leaderMemberController.getMemberPage(deniedReqVO), CLUB_SCOPE_DENIED);
     }
 
     @Test
@@ -303,6 +382,8 @@ class ClubPointClubQueryControllerTest extends BaseDbUnitTest {
                 ClubPointClubAppController.class.getAnnotation(RequestMapping.class).value()[0]);
         assertEquals("/clubpoints/leader/club",
                 ClubPointClubLeaderController.class.getAnnotation(RequestMapping.class).value()[0]);
+        assertEquals("/clubpoints/leader/member",
+                ClubPointClubMemberLeaderController.class.getAnnotation(RequestMapping.class).value()[0]);
         assertEquals("/clubpoints/club",
                 ClubPointClubAdminController.class.getAnnotation(RequestMapping.class).value()[0]);
         assertEquals("/clubpoints/club-member",
@@ -316,10 +397,22 @@ class ClubPointClubQueryControllerTest extends BaseDbUnitTest {
         assertGetMapping(ClubPointClubAppController.class, "getMemberPage",
                 new Class<?>[]{AppClubMemberPageReqVO.class}, "/member-page",
                 "@ss.hasPermission('clubpoints:club-member:query')");
+        assertPostMapping(ClubPointClubAppController.class, "joinClub",
+                new Class<?>[]{AppClubOperationReqVO.class}, "/join",
+                "@ss.hasPermission('clubpoints:club-member:join')");
+        assertPostMapping(ClubPointClubAppController.class, "exitClub",
+                new Class<?>[]{AppClubOperationReqVO.class}, "/exit",
+                "@ss.hasPermission('clubpoints:club-member:exit')");
         assertGetMapping(ClubPointClubLeaderController.class, "getMyManagedList", new Class<?>[]{},
                 "/my-managed-list", "@ss.hasPermission('clubpoints:club-leader')");
         assertGetMapping(ClubPointClubLeaderController.class, "getClub", new Class<?>[]{Long.class},
                 "/get", "@ss.hasPermission('clubpoints:club-leader')");
+        assertPutMapping(ClubPointClubLeaderController.class, "updateClub",
+                new Class<?>[]{LeaderClubSaveReqVO.class}, "/update",
+                "@ss.hasPermission('clubpoints:club:update')");
+        assertGetMapping(ClubPointClubMemberLeaderController.class, "getMemberPage",
+                new Class<?>[]{LeaderClubMemberPageReqVO.class}, "/page",
+                "@ss.hasPermission('clubpoints:club-member:query')");
         assertGetMapping(ClubPointClubAdminController.class, "getClubPage",
                 new Class<?>[]{AdminClubPageReqVO.class}, "/page", "@ss.hasPermission('clubpoints:club:query')");
         assertGetMapping(ClubPointClubAdminController.class, "getClub", new Class<?>[]{Long.class},

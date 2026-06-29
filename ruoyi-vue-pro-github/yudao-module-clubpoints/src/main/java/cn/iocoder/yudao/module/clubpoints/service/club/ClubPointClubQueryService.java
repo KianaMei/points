@@ -25,6 +25,8 @@ public interface ClubPointClubQueryService {
 
     ClubPointClubInfoBO getLeaderClub(Long loginUserId, Long clubId);
 
+    PageResult<ClubPointClubMemberBO> getLeaderMemberPage(Long loginUserId, ClubPointClubMemberPageReqBO reqBO);
+
     PageResult<ClubPointClubInfoBO> getAdminClubPage(ClubPointClubPageReqBO reqBO);
 
     ClubPointClubInfoBO getAdminClub(Long clubId);

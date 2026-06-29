@@ -18,7 +18,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="俱乐部ID" prop="clubId">
+      <el-form-item label="俱乐部" prop="clubId">
         <el-input-number v-model="queryParams.clubId" :min="1" class="!w-180px" controls-position="right" />
       </el-form-item>
       <el-form-item>
@@ -37,7 +37,7 @@
 
   <ContentWrap>
     <el-table v-loading="loading" :data="list">
-      <el-table-column align="center" label="活动ID" prop="id" width="100" />
+      <el-table-column align="center" label="活动编号" prop="id" width="100" />
       <el-table-column label="标题" min-width="220" prop="title" />
       <el-table-column label="俱乐部" min-width="160" prop="clubNameSnapshot" />
       <el-table-column align="center" label="状态" prop="status" width="120">
@@ -252,7 +252,11 @@ const publishActivity = async (row: any) => {
     await ActivityApi.publishAdminActivity({ id: row.id, reason: result.value })
     message.success('已发布')
     await getList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('发布活动失败，请重试')
+    }
+  }
 }
 
 const openReview = (row: any) => {
@@ -271,7 +275,11 @@ const cancelActivity = async (row: any) => {
     await ActivityApi.cancelAdminActivity({ id: row.id, reason: result.value })
     message.success('已取消')
     await getList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('取消活动失败，请重试')
+    }
+  }
 }
 
 onMounted(getList)

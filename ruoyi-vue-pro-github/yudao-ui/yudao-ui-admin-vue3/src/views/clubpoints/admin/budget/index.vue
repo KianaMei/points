@@ -196,7 +196,11 @@ const disableBudget = async (row: any) => {
     await OperationApi.disableBudget({ id: row.id, reason: result.value })
     message.success('预算已停用')
     await getList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('停用预算失败，请重试')
+    }
+  }
 }
 
 onMounted(getList)

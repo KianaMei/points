@@ -39,40 +39,39 @@ WHERE `id` BETWEEN 1300010000 AND 1300012999;
 
 INSERT INTO `system_menu` (`id`, `name`, `permission`, `type`, `sort`, `parent_id`, `path`, `icon`, `component`, `component_name`, `status`, `visible`, `keep_alive`, `always_show`, `creator`, `create_time`, `updater`, `update_time`, `deleted`) VALUES
 (1300010000, '俱乐部积分', '', 1, 1300, 0, '/clubpoints', 'ep:trophy', NULL, NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010100, '我的积分', '', 1, 10, 1300010000, 'app', 'ep:user', NULL, NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010110, '员工工作台', '', 2, 10, 1300010100, 'dashboard', 'ep:odometer', 'clubpoints/app/dashboard/index', 'ClubPointsAppDashboard', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010120, '我的积分', '', 2, 20, 1300010100, 'ledger', 'ep:tickets', 'clubpoints/app/ledger/index', 'ClubPointsAppLedger', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010130, '我的俱乐部', 'clubpoints:club-member:query', 2, 30, 1300010100, 'club', 'ep:office-building', 'clubpoints/app/club/index', 'ClubPointsAppClub', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010140, '活动报名', 'clubpoints:registration:create', 2, 40, 1300010100, 'activity', 'ep:calendar', 'clubpoints/app/activity/index', 'ClubPointsAppActivity', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010150, '积分兑换', 'clubpoints:redemption:apply', 2, 50, 1300010100, 'redemption', 'ep:present', 'clubpoints/app/redemption/index', 'ClubPointsAppRedemption', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010160, '我的异议', '', 2, 60, 1300010100, 'dispute', 'ep:chat-line-round', 'clubpoints/app/dispute/index', 'ClubPointsAppDispute', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010170, '我的通知', '', 2, 70, 1300010100, 'notify', 'ep:bell', 'clubpoints/app/notify/index', 'ClubPointsAppNotify', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010100, '员工积分中心', '', 1, 10, 1300010000, 'app', 'ep:user', NULL, NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010120, '我的积分', '', 2, 10, 1300010100, 'ledger', 'ep:tickets', 'clubpoints/app/ledger/index', 'ClubPointsAppLedger', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010130, '我的俱乐部', 'clubpoints:club-member:query', 2, 20, 1300010100, 'club', 'ep:office-building', 'clubpoints/app/club/index', 'ClubPointsAppClub', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010140, '活动报名签到', 'clubpoints:registration:create', 2, 30, 1300010100, 'activity', 'ep:calendar', 'clubpoints/app/activity/index', 'ClubPointsAppActivity', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010150, '积分兑换', 'clubpoints:redemption:apply', 2, 40, 1300010100, 'redemption', 'ep:present', 'clubpoints/app/redemption/index', 'ClubPointsAppRedemption', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010160, '我的异议', '', 2, 50, 1300010100, 'dispute', 'ep:chat-line-round', 'clubpoints/app/dispute/index', 'ClubPointsAppDispute', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010170, '我的通知', '', 2, 60, 1300010100, 'notify', 'ep:bell', 'clubpoints/app/notify/index', 'ClubPointsAppNotify', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010200, '负责人工作台', 'clubpoints:leader', 1, 20, 1300010000, 'leader', 'ep:user-filled', NULL, NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010210, '负责人首页', 'clubpoints:leader', 2, 10, 1300010200, 'dashboard', 'ep:odometer', 'clubpoints/leader/dashboard/index', 'ClubPointsLeaderDashboard', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010220, '负责俱乐部', 'clubpoints:club-leader', 2, 20, 1300010200, 'club', 'ep:office-building', 'clubpoints/leader/club/index', 'ClubPointsLeaderClub', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010230, '负责人活动', 'clubpoints:activity:query', 2, 30, 1300010200, 'activity', 'ep:calendar', 'clubpoints/leader/activity/index', 'ClubPointsLeaderActivity', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010240, '签到修正', 'clubpoints:attendance:query', 2, 40, 1300010200, 'attendance', 'ep:checked', 'clubpoints/leader/attendance/index', 'ClubPointsLeaderAttendance', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010250, '非签到材料', 'clubpoints:contribution:query', 2, 50, 1300010200, 'contribution', 'ep:document-checked', 'clubpoints/leader/contribution/index', 'ClubPointsLeaderContribution', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010300, '积分管理', '', 1, 30, 1300010000, 'admin', 'ep:setting', NULL, NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010310, '管理员工作台', 'clubpoints:dashboard:query', 2, 10, 1300010300, 'dashboard', 'ep:odometer', 'clubpoints/admin/dashboard/index', 'ClubPointsAdminDashboard', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010320, '俱乐部和负责人', 'clubpoints:club:query', 2, 20, 1300010300, 'club', 'ep:office-building', 'clubpoints/admin/club/index', 'ClubPointsAdminClub', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010330, '活动管理', 'clubpoints:activity:query', 2, 30, 1300010300, 'activity', 'ep:calendar', 'clubpoints/admin/activity/index', 'ClubPointsAdminActivity', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010340, '活动结算', 'clubpoints:settlement:query', 2, 40, 1300010300, 'settlement', 'ep:finished', 'clubpoints/admin/settlement/index', 'ClubPointsAdminSettlement', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010350, '积分账户', 'clubpoints:ledger:query', 2, 50, 1300010300, 'ledger/account', 'ep:wallet', 'clubpoints/admin/ledger/account/index', 'ClubPointsAdminLedgerAccount', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010360, '积分流水', 'clubpoints:ledger:query', 2, 60, 1300010300, 'ledger/transaction', 'ep:tickets', 'clubpoints/admin/ledger/transaction/index', 'ClubPointsAdminLedgerTransaction', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010370, '规则版本', 'clubpoints:rule:manage', 2, 70, 1300010300, 'rule', 'ep:setting', 'clubpoints/admin/rule/index', 'ClubPointsAdminRule', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010380, '材料审核', 'clubpoints:contribution:review', 2, 80, 1300010300, 'contribution-review', 'ep:document-checked', 'clubpoints/admin/contribution-review/index', 'ClubPointsAdminContributionReview', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010230, '活动管理', 'clubpoints:activity:query', 2, 30, 1300010200, 'activity', 'ep:calendar', 'clubpoints/leader/activity/index', 'ClubPointsLeaderActivity', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010240, '报名与签到', 'clubpoints:attendance:query', 2, 40, 1300010200, 'attendance', 'ep:checked', 'clubpoints/leader/attendance/index', 'ClubPointsLeaderAttendance', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010250, '非签到积分材料', 'clubpoints:contribution:query', 2, 50, 1300010200, 'contribution', 'ep:document-checked', 'clubpoints/leader/contribution/index', 'ClubPointsLeaderContribution', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010300, '积分管理后台', '', 1, 30, 1300010000, 'admin', 'ep:setting', NULL, NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010310, '管理员首页', 'clubpoints:dashboard:query', 2, 10, 1300010300, 'dashboard', 'ep:odometer', 'clubpoints/admin/dashboard/index', 'ClubPointsAdminDashboard', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010370, '规则配置', 'clubpoints:rule:manage', 2, 20, 1300010300, 'rule', 'ep:setting', 'clubpoints/admin/rule/index', 'ClubPointsAdminRule', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010320, '俱乐部管理', 'clubpoints:club:query', 2, 30, 1300010300, 'club', 'ep:office-building', 'clubpoints/admin/club/index', 'ClubPointsAdminClub', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010330, '活动审核与管理', 'clubpoints:activity:query', 2, 40, 1300010300, 'activity', 'ep:calendar', 'clubpoints/admin/activity/index', 'ClubPointsAdminActivity', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010340, '活动积分发放', 'clubpoints:settlement:query', 2, 50, 1300010300, 'settlement', 'ep:finished', 'clubpoints/admin/settlement/index', 'ClubPointsAdminSettlement', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010350, '积分账户', 'clubpoints:ledger:query', 2, 60, 1300010300, 'ledger/account', 'ep:wallet', 'clubpoints/admin/ledger/account/index', 'ClubPointsAdminLedgerAccount', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010360, '积分流水', 'clubpoints:ledger:query', 2, 70, 1300010300, 'ledger/transaction', 'ep:tickets', 'clubpoints/admin/ledger/transaction/index', 'ClubPointsAdminLedgerTransaction', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010380, '非签到材料审核', 'clubpoints:contribution:review', 2, 80, 1300010300, 'contribution-review', 'ep:document-checked', 'clubpoints/admin/contribution-review/index', 'ClubPointsAdminContributionReview', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010390, '管理员代录', 'clubpoints:contribution:direct-create', 2, 90, 1300010300, 'contribution-direct', 'ep:edit-pen', 'clubpoints/admin/contribution-direct/index', 'ClubPointsAdminContributionDirect', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010400, '兑换批次', 'clubpoints:redemption-batch:manage', 2, 100, 1300010300, 'redemption-batch', 'ep:collection', 'clubpoints/admin/redemption-batch/index', 'ClubPointsAdminRedemptionBatch', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010410, '礼品维护', 'clubpoints:redemption-gift:manage', 2, 110, 1300010300, 'redemption-gift', 'ep:present', 'clubpoints/admin/redemption-gift/index', 'ClubPointsAdminRedemptionGift', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010420, '兑换审核', 'clubpoints:redemption:review', 2, 120, 1300010300, 'redemption-application', 'ep:shopping-cart', 'clubpoints/admin/redemption-application/index', 'ClubPointsAdminRedemptionApplication', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010430, '异议处理', 'clubpoints:dispute:handle', 2, 130, 1300010300, 'dispute', 'ep:chat-line-round', 'clubpoints/admin/dispute/index', 'ClubPointsAdminDispute', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010440, '年度清零', 'clubpoints:annual:clear', 2, 140, 1300010300, 'annual-clearing', 'ep:refresh-left', 'clubpoints/admin/annual-clearing/index', 'ClubPointsAdminAnnualClearing', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010450, '年度排名和激励', 'clubpoints:annual:query', 2, 150, 1300010300, 'annual-ranking', 'ep:medal', 'clubpoints/admin/annual-ranking/index', 'ClubPointsAdminAnnualRanking', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300010450, '年度排名与激励', 'clubpoints:annual:query', 2, 150, 1300010300, 'annual-ranking', 'ep:medal', 'clubpoints/admin/annual-ranking/index', 'ClubPointsAdminAnnualRanking', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010460, '预算记录', 'clubpoints:budget:manage', 2, 160, 1300010300, 'budget', 'ep:money', 'clubpoints/admin/budget/index', 'ClubPointsAdminBudget', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010470, '报表中心', 'clubpoints:report:query', 2, 170, 1300010300, 'report', 'ep:download', 'clubpoints/admin/report/index', 'ClubPointsAdminReport', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300010480, '审计日志', 'clubpoints:audit:query', 2, 180, 1300010300, 'audit', 'ep:document-copy', 'clubpoints/admin/audit/index', 'ClubPointsAdminAudit', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300010490, '任务运行', 'clubpoints:job:query', 2, 190, 1300010300, 'job-run', 'ep:operation', 'clubpoints/admin/job-run/index', 'ClubPointsAdminJobRun', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0')
+(1300010490, '任务异常处理', 'clubpoints:job:query', 2, 190, 1300010300, 'job-run', 'ep:operation', 'clubpoints/admin/job-run/index', 'ClubPointsAdminJobRun', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0')
 ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `permission` = VALUES(`permission`),
@@ -98,7 +97,6 @@ ON DUPLICATE KEY UPDATE
 INSERT INTO `system_menu` (`id`, `name`, `permission`, `type`, `sort`, `parent_id`, `path`, `icon`, `component`, `component_name`, `status`, `visible`, `keep_alive`, `always_show`, `creator`, `create_time`, `updater`, `update_time`, `deleted`) VALUES
 (1300012001, '取消活动', 'clubpoints:activity:cancel', 3, 1, 1300010230, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012002, '创建活动', 'clubpoints:activity:create', 3, 2, 1300010230, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300012003, '删除活动', 'clubpoints:activity:delete', 3, 3, 1300010230, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012004, '发布活动', 'clubpoints:activity:publish', 3, 4, 1300010330, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012005, '查询活动', 'clubpoints:activity:query', 3, 5, 1300010230, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012006, '审核活动', 'clubpoints:activity:review', 3, 6, 1300010330, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
@@ -125,7 +123,6 @@ INSERT INTO `system_menu` (`id`, `name`, `permission`, `type`, `sort`, `parent_i
 (1300012026, '停用俱乐部', 'clubpoints:club:disable', 3, 26, 1300010320, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012027, '查询俱乐部', 'clubpoints:club:query', 3, 27, 1300010320, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012028, '修改俱乐部', 'clubpoints:club:update', 3, 28, 1300010220, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300012029, '删除材料', 'clubpoints:contribution:delete', 3, 29, 1300010250, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012030, '管理员代录', 'clubpoints:contribution:direct-create', 3, 30, 1300010390, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012031, '查询材料', 'clubpoints:contribution:query', 3, 31, 1300010250, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012032, '审核材料', 'clubpoints:contribution:review', 3, 32, 1300010380, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
@@ -148,8 +145,8 @@ INSERT INTO `system_menu` (`id`, `name`, `permission`, `type`, `sort`, `parent_i
 (1300012049, '查询报名', 'clubpoints:registration:query', 3, 49, 1300010240, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012050, '导出报表', 'clubpoints:report:export', 3, 50, 1300010470, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012051, '规则管理', 'clubpoints:rule:manage', 3, 51, 1300010370, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300012052, '查询结算', 'clubpoints:settlement:query', 3, 52, 1300010340, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
-(1300012053, '运行结算', 'clubpoints:settlement:run', 3, 53, 1300010340, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300012052, '查询发放', 'clubpoints:settlement:query', 3, 52, 1300010340, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+(1300012053, '异常补发/重跑', 'clubpoints:settlement:run', 3, 53, 1300010340, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012054, '特殊缺席', 'clubpoints:registration:special-absence', 3, 54, 1300010240, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012056, '违规扣分', 'clubpoints:contribution:violation-deduct', 3, 56, 1300010390, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
 (1300012057, '弄虚作假处理', 'clubpoints:contribution:fraud-handle', 3, 57, 1300010390, '', '#', '', NULL, 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
@@ -190,14 +187,14 @@ INSERT INTO `system_role_menu` (`role_id`, `menu_id`, `creator`, `create_time`, 
 SELECT 1300000001, `id`, '1', NOW(), '1', NOW(), b'0'
 FROM `system_menu`
 WHERE `id` IN (
-  1300010000, 1300010100, 1300010110, 1300010120, 1300010130,
+  1300010000, 1300010100, 1300010120, 1300010130,
   1300010140, 1300010150, 1300010160, 1300010170,
   1300010200, 1300010210, 1300010220, 1300010230, 1300010240,
   1300010250,
-  1300012001, 1300012002, 1300012003, 1300012005, 1300012007,
+  1300012001, 1300012002, 1300012005, 1300012007,
   1300012008, 1300012012, 1300012013, 1300012014, 1300012015,
   1300012018, 1300012020, 1300012021, 1300012022, 1300012027,
-  1300012028, 1300012029, 1300012031, 1300012033, 1300012034,
+  1300012028, 1300012031, 1300012033, 1300012034,
   1300012038, 1300012044, 1300012045, 1300012047, 1300012048,
   1300012049, 1300012054
 );
@@ -206,7 +203,7 @@ INSERT INTO `system_role_menu` (`role_id`, `menu_id`, `creator`, `create_time`, 
 SELECT 1300000000, `id`, '1', NOW(), '1', NOW(), b'0'
 FROM `system_menu`
 WHERE `id` IN (
-  1300010000, 1300010100, 1300010110, 1300010120, 1300010130,
+  1300010000, 1300010100, 1300010120, 1300010130,
   1300010140, 1300010150, 1300010160, 1300010170,
   1300012012, 1300012013, 1300012020, 1300012021, 1300012022,
   1300012044, 1300012045, 1300012047, 1300012048
@@ -219,7 +216,7 @@ WHERE `id` IN (
 INSERT INTO `system_dict_type` (`id`, `name`, `type`, `status`, `remark`, `creator`, `create_time`, `updater`, `update_time`, `deleted`, `deleted_time`) VALUES
 (1300030001, '俱乐部状态', 'club_points_club_status', 0, '1=启用；2=停用；3=已删除快照', '1', NOW(), '1', NOW(), b'0', NULL),
 (1300030002, '俱乐部成员状态', 'club_points_member_status', 0, '1=有效；2=自主退出；3=管理员移除', '1', NOW(), '1', NOW(), b'0', NULL),
-(1300030003, '活动状态', 'club_points_activity_status', 0, '1=草稿；2=待审核；3=已驳回；4=已发布；5=已取消；6=已结束；7=已结算；8=已删除快照', '1', NOW(), '1', NOW(), b'0', NULL),
+(1300030003, '活动状态', 'club_points_activity_status', 0, '1=草稿；2=待审核；3=已驳回；4=已发布；5=已取消；6=已结束；7=已发放；8=已删除快照', '1', NOW(), '1', NOW(), b'0', NULL),
 (1300030004, '报名状态', 'club_points_registration_status', 0, '1=已报名；2=已取消', '1', NOW(), '1', NOW(), b'0', NULL),
 (1300030005, '签到签退目标', 'club_points_attendance_target_type', 0, '1=签到；2=签退', '1', NOW(), '1', NOW(), b'0', NULL),
 (1300030006, '签到签退来源', 'club_points_attendance_source_type', 0, '1=自助；2=补录；3=修正', '1', NOW(), '1', NOW(), b'0', NULL),
@@ -238,9 +235,9 @@ INSERT INTO `system_dict_type` (`id`, `name`, `type`, `status`, `remark`, `creat
 (1300030019, '报名取消原因', 'club_points_registration_cancel_reason', 0, '1=员工自助；2=退出俱乐部自动；3=管理员移除；4=活动取消', '1', NOW(), '1', NOW(), b'0', NULL),
 (1300030020, '规则版本状态', 'club_points_rule_version_status', 0, '1=草稿；2=已发布；3=已撤回；4=已停用', '1', NOW(), '1', NOW(), b'0', NULL),
 (1300030021, '规则项状态', 'club_points_rule_item_status', 0, '1=启用；2=停用', '1', NOW(), '1', NOW(), b'0', NULL),
-(1300030022, '流水来源类型', 'club_points_transaction_source_type', 0, '1=活动结算；2=非签到材料；3=管理员代录；4=兑换；5=年度清零；6=调整；7=撤销；8=异议处理', '1', NOW(), '1', NOW(), b'0', NULL),
+(1300030022, '流水来源类型', 'club_points_transaction_source_type', 0, '1=活动积分发放；2=非签到材料；3=管理员代录；4=兑换；5=年度清零；6=调整；7=撤销；8=异议处理', '1', NOW(), '1', NOW(), b'0', NULL),
 (1300030023, '年度清零状态', 'club_points_annual_clearing_status', 0, '1=成功；2=失败；3=跳过', '1', NOW(), '1', NOW(), b'0', NULL),
-(1300030024, '活动结算状态', 'club_points_activity_settlement_status', 0, '1=待结算；2=结算中；3=已结算；4=结算失败；5=人工处理', '1', NOW(), '1', NOW(), b'0', NULL)
+(1300030024, '活动积分发放状态', 'club_points_activity_settlement_status', 0, '1=待发放；2=发放中；3=已发放；4=发放失败；5=人工处理', '1', NOW(), '1', NOW(), b'0', NULL)
 ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `type` = VALUES(`type`),
@@ -264,7 +261,7 @@ INSERT INTO `system_dict_data` (`id`, `sort`, `label`, `value`, `dict_type`, `st
 (1300031024, 4, '已发布', '4', 'club_points_activity_status', 0, 'success', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031025, 5, '已取消', '5', 'club_points_activity_status', 0, 'danger', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031026, 6, '已结束', '6', 'club_points_activity_status', 0, 'info', '', NULL, '1', NOW(), '1', NOW(), b'0'),
-(1300031027, 7, '已结算', '7', 'club_points_activity_status', 0, 'primary', '', NULL, '1', NOW(), '1', NOW(), b'0'),
+(1300031027, 7, '已发放', '7', 'club_points_activity_status', 0, 'primary', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031028, 8, '已删除快照', '8', 'club_points_activity_status', 0, 'info', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031031, 1, '已报名', '1', 'club_points_registration_status', 0, 'success', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031032, 2, '已取消', '2', 'club_points_registration_status', 0, 'info', '', NULL, '1', NOW(), '1', NOW(), b'0'),
@@ -330,7 +327,7 @@ INSERT INTO `system_dict_data` (`id`, `sort`, `label`, `value`, `dict_type`, `st
 (1300031194, 4, '已停用', '4', 'club_points_rule_version_status', 0, 'danger', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031201, 1, '启用', '1', 'club_points_rule_item_status', 0, 'success', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031202, 2, '停用', '2', 'club_points_rule_item_status', 0, 'danger', '', NULL, '1', NOW(), '1', NOW(), b'0'),
-(1300031211, 1, '活动结算', '1', 'club_points_transaction_source_type', 0, 'primary', '', NULL, '1', NOW(), '1', NOW(), b'0'),
+(1300031211, 1, '活动积分发放', '1', 'club_points_transaction_source_type', 0, 'primary', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031212, 2, '非签到材料', '2', 'club_points_transaction_source_type', 0, 'success', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031213, 3, '管理员代录', '3', 'club_points_transaction_source_type', 0, 'warning', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031214, 4, '兑换', '4', 'club_points_transaction_source_type', 0, 'danger', '', NULL, '1', NOW(), '1', NOW(), b'0'),
@@ -341,10 +338,10 @@ INSERT INTO `system_dict_data` (`id`, `sort`, `label`, `value`, `dict_type`, `st
 (1300031221, 1, '成功', '1', 'club_points_annual_clearing_status', 0, 'success', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031222, 2, '失败', '2', 'club_points_annual_clearing_status', 0, 'danger', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031223, 3, '跳过', '3', 'club_points_annual_clearing_status', 0, 'info', '', NULL, '1', NOW(), '1', NOW(), b'0'),
-(1300031231, 1, '待结算', '1', 'club_points_activity_settlement_status', 0, 'info', '', NULL, '1', NOW(), '1', NOW(), b'0'),
-(1300031232, 2, '结算中', '2', 'club_points_activity_settlement_status', 0, 'primary', '', NULL, '1', NOW(), '1', NOW(), b'0'),
-(1300031233, 3, '已结算', '3', 'club_points_activity_settlement_status', 0, 'success', '', NULL, '1', NOW(), '1', NOW(), b'0'),
-(1300031234, 4, '结算失败', '4', 'club_points_activity_settlement_status', 0, 'danger', '', NULL, '1', NOW(), '1', NOW(), b'0'),
+(1300031231, 1, '待发放', '1', 'club_points_activity_settlement_status', 0, 'info', '', NULL, '1', NOW(), '1', NOW(), b'0'),
+(1300031232, 2, '发放中', '2', 'club_points_activity_settlement_status', 0, 'primary', '', NULL, '1', NOW(), '1', NOW(), b'0'),
+(1300031233, 3, '已发放', '3', 'club_points_activity_settlement_status', 0, 'success', '', NULL, '1', NOW(), '1', NOW(), b'0'),
+(1300031234, 4, '发放失败', '4', 'club_points_activity_settlement_status', 0, 'danger', '', NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300031235, 5, '人工处理', '5', 'club_points_activity_settlement_status', 0, 'warning', '', NULL, '1', NOW(), '1', NOW(), b'0')
 ON DUPLICATE KEY UPDATE
   `sort` = VALUES(`sort`),
@@ -388,7 +385,7 @@ INSERT INTO `club_points_rule_item` (`id`, `rule_version_id`, `item_code`, `item
 (1300040002, 1300040000, 'ACTIVITY_MEDIUM_BASE', '中型活动基础分', 1, 10, 8, 8, 8, NULL, NULL, NULL, NULL, 1, 2, NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300040003, 1300040000, 'ACTIVITY_LARGE_BASE', '大型活动基础分', 1, 10, 10, 10, 10, NULL, NULL, NULL, NULL, 1, 3, NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300040004, 1300040000, 'ACTIVITY_FULL_EXTRA', '全程参与额外分', 1, 11, 2, 2, 2, NULL, NULL, NULL, NULL, 1, 4, NULL, '1', NOW(), '1', NOW(), b'0'),
-(1300040005, 1300040000, 'ACTIVITY_SETTLEMENT_GRACE_MINUTES', '活动结算缓冲分钟', 2, 10, NULL, NULL, NULL, 30, NULL, NULL, NULL, 1, 5, NULL, '1', NOW(), '1', NOW(), b'0'),
+(1300040005, 1300040000, 'ACTIVITY_SETTLEMENT_GRACE_MINUTES', '活动发放缓冲分钟', 2, 10, NULL, NULL, NULL, 30, NULL, NULL, NULL, 1, 5, NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300040006, 1300040000, 'ABSENCE_SINGLE_DEDUCT', '无故缺席单次扣分', 1, 40, 2, 2, 2, NULL, NULL, NULL, NULL, 1, 6, NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300040007, 1300040000, 'ABSENCE_MONTHLY_THRESHOLD', '月度累计缺席阈值', 2, 40, NULL, NULL, NULL, 3, NULL, NULL, NULL, 1, 7, NULL, '1', NOW(), '1', NOW(), b'0'),
 (1300040008, 1300040000, 'ABSENCE_MONTHLY_DEDUCT', '月度累计缺席扣分', 1, 40, 5, 5, 5, NULL, NULL, NULL, NULL, 1, 8, NULL, '1', NOW(), '1', NOW(), b'0'),
@@ -434,7 +431,7 @@ INSERT INTO `system_notify_template` (`id`, `name`, `code`, `nickname`, `content
 (1300050001, '积分变动通知', 'club_points_transaction_changed', '俱乐部积分', '你的积分发生变动：${reason}，${direction}${points} 分，当前可用积分 ${availablePoints} 分。', 2, '["reason","direction","points","availablePoints"]', 0, '积分流水生成后通知员工', '1', NOW(), '1', NOW(), b'0'),
 (1300050002, '兑换审核结果通知', 'club_points_redemption_reviewed', '俱乐部积分', '你的兑换申请 ${applicationNo} 审核结果：${result}。${reason}', 2, '["applicationNo","result","reason"]', 0, '兑换审核后通知员工', '1', NOW(), '1', NOW(), b'0'),
 (1300050003, '异议处理结果通知', 'club_points_dispute_replied', '俱乐部积分', '你的异议 ${title} 已处理：${replyContent}', 2, '["title","replyContent"]', 0, '异议回复后通知员工', '1', NOW(), '1', NOW(), b'0'),
-(1300050004, '活动结算完成通知', 'club_points_activity_settled', '俱乐部积分', '活动 ${activityTitle} 已完成积分结算，本次获得 ${points} 分。', 2, '["activityTitle","points"]', 0, '活动结算后通知员工', '1', NOW(), '1', NOW(), b'0'),
+(1300050004, '活动积分发放完成通知', 'club_points_activity_settled', '俱乐部积分', '活动 ${activityTitle} 已完成积分发放，本次获得 ${points} 分。', 2, '["activityTitle","points"]', 0, '活动积分发放后通知员工', '1', NOW(), '1', NOW(), b'0'),
 (1300050005, '活动审核结果通知', 'club_points_activity_reviewed', '俱乐部积分', '你提交的活动 ${activityTitle} 审核结果：${result}。${reason}', 2, '["activityTitle","result","reason"]', 0, '活动审核后通知提交人', '1', NOW(), '1', NOW(), b'0')
 ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
@@ -454,7 +451,7 @@ ON DUPLICATE KEY UPDATE
 -- ----------------------------
 
 INSERT INTO `infra_job` (`id`, `name`, `status`, `handler_name`, `handler_param`, `cron_expression`, `retry_count`, `retry_interval`, `monitor_timeout`, `creator`, `create_time`, `updater`, `update_time`, `deleted`) VALUES
-(1300060001, '俱乐部活动结算 Job', 2, 'clubPointsActivitySettlementJob', '', '0 */10 * * * ?', 3, 60, 300, '1', NOW(), '1', NOW(), b'0'),
+(1300060001, '俱乐部活动积分发放 Job', 1, 'clubPointsActivitySettlementJob', '', '0 */10 * * * ?', 3, 60, 300, '1', NOW(), '1', NOW(), b'0'),
 (1300060002, '俱乐部年度清零 Job', 2, 'clubPointsAnnualClearingJob', '', '0 0 2 1 1 ?', 3, 300, 1800, '1', NOW(), '1', NOW(), b'0'),
 (1300060003, '俱乐部年度排名激励 Job', 2, 'clubPointsAnnualRankingJob', '', '0 0 3 1 1 ?', 3, 300, 1800, '1', NOW(), '1', NOW(), b'0')
 ON DUPLICATE KEY UPDATE

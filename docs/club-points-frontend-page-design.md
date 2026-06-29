@@ -48,9 +48,9 @@ src/views/clubpoints/
 
 | 分组 | 可见角色 | 说明 |
 | --- | --- | --- |
-| 我的积分 | 员工、负责人、管理员本人 | 本人工作台、积分、俱乐部、活动、兑换、异议、通知。 |
+| 员工积分中心 | 员工、负责人、管理员本人 | 本人工作台、积分、俱乐部、活动、兑换、异议、通知。 |
 | 负责人工作台 | 负责人 | 负责俱乐部的活动、成员、签到修正、非签到材料。 |
-| 积分管理 | 管理员 | 全局俱乐部、活动、规则、账本、兑换、年度、预算、报表、审计、任务。 |
+| 管理员工作台 | 管理员 | 全局俱乐部、活动、规则、账本、兑换、年度、预算、报表、审计、任务；父级菜单下的 dashboard 子页显示为 `管理员首页`，避免和父级重名。 |
 
 ### 2.2 路由命名
 
@@ -162,7 +162,7 @@ src/views/clubpoints/
 | --- | --- |
 | 活动列表 | 俱乐部、活动标题、地点、开始结束时间、报名截止、取消截止、基础积分、全程额外积分、状态、报名状态 |
 | 活动详情 | 活动说明、签到窗口、签退窗口、积分配置、附件、当前员工报名和签到签退状态 |
-| 我的报名 | 报名时间、取消时间、签到状态、签退状态、结算状态 |
+| 我的报名 | 报名时间、取消时间、签到状态、签退状态、积分发放状态 |
 | 操作 | 报名、取消报名、签到、签退 |
 
 签到签退提交必须带 `registrationId` 和 `clientTime`。页面可以展示本地时间，但必须提示：最终窗口判断以后端服务器北京时间为准。
@@ -184,7 +184,7 @@ src/views/clubpoints/
 | 礼品列表 | 礼品名称、图片、消耗积分、库存状态、说明、申请 |
 | 我的兑换 | 批次、礼品、消耗积分、冻结积分、申请状态、申请时间、审核时间、审核意见、取消 |
 
-提交兑换前端必须生成 `requestNo`。库存不足、资格不足、积分不足都按后端错误码展示，前端不能自行绕过申请按钮限制。
+礼品列表的积分字段使用后端返回的 `pointsCost`。查询礼品列表时，如果当前员工没有资格快照或不具备资格，页面展示空列表，不弹“资格快照不存在”这类后台处理错误。提交兑换前端必须生成 `requestNo`。库存不足、资格不足、积分不足都按后端错误码展示，前端不能自行绕过申请按钮限制。
 
 ### 4.6 我的异议
 
@@ -350,13 +350,15 @@ src/views/clubpoints/
 
 管理员可以直接发布活动，也可以审核负责人提交的活动。审核弹窗只能通过或驳回，驳回必须填写原因。
 
-### 6.4 结算和账本
+### 6.4 活动积分发放和账本
 
 | 页面 | 路由 | API | 权限 |
 | --- | --- | --- | --- |
-| 活动结算 | `/clubpoints/admin/settlement` | `POST /clubpoints/settlement/run`、`GET /clubpoints/settlement/page` | `clubpoints:settlement:run`、`clubpoints:settlement:query` |
+| 活动积分发放 | `/clubpoints/admin/settlement` | `GET /clubpoints/settlement/pending-activity-page`、`POST /clubpoints/settlement/run`、`GET /clubpoints/settlement/page`、`GET /clubpoints/settlement/detail` | `clubpoints:settlement:run`、`clubpoints:settlement:query` |
 | 积分账户 | `/clubpoints/admin/ledger/account` | `GET /clubpoints/ledger/account-page` | `clubpoints:ledger:query` |
 | 积分流水 | `/clubpoints/admin/ledger/transaction` | `GET /clubpoints/ledger/transaction-page`、`POST /clubpoints/ledger/adjust`、`POST /clubpoints/ledger/reverse` | `clubpoints:ledger:query`、`clubpoints:ledger:adjust`、`clubpoints:ledger:reverse` |
+
+活动积分发放页分为 `待自动发放` 和 `发放记录` 两个页签。搜索条件使用俱乐部名称、活动标题、活动时间和处理状态，不使用俱乐部 ID、活动 ID、运行 ID 这类数据库视角字段。正常活动由系统 Job 在活动结束后自动发放积分；`异常补发/重跑` 只作为自动任务失败、签到 / 签退修正后重算、活动状态异常等补偿入口，必须填写原因。
 
 积分调整表单必须包含 `requestNo`、员工、调整类型、方向、积分、发放俱乐部、规则版本、原因、附件。撤销流水必须选择原流水并填写撤销原因。
 
@@ -442,7 +444,7 @@ src/views/clubpoints/
 | `api/clubpoints/admin/dashboard.ts` | `/clubpoints/admin/dashboard` | 管理员工作台 |
 | `api/clubpoints/admin/club.ts` | `/clubpoints/club`、`/clubpoints/club-leader`、`/clubpoints/club-member` | 管理员俱乐部 |
 | `api/clubpoints/admin/activity.ts` | `/clubpoints/activity` | 管理员活动 |
-| `api/clubpoints/admin/settlement.ts` | `/clubpoints/settlement` | 活动结算 |
+| `api/clubpoints/admin/settlement.ts` | `/clubpoints/settlement` | 活动积分发放 |
 | `api/clubpoints/admin/ledger.ts` | `/clubpoints/ledger` | 账本和调整 |
 | `api/clubpoints/admin/rule.ts` | `/clubpoints/rule` | 规则版本 |
 | `api/clubpoints/admin/contribution.ts` | `/clubpoints/contribution` | 材料审核和代录 |

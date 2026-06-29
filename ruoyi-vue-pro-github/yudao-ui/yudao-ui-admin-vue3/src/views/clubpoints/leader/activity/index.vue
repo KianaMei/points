@@ -261,7 +261,11 @@ const submitActivity = async (row: ActivityApi.LeaderActivityRespVO) => {
     await ActivityApi.submitLeaderActivity({ id: row.id, reason: result.value })
     message.success('已提交审核')
     await getList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('提交活动失败，请重试')
+    }
+  }
 }
 
 const cancelActivity = async (row: ActivityApi.LeaderActivityRespVO) => {
@@ -270,7 +274,11 @@ const cancelActivity = async (row: ActivityApi.LeaderActivityRespVO) => {
     await ActivityApi.cancelLeaderActivity({ id: row.id, reason: result.value })
     message.success('已取消')
     await getList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('取消活动失败，请重试')
+    }
+  }
 }
 
 onMounted(getList)

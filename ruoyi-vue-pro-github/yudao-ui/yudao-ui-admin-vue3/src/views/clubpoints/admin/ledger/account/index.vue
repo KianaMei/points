@@ -1,7 +1,7 @@
 <template>
   <ContentWrap>
     <el-form ref="queryFormRef" :inline="true" :model="queryParams" class="-mb-15px" label-width="88px">
-      <el-form-item label="员工ID" prop="userId">
+      <el-form-item label="员工" prop="userId">
         <el-input-number v-model="queryParams.userId" :min="1" class="!w-200px" controls-position="right" />
       </el-form-item>
       <el-form-item>
@@ -17,7 +17,7 @@
 
   <ContentWrap>
     <el-table v-loading="loading" :data="list">
-      <el-table-column align="center" label="员工ID" prop="userId" width="120" />
+      <el-table-column align="center" label="员工" prop="userId" width="120" />
       <el-table-column align="center" label="可用积分" prop="availablePoints" width="160">
         <template #default="{ row }">
           <PointAmount :show-sign="false" :value="row.availablePoints" />

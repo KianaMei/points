@@ -11,7 +11,7 @@
       <el-form-item label="批次ID" prop="batchId">
         <el-input-number v-model="queryParams.batchId" :min="1" class="!w-180px" controls-position="right" />
       </el-form-item>
-      <el-form-item label="员工ID" prop="userId">
+      <el-form-item label="员工" prop="userId">
         <el-input-number v-model="queryParams.userId" :min="1" class="!w-180px" controls-position="right" />
       </el-form-item>
       <el-form-item label="状态" prop="status">
@@ -38,7 +38,7 @@
   <ContentWrap>
     <el-table v-loading="loading" :data="list">
       <el-table-column label="申请号" min-width="180" prop="applicationNo" />
-      <el-table-column align="center" label="员工ID" prop="userId" width="110" />
+      <el-table-column align="center" label="员工" prop="userId" width="110" />
       <el-table-column label="批次" min-width="160" prop="batchNameSnapshot">
         <template #default="{ row }">{{ row.batchNameSnapshot || row.batchId }}</template>
       </el-table-column>

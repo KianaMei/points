@@ -100,6 +100,29 @@ class ClubPointRedemptionApplicationServiceImplTest extends BaseDbUnitTest {
     }
 
     @Test
+    void listAvailableGiftsShouldReturnEmptyWhenUserHasNoEligibilitySnapshot() {
+        ClubPointRedemptionBatchDO batch = insertBatch(ClubPointRedemptionBatchStatusEnum.OPENED.getStatus());
+        insertGift(batch.getId(), ClubPointRedemptionGiftStatusEnum.ON_SHELF.getStatus(), 60, 10, 0, 0, 1);
+
+        List<ClubPointRedemptionGiftDO> gifts =
+                redemptionApplicationService.listAvailableGifts(batch.getId(), USER_ID);
+
+        assertTrue(gifts.isEmpty());
+    }
+
+    @Test
+    void listAvailableGiftsShouldReturnEmptyWhenUserIsNotQualified() {
+        ClubPointRedemptionBatchDO batch = insertBatch(ClubPointRedemptionBatchStatusEnum.OPENED.getStatus());
+        insertEligibility(batch.getId(), USER_ID, false, 201);
+        insertGift(batch.getId(), ClubPointRedemptionGiftStatusEnum.ON_SHELF.getStatus(), 60, 10, 0, 0, 1);
+
+        List<ClubPointRedemptionGiftDO> gifts =
+                redemptionApplicationService.listAvailableGifts(batch.getId(), USER_ID);
+
+        assertTrue(gifts.isEmpty());
+    }
+
+    @Test
     void applyShouldFreezePointsLockStockAndCreatePendingApplication() {
         ClubPointRedemptionBatchDO batch = insertBatch(ClubPointRedemptionBatchStatusEnum.OPENED.getStatus());
         insertEligibility(batch.getId(), USER_ID, true, 7);

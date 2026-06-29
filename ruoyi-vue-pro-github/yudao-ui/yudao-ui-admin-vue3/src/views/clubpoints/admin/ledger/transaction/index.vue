@@ -8,7 +8,7 @@
       type="info"
     />
     <el-form ref="queryFormRef" :inline="true" :model="queryParams" class="-mb-15px" label-width="88px">
-      <el-form-item label="员工ID" prop="userId">
+      <el-form-item label="员工" prop="userId">
         <el-input-number v-model="queryParams.userId" :min="1" class="!w-200px" controls-position="right" />
       </el-form-item>
       <el-form-item label="方向" prop="direction">
@@ -52,8 +52,8 @@
 
   <ContentWrap>
     <el-table v-loading="loading" :data="list">
-      <el-table-column align="center" label="流水ID" prop="id" width="100" />
-      <el-table-column align="center" label="员工ID" prop="userId" width="120" />
+      <el-table-column align="center" label="流水编号" prop="id" width="100" />
+      <el-table-column align="center" label="员工" prop="userId" width="120" />
       <el-table-column align="center" label="方向" prop="direction" width="100">
         <template #default="{ row }">
           <StatusTag :type="DICT_TYPE.CLUB_POINTS_TRANSACTION_DIRECTION" :value="row.direction" />
@@ -100,7 +100,7 @@
 
   <Dialog v-model="adjustDialogVisible" title="调整积分" width="760">
     <el-form ref="adjustFormRef" :model="adjustForm" :rules="adjustRules" label-width="112px">
-      <el-form-item label="请求号" prop="requestNo">
+      <el-form-item label="提交编号" prop="requestNo">
         <el-input v-model="adjustForm.requestNo" disabled />
       </el-form-item>
       <el-form-item label="员工" prop="userId">
@@ -305,7 +305,11 @@ const reverseTransaction = async (row: LedgerApi.AdminLedgerTransactionRespVO) =
     await LedgerApi.reverseLedger({ transactionId: row.id, reason: result.value })
     message.success('撤销成功')
     await getList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('撤销流水失败，请重试')
+    }
+  }
 }
 
 onMounted(getList)

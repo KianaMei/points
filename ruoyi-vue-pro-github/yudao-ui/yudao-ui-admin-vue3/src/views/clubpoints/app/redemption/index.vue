@@ -4,7 +4,7 @@
       :closable="false"
       class="mb-16px"
       show-icon
-      title="兑换申请提交会生成 requestNo；失败重试不重新生成。资格、库存、积分不足均以后端返回为准。"
+      title="兑换申请提交会生成提交编号；失败重试不重新生成。资格、库存、积分不足均以后端返回为准。"
       type="info"
     />
     <el-tabs v-model="activeTab">
@@ -36,9 +36,9 @@
         <el-empty v-if="!selectedBatchId" description="请先选择批次" />
         <el-table v-else v-loading="giftLoading" :data="giftList">
           <el-table-column label="礼品名称" min-width="220" prop="name" />
-          <el-table-column align="center" label="消耗积分" prop="pointPrice" width="120">
+          <el-table-column align="center" label="消耗积分" prop="pointsCost" width="120">
             <template #default="{ row }">
-              <PointAmount :show-sign="false" :value="row.pointPrice" />
+              <PointAmount :show-sign="false" :value="row.pointsCost" />
             </template>
           </el-table-column>
           <el-table-column align="center" label="库存" width="160">
@@ -101,7 +101,7 @@
 
   <Dialog v-model="applyDialogVisible" title="兑换申请" width="560">
     <el-form :model="applyForm" label-width="96px">
-      <el-form-item label="请求号">
+      <el-form-item label="提交编号">
         <el-input v-model="applyForm.requestNo" disabled />
       </el-form-item>
       <el-form-item label="礼品">
@@ -229,7 +229,11 @@ const cancelApplication = async (row: RedemptionApi.AppRedemptionApplicationResp
     await RedemptionApi.cancelRedemption({ id: row.id, reason: result.value })
     message.success('取消成功')
     await getMyList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('取消兑换失败，请重试')
+    }
+  }
 }
 
 onMounted(() => {

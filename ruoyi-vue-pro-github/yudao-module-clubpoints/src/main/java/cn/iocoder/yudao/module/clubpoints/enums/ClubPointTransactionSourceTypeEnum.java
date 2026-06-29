@@ -9,7 +9,7 @@ import java.util.Arrays;
  */
 public enum ClubPointTransactionSourceTypeEnum implements ArrayValuable<Integer> {
 
-    ACTIVITY_SETTLEMENT(1, "活动结算"),
+    ACTIVITY_SETTLEMENT(1, "活动积分发放"),
     CONTRIBUTION_MATERIAL(2, "非签到材料"),
     ADMIN_DIRECT(3, "管理员代录"),
     REDEMPTION(4, "兑换"),

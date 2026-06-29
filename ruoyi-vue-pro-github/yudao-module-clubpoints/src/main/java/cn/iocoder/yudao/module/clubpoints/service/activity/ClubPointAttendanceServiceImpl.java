@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.clubpoints.service.activity;
 
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActivityDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActivityRegistrationDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointAttendanceCorrectionDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointAttendanceRecordDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubLeaderDO;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.activity.ClubPointActivityMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.activity.ClubPointActivityRegistrationMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.activity.ClubPointAttendanceCorrectionMapper;
@@ -12,20 +14,25 @@ import cn.iocoder.yudao.module.clubpoints.enums.ClubPointActivityStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointAttendanceCorrectionTypeEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointAttendanceSourceTypeEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointAttendanceTargetTypeEnum;
+import cn.iocoder.yudao.module.clubpoints.enums.ClubPointLeaderStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointRegistrationStatusEnum;
 import cn.iocoder.yudao.module.clubpoints.service.activity.bo.ClubPointAttendanceCorrectReqBO;
+import cn.iocoder.yudao.module.clubpoints.service.activity.bo.ClubPointAttendancePageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.activity.bo.ClubPointAttendanceSelfReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.activity.bo.ClubPointAttendanceSupplementReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.activity.bo.ClubPointSpecialAbsenceReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditService;
 import cn.iocoder.yudao.module.clubpoints.service.audit.bo.ClubAuditCreateReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeService;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.club.ClubLeaderMapper;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.clubpoints.enums.ClubAttachmentConstants.BIZ_TYPE_ACTIVITY_REGISTRATION;
@@ -49,12 +56,15 @@ import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_A
 public class ClubPointAttendanceServiceImpl implements ClubPointAttendanceService {
 
     private static final Integer REGISTRATION_ACTIVE = ClubPointRegistrationStatusEnum.REGISTERED.getStatus();
+    private static final Integer LEADER_ACTIVE = ClubPointLeaderStatusEnum.ACTIVE.getStatus();
     private static final Integer SOURCE_SELF = ClubPointAttendanceSourceTypeEnum.SELF.getSourceType();
     private static final Integer SOURCE_SUPPLEMENT = ClubPointAttendanceSourceTypeEnum.SUPPLEMENT.getSourceType();
     private static final Integer SOURCE_CORRECTION = ClubPointAttendanceSourceTypeEnum.CORRECTION.getSourceType();
 
     @Resource
     private ClubPointActivityMapper activityMapper;
+    @Resource
+    private ClubLeaderMapper leaderMapper;
     @Resource
     private ClubPointActivityRegistrationMapper registrationMapper;
     @Resource
@@ -79,11 +89,31 @@ public class ClubPointAttendanceServiceImpl implements ClubPointAttendanceServic
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PageResult<ClubPointAttendanceRecordDO> getLeaderAttendancePage(Long loginUserId,
+                                                                           ClubPointAttendancePageReqBO reqBO) {
+        List<Long> managedClubIds = reqBO.getClubId() != null
+                ? validateAndBuildSingleManagedClub(loginUserId, reqBO.getClubId())
+                : getManagedClubIds(loginUserId);
+        if (managedClubIds.isEmpty()) {
+            return PageResult.empty();
+        }
+        List<Long> activityIds = activityMapper.selectListByClubIds(managedClubIds).stream()
+                .map(ClubPointActivityDO::getId)
+                .collect(Collectors.toList());
+        if (activityIds.isEmpty()) {
+            return PageResult.empty();
+        }
+        return attendanceRecordMapper.selectPageByActivityIds(reqBO, activityIds, reqBO.getActivityId(),
+                reqBO.getRegistrationId(), reqBO.getUserId(), reqBO.getTargetType());
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Long supplementAttendance(ClubPointAttendanceSupplementReqBO reqBO) {
-        clubScopeService.validateGlobal(Boolean.TRUE.equals(reqBO.getOperatorGlobalScope()));
         ClubPointAttendanceTargetTypeEnum targetType = targetType(reqBO.getTargetType());
         ClubPointActivityRegistrationDO registration = validateActiveRegistration(reqBO.getRegistrationId());
+        validateOperatorScope(reqBO.getOperatorGlobalScope(), reqBO.getOperatorUserId(), registration.getClubId());
         validateActivityCanCorrectAttendance(registration.getActivityId());
         if (targetType == ClubPointAttendanceTargetTypeEnum.CHECK_OUT) {
             validateCheckInExists(registration.getId());
@@ -127,11 +157,15 @@ public class ClubPointAttendanceServiceImpl implements ClubPointAttendanceServic
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long correctAttendance(ClubPointAttendanceCorrectReqBO reqBO) {
-        clubScopeService.validateGlobal(Boolean.TRUE.equals(reqBO.getOperatorGlobalScope()));
         ClubPointAttendanceRecordDO record = attendanceRecordMapper.selectById(reqBO.getAttendanceRecordId());
         if (record == null) {
             throw exception(CLUB_ATTENDANCE_NOT_FOUND);
         }
+        ClubPointActivityRegistrationDO registration = registrationMapper.selectById(record.getRegistrationId());
+        if (registration == null) {
+            throw exception(CLUB_ACTIVITY_REGISTRATION_NOT_FOUND);
+        }
+        validateOperatorScope(reqBO.getOperatorGlobalScope(), reqBO.getOperatorUserId(), registration.getClubId());
         validateActivityCanCorrectAttendance(record.getActivityId());
         String beforeJson = snapshot(record);
         LocalDateTime beforeRecordTime = record.getRecordTime();
@@ -163,8 +197,8 @@ public class ClubPointAttendanceServiceImpl implements ClubPointAttendanceServic
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void markSpecialAbsence(ClubPointSpecialAbsenceReqBO reqBO) {
-        clubScopeService.validateGlobal(Boolean.TRUE.equals(reqBO.getOperatorGlobalScope()));
         ClubPointActivityRegistrationDO registration = validateActiveRegistration(reqBO.getRegistrationId());
+        validateOperatorScope(reqBO.getOperatorGlobalScope(), reqBO.getOperatorUserId(), registration.getClubId());
         String beforeJson = snapshot(registration);
         registration.setSpecialAbsenceFlag(true)
                 .setNoAbsenceDeduct(true)
@@ -271,6 +305,25 @@ public class ClubPointAttendanceServiceImpl implements ClubPointAttendanceServic
 
     private static LocalDateTime recordTime(LocalDateTime recordTime) {
         return recordTime != null ? recordTime : LocalDateTime.now();
+    }
+
+    private void validateOperatorScope(Boolean operatorGlobalScope, Long operatorUserId, Long clubId) {
+        if (Boolean.TRUE.equals(operatorGlobalScope)) {
+            clubScopeService.validateGlobal(true);
+            return;
+        }
+        clubScopeService.validateManagedClub(operatorUserId, clubId);
+    }
+
+    private List<Long> validateAndBuildSingleManagedClub(Long loginUserId, Long clubId) {
+        clubScopeService.validateManagedClub(loginUserId, clubId);
+        return java.util.Collections.singletonList(clubId);
+    }
+
+    private List<Long> getManagedClubIds(Long loginUserId) {
+        return leaderMapper.selectActiveListByUserId(loginUserId, LEADER_ACTIVE).stream()
+                .map(ClubLeaderDO::getClubId)
+                .collect(Collectors.toList());
     }
 
     private static ClubPointAttendanceTargetTypeEnum targetType(Integer targetType) {

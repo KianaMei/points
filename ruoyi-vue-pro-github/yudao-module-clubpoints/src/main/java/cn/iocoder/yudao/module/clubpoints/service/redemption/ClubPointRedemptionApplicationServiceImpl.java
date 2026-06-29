@@ -45,6 +45,7 @@ import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,7 +121,11 @@ public class ClubPointRedemptionApplicationServiceImpl implements ClubPointRedem
     @Override
     public List<ClubPointRedemptionGiftDO> listAvailableGifts(Long batchId, Long userId) {
         validateBatchOpenForApply(batchId);
-        eligibilityService.validateUserQualifiedForApply(batchId, userId);
+        ClubPointRedemptionEligibilitySnapshotDO eligibilitySnapshot =
+                eligibilitySnapshotMapper.selectByBatchIdAndUserId(batchId, userId);
+        if (eligibilitySnapshot == null || !Boolean.TRUE.equals(eligibilitySnapshot.getQualified())) {
+            return Collections.emptyList();
+        }
         return giftMapper.selectListByBatchIdAndStatus(batchId, ClubPointRedemptionGiftStatusEnum.ON_SHELF.getStatus());
     }
 

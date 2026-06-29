@@ -6,7 +6,7 @@ import lombok.experimental.Accessors;
 import java.time.LocalDateTime;
 
 /**
- * 活动结算 Job 请求
+ * 活动积分发放 Job 请求
  */
 @Data
 @Accessors(chain = true)

@@ -7,6 +7,10 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.settlement.ClubPointActivitySettlementRunDO;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
+
 @Mapper
 public interface ClubPointActivitySettlementRunMapper extends BaseMapperX<ClubPointActivitySettlementRunDO> {
 
@@ -16,10 +20,16 @@ public interface ClubPointActivitySettlementRunMapper extends BaseMapperX<ClubPo
     }
 
     default PageResult<ClubPointActivitySettlementRunDO> selectPage(PageParam pageParam, Long activityId,
-                                                                    Integer status) {
+                                                                    Collection<Long> activityIds, Integer status,
+                                                                    LocalDateTime startTime, LocalDateTime endTime) {
+        if (activityIds != null && activityIds.isEmpty()) {
+            return new PageResult<>(Collections.emptyList(), 0L);
+        }
         return selectPage(pageParam, new LambdaQueryWrapperX<ClubPointActivitySettlementRunDO>()
                 .eqIfPresent(ClubPointActivitySettlementRunDO::getActivityId, activityId)
+                .inIfPresent(ClubPointActivitySettlementRunDO::getActivityId, activityIds)
                 .eqIfPresent(ClubPointActivitySettlementRunDO::getStatus, status)
+                .betweenIfPresent(ClubPointActivitySettlementRunDO::getSettlementTime, startTime, endTime)
                 .orderByDesc(ClubPointActivitySettlementRunDO::getSettlementTime)
                 .orderByDesc(ClubPointActivitySettlementRunDO::getId));
     }

@@ -130,7 +130,7 @@ class ClubPointSettlementAdminControllerTest extends BaseDbUnitTest {
 
         String runResult = adminController.runSettlement(new AdminSettlementRunReqVO()
                 .setActivityId(activity.getId())
-                .setReason("管理员手动结算")).getCheckedData();
+                .setReason("管理员异常补发/重跑")).getCheckedData();
 
         ClubJobRunDO jobRun = jobRunMapper.selectList().get(0);
         assertTrue(runResult.contains(String.valueOf(jobRun.getId())));
@@ -146,7 +146,7 @@ class ClubPointSettlementAdminControllerTest extends BaseDbUnitTest {
         assertEquals(ClubAuditActionTypeConstants.ACTIVITY_SETTLEMENT_MANUAL, auditLog.getActionType());
         assertEquals("ACTIVITY_SETTLEMENT", auditLog.getBizType());
         assertEquals(activity.getId(), auditLog.getBizId());
-        assertEquals("管理员手动结算", auditLog.getReason());
+        assertEquals("管理员异常补发/重跑", auditLog.getReason());
 
         PageResult<AdminSettlementRunRespVO> runPage = adminController.getRunPage(buildRunPageReq(activity.getId()))
                 .getCheckedData();
@@ -173,11 +173,11 @@ class ClubPointSettlementAdminControllerTest extends BaseDbUnitTest {
 
         adminController.runSettlement(new AdminSettlementRunReqVO()
                 .setActivityId(activity.getId())
-                .setReason("第一次手动结算"));
+                .setReason("第一次异常补发/重跑"));
         adminController.runSettlement(new AdminSettlementRunReqVO()
                 .setActivityId(activity.getId())
                 .setForce(true)
-                .setReason("强制重跑"));
+                .setReason("签到修正后重算"));
 
         assertEquals(1L, transactionMapper.selectList().stream()
                 .filter(transaction -> activity.getId().equals(transaction.getActivityId()))
@@ -185,6 +185,54 @@ class ClubPointSettlementAdminControllerTest extends BaseDbUnitTest {
                         .equals(transaction.getSourceType()))
                 .count());
         assertEquals(2L, jobRunMapper.selectCount());
+    }
+
+    @Test
+    void adminSettlementPagesShouldUseBusinessFiltersAndBusinessResponseFields() throws Exception {
+        login(1L, "管理员");
+        ClubPointRuleVersionDO ruleVersion = seedSettlementRules();
+        ClubPointClubDO basketballClub = insertClub("CLUB-M7-API-3", "篮球协会");
+        ClubPointActivityDO targetActivity = insertEndedActivity(basketballClub, "周五篮球训练");
+        insertConfigVersion(targetActivity, ruleVersion);
+        ClubPointActivityRegistrationDO registration = insertRegistration(targetActivity, 7403L, "Business User");
+        insertAttendance(registration, ClubPointAttendanceTargetTypeEnum.CHECK_IN.getTargetType(),
+                targetActivity.getStartTime());
+        ClubPointClubDO musicClub = insertClub("CLUB-M7-API-4", "音乐协会");
+        ClubPointActivityDO otherActivity = insertEndedActivity(musicClub, "合唱排练");
+        insertConfigVersion(otherActivity, ruleVersion);
+
+        PageResult<AdminSettlementPendingActivityRespVO> pendingPage = adminController.getPendingActivityPage(
+                buildPendingActivityBusinessPageReq("篮球", "篮球训练",
+                        targetActivity.getStartTime().minusMinutes(1),
+                        targetActivity.getEndTime().plusMinutes(1))).getCheckedData();
+
+        assertEquals(1L, pendingPage.getTotal());
+        AdminSettlementPendingActivityRespVO pendingActivity = pendingPage.getList().get(0);
+        assertEquals(targetActivity.getId(), pendingActivity.getId());
+        assertEquals("篮球协会", pendingActivity.getClubNameSnapshot());
+        assertEquals("周五篮球训练", pendingActivity.getTitle());
+
+        adminController.runSettlement(new AdminSettlementRunReqVO()
+                .setActivityId(targetActivity.getId())
+                .setReason("自动任务失败后补发"));
+
+        PageResult<AdminSettlementRunRespVO> runPage = adminController.getRunPage(
+                buildRunBusinessPageReq("篮球", "篮球训练", ClubPointSettlementRunStatusEnum.SUCCESS.getStatus(),
+                        BASE_TIME.minusDays(1), BASE_TIME.plusDays(10))).getCheckedData();
+
+        assertEquals(1L, runPage.getTotal());
+        AdminSettlementRunRespVO run = runPage.getList().get(0);
+        assertEquals(targetActivity.getId(), run.getActivityId());
+        assertEquals("周五篮球训练", run.getActivityTitle());
+        assertEquals("篮球协会", run.getClubName());
+        assertEquals(1, run.getRegistrationCount());
+        assertEquals(1, run.getSuccessCount());
+        assertEquals(0, run.getSkipCount());
+        assertEquals(0, run.getFailedCount());
+
+        AdminSettlementDetailRespVO detail = adminController.getDetail(run.getId()).getCheckedData();
+        assertEquals("周五篮球训练", detail.getRun().getActivityTitle());
+        assertEquals("篮球协会", detail.getRun().getClubName());
     }
 
     @Test
@@ -232,6 +280,32 @@ class ClubPointSettlementAdminControllerTest extends BaseDbUnitTest {
     private static AdminSettlementRunPageReqVO buildRunPageReq(Long activityId) {
         AdminSettlementRunPageReqVO reqVO = new AdminSettlementRunPageReqVO()
                 .setActivityId(activityId);
+        reqVO.setPageNo(1);
+        reqVO.setPageSize(10);
+        return reqVO;
+    }
+
+    private static AdminSettlementPendingActivityPageReqVO buildPendingActivityBusinessPageReq(
+            String clubName, String activityTitle, LocalDateTime startTime, LocalDateTime endTime) {
+        AdminSettlementPendingActivityPageReqVO reqVO = new AdminSettlementPendingActivityPageReqVO()
+                .setClubName(clubName)
+                .setActivityTitle(activityTitle)
+                .setStartTime(startTime)
+                .setEndTime(endTime);
+        reqVO.setPageNo(1);
+        reqVO.setPageSize(10);
+        return reqVO;
+    }
+
+    private static AdminSettlementRunPageReqVO buildRunBusinessPageReq(String clubName, String activityTitle,
+                                                                       Integer status, LocalDateTime startTime,
+                                                                       LocalDateTime endTime) {
+        AdminSettlementRunPageReqVO reqVO = new AdminSettlementRunPageReqVO()
+                .setClubName(clubName)
+                .setActivityTitle(activityTitle)
+                .setStatus(status)
+                .setStartTime(startTime)
+                .setEndTime(endTime);
         reqVO.setPageNo(1);
         reqVO.setPageSize(10);
         return reqVO;

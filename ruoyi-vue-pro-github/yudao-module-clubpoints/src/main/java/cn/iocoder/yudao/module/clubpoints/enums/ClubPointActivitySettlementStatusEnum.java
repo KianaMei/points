@@ -5,14 +5,14 @@ import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import java.util.Arrays;
 
 /**
- * 活动结算展示状态枚举
+ * 活动积分发放展示状态枚举
  */
 public enum ClubPointActivitySettlementStatusEnum implements ArrayValuable<Integer> {
 
-    PENDING(1, "待结算"),
-    PROCESSING(2, "结算中"),
-    SETTLED(3, "已结算"),
-    FAILED(4, "结算失败"),
+    PENDING(1, "待发放"),
+    PROCESSING(2, "发放中"),
+    SETTLED(3, "已发放"),
+    FAILED(4, "发放失败"),
     MANUAL_HANDLING(5, "人工处理");
 
     public static final Integer[] ARRAYS = Arrays.stream(values())

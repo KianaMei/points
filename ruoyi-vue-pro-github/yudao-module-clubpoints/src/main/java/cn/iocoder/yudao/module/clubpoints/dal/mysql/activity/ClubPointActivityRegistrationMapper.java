@@ -43,6 +43,20 @@ public interface ClubPointActivityRegistrationMapper extends BaseMapperX<ClubPoi
                 .orderByDesc(ClubPointActivityRegistrationDO::getId));
     }
 
+    default PageResult<ClubPointActivityRegistrationDO> selectPageByClubIds(PageParam pageParam,
+                                                                            Collection<Long> clubIds,
+                                                                            Long activityId,
+                                                                            Integer status,
+                                                                            Long userId) {
+        return selectPage(pageParam, new LambdaQueryWrapperX<ClubPointActivityRegistrationDO>()
+                .in(ClubPointActivityRegistrationDO::getClubId, clubIds)
+                .eqIfPresent(ClubPointActivityRegistrationDO::getActivityId, activityId)
+                .eqIfPresent(ClubPointActivityRegistrationDO::getStatus, status)
+                .eqIfPresent(ClubPointActivityRegistrationDO::getUserId, userId)
+                .orderByDesc(ClubPointActivityRegistrationDO::getRegisterTime)
+                .orderByDesc(ClubPointActivityRegistrationDO::getId));
+    }
+
     @Select("SELECT r.* FROM club_points_activity_registration r"
             + " JOIN club_points_activity a ON a.id = r.activity_id"
             + " LEFT JOIN club_points_attendance_record c"

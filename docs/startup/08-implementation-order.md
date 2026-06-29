@@ -20,6 +20,7 @@
 -> 年度 / 预算 / 异议
 -> 报表 / 任务 / 前端收口
 -> 验收硬化
+-> 可用性 / 前后端契约硬化
 ```
 
 ## 里程碑
@@ -37,6 +38,7 @@
 - M10：异议、年度清零、排名、激励、预算。
 - M11：报表、审计、任务监控、前端工作台。
 - M12：测试矩阵、性能、MVP 验收。
+- M13：可用性、前后端契约、用户语言、三角色 E2E 硬化。
 
 ## 当前硬门禁
 
@@ -62,6 +64,7 @@
 - M10：`docs/development-milestones/M10-annual-dispute-budget.md`
 - M11：`docs/development-milestones/M11-report-job-frontend.md`
 - M12：`docs/development-milestones/M12-hardening-acceptance.md`
+- M13：`docs/development-milestones/M13-usability-contract-hardening.md`
 
 ## 禁止倒序
 

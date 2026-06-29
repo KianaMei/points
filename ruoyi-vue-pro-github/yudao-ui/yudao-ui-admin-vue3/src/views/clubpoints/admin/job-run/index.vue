@@ -7,11 +7,11 @@
       <el-form-item label="业务类型" prop="bizType">
         <el-input v-model="queryParams.bizType" class="!w-180px" clearable placeholder="业务类型" />
       </el-form-item>
-      <el-form-item label="业务ID" prop="bizId">
+      <el-form-item label="业务编号" prop="bizId">
         <el-input-number v-model="queryParams.bizId" :min="1" class="!w-180px" controls-position="right" />
       </el-form-item>
-      <el-form-item label="运行键" prop="runKey">
-        <el-input v-model="queryParams.runKey" class="!w-220px" clearable placeholder="runKey" />
+      <el-form-item label="任务批次" prop="runKey">
+        <el-input v-model="queryParams.runKey" class="!w-220px" clearable placeholder="请输入任务批次" />
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" class="!w-180px" clearable placeholder="请选择状态">
@@ -49,12 +49,12 @@
 
   <ContentWrap>
     <el-table v-loading="loading" :data="list">
-      <el-table-column align="center" label="运行ID" prop="id" width="100" />
+      <el-table-column align="center" label="任务编号" prop="id" width="100" />
       <el-table-column label="任务类型" min-width="190" prop="taskType" show-overflow-tooltip />
       <el-table-column label="业务" min-width="150" show-overflow-tooltip>
         <template #default="{ row }">{{ row.bizType || '-' }} / {{ row.bizId || '-' }}</template>
       </el-table-column>
-      <el-table-column label="运行键" min-width="180" prop="runKey" show-overflow-tooltip />
+      <el-table-column label="任务批次" min-width="180" prop="runKey" show-overflow-tooltip />
       <el-table-column align="center" label="状态" prop="status" width="130">
         <template #default="{ row }">
           <StatusTag :type="DICT_TYPE.CLUB_POINTS_JOB_STATUS" :value="row.status" />
@@ -92,9 +92,7 @@
   <Dialog v-model="detailVisible" title="任务运行详情" width="860">
     <el-descriptions :column="2" border>
       <el-descriptions-item label="任务类型">{{ detail.taskType || '-' }}</el-descriptions-item>
-      <el-descriptions-item label="业务">{{ detail.bizType || '-' }} / {{ detail.bizId || '-' }}</el-descriptions-item>
-      <el-descriptions-item label="运行键">{{ detail.runKey || '-' }}</el-descriptions-item>
-      <el-descriptions-item label="幂等键">{{ detail.idempotencyKey || '-' }}</el-descriptions-item>
+      <el-descriptions-item label="业务">{{ detail.bizType || '-' }}</el-descriptions-item>
       <el-descriptions-item label="总数">{{ detail.totalCount || 0 }}</el-descriptions-item>
       <el-descriptions-item label="成功/跳过/失败">
         {{ detail.successCount || 0 }} / {{ detail.skipCount || 0 }} / {{ detail.failedCount || 0 }}
@@ -104,7 +102,18 @@
       <el-descriptions-item label="错误类型">{{ detail.errorType || '-' }}</el-descriptions-item>
       <el-descriptions-item label="错误信息">{{ detail.errorMessage || '-' }}</el-descriptions-item>
     </el-descriptions>
-    <el-input class="mt-16px" :model-value="formatJson(detail.resultJson)" :rows="10" readonly type="textarea" />
+    <el-collapse class="mt-16px">
+      <el-collapse-item name="technical" title="技术诊断信息">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="bizId">{{ detail.bizId || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="runKey">{{ detail.runKey || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="idempotencyKey">{{ detail.idempotencyKey || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="resultJson">
+            <el-input :model-value="formatJson(detail.resultJson)" :rows="8" readonly type="textarea" />
+          </el-descriptions-item>
+        </el-descriptions>
+      </el-collapse-item>
+    </el-collapse>
     <template #footer>
       <el-button @click="detailVisible = false">关闭</el-button>
       <el-button
@@ -207,7 +216,9 @@ const openDetail = async (row: OperationApi.AdminJobRunRespVO) => {
   try {
     Object.assign(detail, await OperationApi.getJobRunDetail(row.id))
     detailVisible.value = true
-  } catch {}
+  } catch {
+    message.error('任务详情加载失败，请重试')
+  }
 }
 
 const isFailed = (row: Partial<OperationApi.AdminJobRunRespVO>) => FAILED_STATUSES.includes(Number(row.status))
@@ -226,7 +237,11 @@ const handleFailedJob = async (row: Partial<OperationApi.AdminJobRunRespVO>) => 
     message.success('失败任务已提交处理')
     detailVisible.value = false
     await getList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('失败任务处理提交失败，请重试')
+    }
+  }
 }
 
 const formatJson = (value?: string) => {

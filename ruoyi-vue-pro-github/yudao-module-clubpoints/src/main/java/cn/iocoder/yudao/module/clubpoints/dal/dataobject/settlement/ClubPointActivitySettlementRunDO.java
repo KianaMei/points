@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.clubpoints.dal.dataobject.settlement;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import com.baomidou.mybatisplus.annotation.KeySequence;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -11,7 +12,7 @@ import lombok.experimental.Accessors;
 import java.time.LocalDateTime;
 
 /**
- * 活动结算运行记录 DO
+ * 活动积分发放运行记录 DO
  */
 @TableName("club_points_activity_settlement_run")
 @KeySequence("club_points_activity_settlement_run_seq")
@@ -35,5 +36,16 @@ public class ClubPointActivitySettlementRunDO extends BaseDO {
     private String errorMessage;
     private Integer triggerSource;
     private Long operatorUserId;
+
+    @TableField(exist = false)
+    private Long clubId;
+    @TableField(exist = false)
+    private String activityTitle;
+    @TableField(exist = false)
+    private String clubName;
+    @TableField(exist = false)
+    private LocalDateTime activityStartTime;
+    @TableField(exist = false)
+    private LocalDateTime activityEndTime;
 
 }

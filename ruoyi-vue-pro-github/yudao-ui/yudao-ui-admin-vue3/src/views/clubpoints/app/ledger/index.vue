@@ -63,7 +63,7 @@
 
   <ContentWrap>
     <el-table v-loading="loading" :data="list">
-      <el-table-column align="center" label="流水ID" prop="id" width="100" />
+      <el-table-column align="center" label="流水编号" prop="id" width="100" />
       <el-table-column align="center" label="方向" prop="direction" width="100">
         <template #default="{ row }">
           <StatusTag :type="DICT_TYPE.CLUB_POINTS_TRANSACTION_DIRECTION" :value="row.direction" />

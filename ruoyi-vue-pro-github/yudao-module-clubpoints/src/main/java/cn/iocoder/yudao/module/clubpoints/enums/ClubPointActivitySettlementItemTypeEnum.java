@@ -1,7 +1,7 @@
 package cn.iocoder.yudao.module.clubpoints.enums;
 
 /**
- * 活动结算流水明细类型枚举
+ * 活动积分发放流水明细类型枚举
  */
 public enum ClubPointActivitySettlementItemTypeEnum {
 

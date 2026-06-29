@@ -79,7 +79,7 @@
 
   <Dialog v-model="correctVisible" :title="correctMode === 'supplement' ? '补录签到签退' : '修正签到签退'" width="560">
     <el-form ref="correctFormRef" :model="correctForm" :rules="correctRules" label-width="104px">
-      <el-form-item label="报名ID" prop="registrationId">
+      <el-form-item label="报名记录" prop="registrationId">
         <el-input-number v-model="correctForm.registrationId" :min="1" class="!w-240px" controls-position="right" />
       </el-form-item>
       <el-form-item label="目标类型" prop="targetType">
@@ -144,7 +144,7 @@ const correctForm = reactive({
   reason: ''
 })
 const correctRules = {
-  registrationId: [{ required: true, message: '报名ID不能为空', trigger: 'blur' }],
+  registrationId: [{ required: true, message: '报名记录不能为空', trigger: 'blur' }],
   targetType: [{ required: true, message: '目标类型不能为空', trigger: 'change' }],
   occurTime: [{ required: true, message: '修正时间不能为空', trigger: 'change' }],
   reason: [{ required: true, message: '原因不能为空', trigger: 'blur' }]
@@ -219,7 +219,11 @@ const markSpecialAbsence = async (row: any) => {
     await AttendanceApi.markLeaderSpecialAbsence({ id: row.id, reason: result.value })
     message.success('已标记特殊缺席')
     await getRegistrationList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('标记特殊缺席失败，请重试')
+    }
+  }
 }
 
 onMounted(() => {

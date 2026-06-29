@@ -14,10 +14,10 @@
       <el-form-item label="业务类型" prop="bizType">
         <el-input v-model="queryParams.bizType" class="!w-180px" clearable placeholder="REPORT" />
       </el-form-item>
-      <el-form-item label="业务ID" prop="bizId">
+      <el-form-item label="业务编号" prop="bizId">
         <el-input-number v-model="queryParams.bizId" :min="1" class="!w-180px" controls-position="right" />
       </el-form-item>
-      <el-form-item label="操作人ID" prop="operatorUserId">
+      <el-form-item label="操作人编号" prop="operatorUserId">
         <el-input-number v-model="queryParams.operatorUserId" :min="1" class="!w-180px" controls-position="right" />
       </el-form-item>
       <el-form-item label="操作人" prop="operatorNameSnapshot">

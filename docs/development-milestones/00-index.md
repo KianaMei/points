@@ -51,6 +51,7 @@
 | `[x]` | M10 | `M10-annual-dispute-budget.md` | 异议、年度清零、排名、激励、预算闭环可用 |
 | `[x]` | M11 | `M11-report-job-frontend.md` | 报表、任务监控、通知、前端页面收口 |
 | `[x]` | M12 | `M12-hardening-acceptance.md` | 并发、权限、回归、演示验收完成 |
+| `[x]` | M13 | `M13-usability-contract-hardening.md` | 可用性、前后端契约、用户语言、三角色 E2E 硬化 |
 
 ## 依赖链
 
@@ -68,6 +69,7 @@ M0 空模块
 -> M10 年度运营
 -> M11 前端和报表收口
 -> M12 硬化验收
+-> M13 可用性和契约硬化
 ```
 
 ## 每个任务的最低完成标准
@@ -82,7 +84,7 @@ M0 空模块
 
 ## 当前最近入口
 
-当前最近入口是 M12：
+当前最近入口：M13 已放行。M0-M13 全部里程碑均已完成并有验证证据。
 
 - M0 已创建 `ruoyi-vue-pro-github/yudao-module-clubpoints` 空模块。
 - M0 已在根 POM 和 `yudao-server/pom.xml` 接入 `yudao-module-clubpoints`。
@@ -203,3 +205,9 @@ M0 空模块
 - M12.8 已移除前端活动 / 材料死删除 API wrapper，并把活动基础积分和全程额外分改为页面显式输入，不再由前端 API 默认硬编码制度分值。
 - M12.8 已通过文档过期表述扫描、死接口扫描、硬编码分值扫描、数据库设计 / 正式 SQL 34 张表一致性验证、clubpoints 前端路径类型过滤和 M12 关键回归组合测试。
 - M12 已放行；M0-M12 全部里程碑均已完成并有验证证据。
+- M13 已完成 API wrapper 到后端 mapping、页面不得散写请求、用户语言白名单、活动积分发放命名、菜单路由、权限一致性、静默失败和 E2E 脚本契约硬化。
+- M13 已重放 `club-points-seed.sql` 到 live `club_points` 数据库，运行态菜单已从旧口径 `员工工作台 / 活动报名` 校准为 `员工积分中心 / 活动报名签到`。
+- M13 已定位并处理 live 后端 `ClubPointClubAppController.joinClub(AppClubOperationReqVO)` 运行态反射异常；根因是旧后端进程加载 stale classpath，源码和当前 `target/classes` 均正确，轻量编译后重启 PID 61960 生效。
+- M13 已通过三角色真实 E2E：员工 6 个页面 action、负责人 5 个页面 action、管理员 19 个页面 action 均满足 `clubpointsApiRequests.length >= 1`、`visibleResultChanged = true`、`pageErrors = []`、`unexpectedClubpointsResponses = []`。
+- M13 已通过 hardening 合集：`mvn -pl yudao-module-clubpoints -am "-Dtest=ClubPointActivityEnumTest,ClubPointActivitySettlementEnumTest,ClubPointLedgerEnumTest,ClubPointRuleEnumTest,ClubNotifyServiceImplTest,ClubPointLedgerServiceImplTest,ClubPointSettlementAdminControllerTest,ClubPointFrontendApiWrapperContractHardeningTest,ClubPointViewNoDirectRequestHardeningTest,ClubPointVisibleLanguageHardeningTest,ClubPointFrontendSilentFailureHardeningTest,ClubPointSettlementProductLanguageHardeningTest,ClubPointMenuRouteContractHardeningTest,ClubPointPermissionEndpointContractHardeningTest,ClubPointE2EScriptContractHardeningTest" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dflatten.skip=true" test`；15 个测试类合计 55 个测试，失败 0，错误 0。
+- M13 前端类型过滤已通过：`pnpm --dir ruoyi-vue-pro-github\yudao-ui\yudao-ui-admin-vue3 exec vue-tsc --noEmit --pretty false` 全量仍因非 clubpoints 存量债退出 1，但过滤 `src/api/clubpoints`、`src/views/clubpoints` 和 `clubpoints` 命中 0。

@@ -17,7 +17,7 @@ public enum ClubPointActivityStatusEnum implements ArrayValuable<Integer> {
     PUBLISHED(4, "已发布", 5, 6, 8),
     CANCELED(5, "已取消", 8),
     ENDED(6, "已结束", 7, 8),
-    SETTLED(7, "已结算", 8),
+    SETTLED(7, "已发放", 8),
     DELETED_SNAPSHOT(8, "已删除快照");
 
     public static final Integer[] ARRAYS = Arrays.stream(values())

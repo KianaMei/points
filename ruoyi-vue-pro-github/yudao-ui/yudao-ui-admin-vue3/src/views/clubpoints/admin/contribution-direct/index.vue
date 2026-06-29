@@ -4,11 +4,11 @@
       :closable="false"
       class="mb-16px"
       show-icon
-      title="管理员代录提交后直接生效。请求号用于后端幂等：失败重试保留同一个 requestNo，重开代录才生成新号。"
+      title="管理员代录提交后直接生效。提交编号用于防重复提交：失败重试保留同一个提交编号，重开代录才生成新编号。"
       type="warning"
     />
     <el-form ref="formRef" :model="formData" :rules="formRules" label-width="112px">
-      <el-form-item label="请求号" prop="requestNo">
+      <el-form-item label="提交编号" prop="requestNo">
         <el-input v-model="formData.requestNo" disabled />
       </el-form-item>
       <el-form-item label="员工" prop="userId">
@@ -78,7 +78,7 @@ const formData = reactive<ContributionApi.AdminContributionDirectCreateReqVO>({
   attachments: []
 })
 const formRules = {
-  requestNo: [{ required: true, message: '请求号不能为空', trigger: 'blur' }],
+  requestNo: [{ required: true, message: '提交编号不能为空', trigger: 'blur' }],
   userId: [{ required: true, message: '员工不能为空', trigger: 'change' }],
   ruleVersionId: [{ required: true, message: '规则版本不能为空', trigger: 'change' }],
   points: [{ required: true, message: '积分不能为空', trigger: 'blur' }],

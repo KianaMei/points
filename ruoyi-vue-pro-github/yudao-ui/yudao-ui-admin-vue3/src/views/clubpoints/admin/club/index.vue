@@ -324,7 +324,11 @@ const disableClub = async (row: ClubApi.AdminClubRespVO) => {
     await ClubApi.disableClub({ id: row.id, reason: result.value })
     message.success('停用成功')
     await getList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('停用俱乐部失败，请重试')
+    }
+  }
 }
 
 const openDeleteDialog = (row: ClubApi.AdminClubRespVO) => {
@@ -395,7 +399,11 @@ const removeMember = async (row: any) => {
     })
     message.success('移除成员成功')
     await getMemberList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('移除成员失败，请重试')
+    }
+  }
 }
 
 const openLeaderDialog = async (row: ClubApi.AdminClubRespVO) => {
@@ -445,7 +453,11 @@ const removeLeader = async (row: any) => {
     })
     message.success('移除负责人成功')
     await getLeaderList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('移除负责人失败，请重试')
+    }
+  }
 }
 
 onMounted(getList)

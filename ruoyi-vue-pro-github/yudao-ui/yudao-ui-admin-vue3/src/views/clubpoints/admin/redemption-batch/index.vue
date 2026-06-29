@@ -273,7 +273,11 @@ const changeBatchStatus = async (
     }
     message.success(`${actionText}成功`)
     await getList()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error(`${actionText}失败，请重试`)
+    }
+  }
 }
 
 onMounted(getList)

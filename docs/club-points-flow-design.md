@@ -5,7 +5,7 @@
 ```mermaid
 flowchart TD
     accTitle: 业务流程总览
-    accDescr: 展示从俱乐部成员、活动运营、积分结算、兑换、年度清零到报表和审计的完整业务流程。
+    accDescr: 展示从俱乐部成员、活动运营、积分发放、兑换、年度清零到报表和审计的完整业务流程。
 
     employee_join["员工加入俱乐部"]
     activity_publish["活动创建与发布"]
@@ -355,12 +355,12 @@ flowchart TD
     scope_check -->|"是"| reason --> edit_record --> audit
 ```
 
-### 活动积分自动结算
+### 活动积分自动发放
 
 ```mermaid
 flowchart TD
-    accTitle: 活动结算流程
-    accDescr: 展示活动在签退窗口关闭并经过延迟后结算，幂等生成参与积分或缺席扣分。
+    accTitle: 活动积分发放流程
+    accDescr: 展示活动在签退窗口关闭并经过延迟后自动发放积分，幂等生成参与积分或缺席扣分。
 
     trigger["到达结算时间\nmax(结束时间, 签退窗口关闭) + settlement_delay"]
     load_data["读取活动、报名、签到签退、特殊缺席、配置版本"]
@@ -843,16 +843,16 @@ sequenceDiagram
     redemption-->>employee_b: 提示已兑完或库存不足
 ```
 
-### 活动结算幂等
+### 活动积分发放幂等
 
 ```mermaid
 flowchart TD
-    accTitle: 结算幂等流程
-    accDescr: 展示活动结算通过运行键和员工维度幂等键保证失败任务重试不会重复生成积分流水。
+    accTitle: 活动积分发放幂等流程
+    accDescr: 展示活动积分发放通过运行键和员工维度幂等键保证失败任务重试不会重复生成积分流水。
 
-    job_start["结算任务启动"]
-    run_key["生成活动结算 run_key"]
-    run_exists{"结算批次已成功?"}
+    job_start["积分发放任务启动"]
+    run_key["生成活动积分发放 run_key"]
+    run_exists{"发放批次已成功?"}
     skip_run["跳过整批"]
     load_registrations["加载报名记录"]
     each_employee["处理单个员工"]

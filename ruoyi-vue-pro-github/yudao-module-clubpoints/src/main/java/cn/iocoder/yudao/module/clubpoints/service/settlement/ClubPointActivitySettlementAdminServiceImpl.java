@@ -19,13 +19,20 @@ import cn.iocoder.yudao.module.clubpoints.service.settlement.bo.ClubPointSettlem
 import cn.iocoder.yudao.module.clubpoints.service.settlement.bo.ClubPointSettlementPendingActivityPageReqBO;
 import cn.iocoder.yudao.module.clubpoints.service.settlement.bo.ClubPointSettlementRunPageReqBO;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
- * 管理员活动结算服务
+ * 管理员活动积分发放服务
  */
 @Service
 public class ClubPointActivitySettlementAdminServiceImpl implements ClubPointActivitySettlementAdminService {
@@ -45,8 +52,9 @@ public class ClubPointActivitySettlementAdminServiceImpl implements ClubPointAct
 
     @Override
     public PageResult<ClubPointActivityDO> getPendingActivityPage(ClubPointSettlementPendingActivityPageReqBO reqBO) {
-        return activityMapper.selectPage(reqBO, null, reqBO.getClubId(), reqBO.getKeyword(),
-                ClubPointActivityStatusEnum.ENDED.getStatus(), null, null, null);
+        return activityMapper.selectSettlementPendingPage(reqBO, reqBO.getClubId(), reqBO.getClubName(),
+                resolveActivityTitle(reqBO.getActivityTitle(), reqBO.getKeyword()),
+                reqBO.getStartTime(), reqBO.getEndTime());
     }
 
     @Override
@@ -77,7 +85,11 @@ public class ClubPointActivitySettlementAdminServiceImpl implements ClubPointAct
 
     @Override
     public PageResult<ClubPointActivitySettlementRunDO> getRunPage(ClubPointSettlementRunPageReqBO reqBO) {
-        return settlementRunMapper.selectPage(reqBO, reqBO.getActivityId(), reqBO.getStatus());
+        Collection<Long> activityIds = resolveActivityIds(reqBO);
+        PageResult<ClubPointActivitySettlementRunDO> pageResult = settlementRunMapper.selectPage(reqBO,
+                reqBO.getActivityId(), activityIds, reqBO.getStatus(), null, null);
+        enrichActivityInfo(pageResult.getList());
+        return pageResult;
     }
 
     @Override
@@ -86,10 +98,58 @@ public class ClubPointActivitySettlementAdminServiceImpl implements ClubPointAct
         if (run == null) {
             throw new IllegalArgumentException("Settlement run not found: " + id);
         }
+        enrichActivityInfo(Collections.singletonList(run));
         return new ClubPointSettlementDetailBO()
                 .setRun(run)
                 .setTransactions(transactionMapper.selectListByActivityIdAndSourceType(run.getActivityId(),
                         ClubPointTransactionSourceTypeEnum.ACTIVITY_SETTLEMENT.getType()));
+    }
+
+    private Collection<Long> resolveActivityIds(ClubPointSettlementRunPageReqBO reqBO) {
+        if (!hasActivityBusinessFilter(reqBO)) {
+            return null;
+        }
+        return activityMapper.selectListBySettlementBusinessFilter(reqBO.getClubName(), reqBO.getActivityTitle(),
+                        reqBO.getStartTime(), reqBO.getEndTime())
+                .stream()
+                .map(ClubPointActivityDO::getId)
+                .collect(Collectors.toSet());
+    }
+
+    private void enrichActivityInfo(List<ClubPointActivitySettlementRunDO> runs) {
+        if (runs == null || runs.isEmpty()) {
+            return;
+        }
+        List<Long> activityIds = runs.stream()
+                .map(ClubPointActivitySettlementRunDO::getActivityId)
+                .filter(id -> id != null)
+                .distinct()
+                .collect(Collectors.toList());
+        if (activityIds.isEmpty()) {
+            return;
+        }
+        Map<Long, ClubPointActivityDO> activityMap = activityMapper.selectBatchIds(activityIds).stream()
+                .collect(Collectors.toMap(ClubPointActivityDO::getId, Function.identity(), (left, right) -> left));
+        for (ClubPointActivitySettlementRunDO run : runs) {
+            ClubPointActivityDO activity = activityMap.get(run.getActivityId());
+            if (activity == null) {
+                continue;
+            }
+            run.setClubId(activity.getClubId())
+                    .setClubName(activity.getClubNameSnapshot())
+                    .setActivityTitle(activity.getTitle())
+                    .setActivityStartTime(activity.getStartTime())
+                    .setActivityEndTime(activity.getEndTime());
+        }
+    }
+
+    private static boolean hasActivityBusinessFilter(ClubPointSettlementRunPageReqBO reqBO) {
+        return StringUtils.hasText(reqBO.getClubName()) || StringUtils.hasText(reqBO.getActivityTitle())
+                || reqBO.getStartTime() != null || reqBO.getEndTime() != null;
+    }
+
+    private static String resolveActivityTitle(String activityTitle, String keyword) {
+        return StringUtils.hasText(activityTitle) ? activityTitle : keyword;
     }
 
     private static ClubAuditCreateReqBO buildAuditReq(ClubPointSettlementManualRunReqBO reqBO) {

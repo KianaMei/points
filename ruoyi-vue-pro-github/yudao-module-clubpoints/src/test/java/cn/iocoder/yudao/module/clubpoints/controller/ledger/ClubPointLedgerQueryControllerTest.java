@@ -9,8 +9,11 @@ import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.ledger.ClubPointLedgerAdminController;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.ledger.vo.AdminLedgerAccountPageReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.ledger.vo.AdminLedgerAccountRespVO;
+import cn.iocoder.yudao.module.clubpoints.controller.admin.ledger.vo.AdminLedgerAdjustReqVO;
+import cn.iocoder.yudao.module.clubpoints.controller.admin.ledger.vo.AdminLedgerReverseReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.ledger.vo.AdminLedgerTransactionPageReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.admin.ledger.vo.AdminLedgerTransactionRespVO;
+import cn.iocoder.yudao.module.clubpoints.controller.admin.rule.vo.AttachmentInputVO;
 import cn.iocoder.yudao.module.clubpoints.controller.app.ledger.ClubPointLedgerAppController;
 import cn.iocoder.yudao.module.clubpoints.controller.app.ledger.vo.AppLedgerSummaryRespVO;
 import cn.iocoder.yudao.module.clubpoints.controller.app.ledger.vo.AppLedgerTransactionPageReqVO;
@@ -22,53 +25,80 @@ import cn.iocoder.yudao.module.clubpoints.controller.leader.ledger.vo.LeaderLedg
 import cn.iocoder.yudao.module.clubpoints.controller.leader.ledger.vo.LeaderLedgerTransactionRespVO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubLeaderDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.club.ClubMemberDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.audit.ClubAuditLogDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointAccountDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.ledger.ClubPointTransactionDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRuleItemDO;
+import cn.iocoder.yudao.module.clubpoints.dal.dataobject.rule.ClubPointRuleVersionDO;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.audit.ClubAuditLogMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.club.ClubLeaderMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.club.ClubMemberMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointAccountMapper;
 import cn.iocoder.yudao.module.clubpoints.dal.mysql.ledger.ClubPointTransactionMapper;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.rule.ClubPointRuleItemMapper;
+import cn.iocoder.yudao.module.clubpoints.dal.mysql.rule.ClubPointRuleVersionMapper;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointCategoryEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionDirectionEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionSourceTypeEnum;
 import cn.iocoder.yudao.module.clubpoints.enums.ClubPointTransactionStatusEnum;
+import cn.iocoder.yudao.module.clubpoints.service.audit.ClubAuditServiceImpl;
+import cn.iocoder.yudao.module.clubpoints.service.club.ClubPointClubQueryServiceImpl;
+import cn.iocoder.yudao.module.clubpoints.service.ledger.ClubPointLedgerServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.ledger.ClubPointLedgerQueryServiceImpl;
+import cn.iocoder.yudao.module.clubpoints.service.rule.ClubPointRuleServiceImpl;
 import cn.iocoder.yudao.module.clubpoints.service.scope.ClubScopeServiceImpl;
+import cn.iocoder.yudao.module.system.api.dept.DeptApi;
+import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static cn.iocoder.yudao.framework.common.enums.UserTypeEnum.ADMIN;
 import static cn.iocoder.yudao.framework.security.core.LoginUser.INFO_KEY_NICKNAME;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.POINT_ADJUST;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubAuditActionTypeConstants.POINT_REVERSE;
+import static cn.iocoder.yudao.module.clubpoints.enums.ClubPointRuleItemCodeEnum.SPECIAL_CONTRIBUTION;
 import static cn.iocoder.yudao.module.clubpoints.enums.ErrorCodeConstants.CLUB_SCOPE_DENIED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.when;
 
 @Import({
         ClubPointLedgerAppController.class,
         ClubPointLedgerLeaderController.class,
         ClubPointLedgerAdminController.class,
+        ClubPointLedgerServiceImpl.class,
         ClubPointLedgerQueryServiceImpl.class,
+        ClubPointClubQueryServiceImpl.class,
+        ClubPointRuleServiceImpl.class,
+        ClubAuditServiceImpl.class,
         ClubScopeServiceImpl.class
 })
 class ClubPointLedgerQueryControllerTest extends BaseDbUnitTest {
 
     private static final int STATUS_ACTIVE = 1;
+    private static final int STATUS_PUBLISHED = 2;
+    private static final int RULE_ITEM_ENABLED = 1;
     private static final int STATUS_VALID = ClubPointTransactionStatusEnum.VALID.getStatus();
     private static final int DIRECTION_INCREASE = ClubPointTransactionDirectionEnum.INCREASE.getDirection();
     private static final int DIRECTION_DECREASE = ClubPointTransactionDirectionEnum.DECREASE.getDirection();
@@ -89,9 +119,20 @@ class ClubPointLedgerQueryControllerTest extends BaseDbUnitTest {
     @Resource
     private ClubPointAccountMapper accountMapper;
     @Resource
+    private ClubAuditLogMapper auditLogMapper;
+    @Resource
+    private ClubPointRuleVersionMapper ruleVersionMapper;
+    @Resource
+    private ClubPointRuleItemMapper ruleItemMapper;
+    @Resource
     private ClubMemberMapper clubMemberMapper;
     @Resource
     private ClubLeaderMapper clubLeaderMapper;
+
+    @MockBean
+    private AdminUserApi adminUserApi;
+    @MockBean
+    private DeptApi deptApi;
 
     @AfterEach
     void clearSecurityContext() {
@@ -218,6 +259,47 @@ class ClubPointLedgerQueryControllerTest extends BaseDbUnitTest {
     }
 
     @Test
+    void adminLedgerMutationEndpointsShouldAdjustAndReverseThroughLedgerService() {
+        login(1L, "管理员");
+        mockUser(1006L, "员工1006", 306L, "积分部", "13900001006");
+        Long ruleVersionId = insertPublishedRule();
+
+        Long adjustTransactionId = adminController.adjustLedger(new AdminLedgerAdjustReqVO()
+                .setRequestNo("REQ-M13-LEDGER-ADJUST")
+                .setUserId(1006L)
+                .setDirection(DIRECTION_INCREASE)
+                .setPoints(12)
+                .setRuleVersionId(ruleVersionId)
+                .setRuleItemCode(SPECIAL_CONTRIBUTION.getCode())
+                .setReason("管理员补发积分")
+                .setAttachments(Collections.singletonList(new AttachmentInputVO()
+                        .setType(2)
+                        .setUrl("https://example.invalid/evidence")
+                        .setName("补发材料")))).getCheckedData();
+        ClubPointTransactionDO adjusted = transactionMapper.selectById(adjustTransactionId);
+        assertEquals("ADJ-REQ-M13-LEDGER-ADJUST", adjusted.getTransactionNo());
+        assertEquals("员工1006", adjusted.getUserNameSnapshot());
+        assertEquals("积分部", adjusted.getDeptNameSnapshot());
+        assertEquals("LEDGER_ADJUST:REQ-M13-LEDGER-ADJUST", adjusted.getIdempotencyKey());
+        assertEquals(12, accountMapper.selectByUserId(1006L).getAvailablePoints());
+
+        Long reverseTransactionId = adminController.reverseLedger(new AdminLedgerReverseReqVO()
+                .setTransactionId(adjustTransactionId)
+                .setReason("撤销错误补发")).getCheckedData();
+        ClubPointTransactionDO reverse = transactionMapper.selectById(reverseTransactionId);
+        assertEquals("REV-" + adjustTransactionId, reverse.getTransactionNo());
+        assertEquals(adjustTransactionId, reverse.getReverseOfTransactionId());
+        assertEquals(DIRECTION_DECREASE, reverse.getDirection());
+        assertEquals(0, accountMapper.selectByUserId(1006L).getAvailablePoints());
+
+        Set<String> auditActions = auditLogMapper.selectList().stream()
+                .map(ClubAuditLogDO::getActionType)
+                .collect(Collectors.toSet());
+        assertTrue(auditActions.contains(POINT_ADJUST));
+        assertTrue(auditActions.contains(POINT_REVERSE));
+    }
+
+    @Test
     void endpointsShouldUseDocumentedLedgerPathsAndPermissions() throws Exception {
         assertEquals("/clubpoints/app/ledger",
                 ClubPointLedgerAppController.class.getAnnotation(RequestMapping.class).value()[0]);
@@ -241,6 +323,12 @@ class ClubPointLedgerQueryControllerTest extends BaseDbUnitTest {
         assertGetMapping(ClubPointLedgerAdminController.class, "getTransactionPage",
                 new Class<?>[]{AdminLedgerTransactionPageReqVO.class}, "/transaction-page",
                 "@ss.hasPermission('clubpoints:ledger:query')");
+        assertPostMapping(ClubPointLedgerAdminController.class, "adjustLedger",
+                new Class<?>[]{AdminLedgerAdjustReqVO.class}, "/adjust",
+                "@ss.hasPermission('clubpoints:ledger:adjust')");
+        assertPostMapping(ClubPointLedgerAdminController.class, "reverseLedger",
+                new Class<?>[]{AdminLedgerReverseReqVO.class}, "/reverse",
+                "@ss.hasPermission('clubpoints:ledger:reverse')");
     }
 
     private static void assertGetMapping(Class<?> controllerClass, String methodName, Class<?>[] parameterTypes,
@@ -254,6 +342,15 @@ class ClubPointLedgerQueryControllerTest extends BaseDbUnitTest {
             assertNotNull(preAuthorize);
             assertEquals(expectedPermission, preAuthorize.value());
         }
+    }
+
+    private static void assertPostMapping(Class<?> controllerClass, String methodName, Class<?>[] parameterTypes,
+                                          String expectedPath, String expectedPermission) throws NoSuchMethodException {
+        Method method = controllerClass.getMethod(methodName, parameterTypes);
+        assertEquals(expectedPath, method.getAnnotation(PostMapping.class).value()[0]);
+        PreAuthorize preAuthorize = method.getAnnotation(PreAuthorize.class);
+        assertNotNull(preAuthorize);
+        assertEquals(expectedPermission, preAuthorize.value());
     }
 
     private Long insertTransaction(String transactionNo, Long userId, String userName, Integer direction,
@@ -341,6 +438,44 @@ class ClubPointLedgerQueryControllerTest extends BaseDbUnitTest {
                 .setId(userId)
                 .setUserType(ADMIN.getValue())
                 .setInfo(info), request);
+    }
+
+    private void mockUser(Long userId, String nickname, Long deptId, String deptName, String mobile) {
+        AdminUserRespDTO user = new AdminUserRespDTO()
+                .setId(userId)
+                .setNickname(nickname)
+                .setDeptId(deptId)
+                .setMobile(mobile);
+        DeptRespDTO dept = new DeptRespDTO()
+                .setId(deptId)
+                .setName(deptName);
+        when(adminUserApi.getUser(userId)).thenReturn(user);
+        when(deptApi.getDept(deptId)).thenReturn(dept);
+    }
+
+    private Long insertPublishedRule() {
+        ClubPointRuleVersionDO version = new ClubPointRuleVersionDO()
+                .setVersionNo("V-M13-LEDGER")
+                .setName("M13 ledger rule")
+                .setStatus(STATUS_PUBLISHED)
+                .setPublicityTime(LocalDateTime.of(2026, 1, 1, 0, 0))
+                .setEffectiveTime(LocalDateTime.of(2026, 1, 1, 0, 0))
+                .setPublishedTime(LocalDateTime.of(2026, 1, 1, 0, 0))
+                .setSummary("summary")
+                .setContent("content");
+        ruleVersionMapper.insert(version);
+        ruleItemMapper.insert(new ClubPointRuleItemDO()
+                .setRuleVersionId(version.getId())
+                .setItemCode(SPECIAL_CONTRIBUTION.getCode())
+                .setItemName("特殊贡献积分")
+                .setItemType(1)
+                .setCategory(ClubPointCategoryEnum.SPECIAL_REWARD.getCategory())
+                .setMinPoints(1)
+                .setMaxPoints(100)
+                .setDefaultPoints(10)
+                .setStatus(RULE_ITEM_ENABLED)
+                .setSort(1));
+        return version.getId();
     }
 
     private static void assertServiceException(Runnable runnable, ErrorCode errorCode) {

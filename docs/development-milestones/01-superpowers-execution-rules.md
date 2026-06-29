@@ -2,7 +2,7 @@
 
 ## 适用范围
 
-本规则适用于 `docs/development-milestones/M0-*.md` 到 `M12-*.md`。
+本规则适用于 `docs/development-milestones/M0-*.md` 到 `M13-*.md`。
 
 这些文件不是聊天备忘录，而是执行入口。执行任何里程碑前，必须先加载当前里程碑文件，并按 Superpowers 工作流拆成可验证任务。
 
@@ -85,4 +85,3 @@ Superpowers 默认计划里常见 `Commit`，本项目不使用。统一改为 `
 - 发现数据库设计、API 设计、前端页面设计冲突。
 - 发现需要跑 full build 才能判断但用户没授权。
 - 发现已有用户改动和当前修改直接冲突。
-

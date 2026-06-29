@@ -1,7 +1,7 @@
 <template>
   <ContentWrap>
     <el-form ref="queryFormRef" :inline="true" :model="queryParams" class="-mb-15px" label-width="88px">
-      <el-form-item label="员工ID" prop="userId">
+      <el-form-item label="员工" prop="userId">
         <el-input-number v-model="queryParams.userId" :min="1" class="!w-180px" controls-position="right" />
       </el-form-item>
       <el-form-item label="状态" prop="status">
@@ -28,7 +28,7 @@
   <ContentWrap>
     <el-table v-loading="loading" :data="list">
       <el-table-column align="center" label="异议ID" prop="id" width="100" />
-      <el-table-column align="center" label="员工ID" prop="userId" width="110" />
+      <el-table-column align="center" label="员工" prop="userId" width="110" />
       <el-table-column align="center" label="目标" width="150">
         <template #default="{ row }">{{ row.targetType }} / {{ row.targetId }}</template>
       </el-table-column>

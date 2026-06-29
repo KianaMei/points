@@ -155,7 +155,11 @@ const joinClub = async (row: ClubApi.AppClubRespVO) => {
     await ClubApi.joinClub({ id: row.id, reason: result.value })
     message.success('加入申请已提交')
     await Promise.all([getMyClubs(), getJoinableList()])
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('加入俱乐部失败，请重试')
+    }
+  }
 }
 
 const exitClub = async (row: ClubApi.AppClubRespVO) => {
@@ -165,7 +169,11 @@ const exitClub = async (row: ClubApi.AppClubRespVO) => {
     await ClubApi.exitClub({ id: row.id, reason: result.value })
     message.success('已退出俱乐部')
     await getMyClubs()
-  } catch {}
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      message.error('退出俱乐部失败，请重试')
+    }
+  }
 }
 
 const openMemberDialog = async (row: ClubApi.AppClubRespVO) => {

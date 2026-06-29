@@ -29,6 +29,15 @@ import cn.iocoder.yudao.module.clubpoints.controller.app.activity.vo.AppRegistra
 import cn.iocoder.yudao.module.clubpoints.controller.leader.activity.ClubPointActivityLeaderController;
 import cn.iocoder.yudao.module.clubpoints.controller.leader.activity.vo.LeaderActivityPageReqVO;
 import cn.iocoder.yudao.module.clubpoints.controller.leader.activity.vo.LeaderActivitySaveReqVO;
+import cn.iocoder.yudao.module.clubpoints.controller.leader.attendance.ClubPointAttendanceLeaderController;
+import cn.iocoder.yudao.module.clubpoints.controller.leader.attendance.vo.LeaderAttendanceCorrectReqVO;
+import cn.iocoder.yudao.module.clubpoints.controller.leader.attendance.vo.LeaderAttendancePageReqVO;
+import cn.iocoder.yudao.module.clubpoints.controller.leader.attendance.vo.LeaderAttendanceRespVO;
+import cn.iocoder.yudao.module.clubpoints.controller.leader.attendance.vo.LeaderAttendanceSupplementReqVO;
+import cn.iocoder.yudao.module.clubpoints.controller.leader.registration.ClubPointRegistrationLeaderController;
+import cn.iocoder.yudao.module.clubpoints.controller.leader.registration.vo.LeaderRegistrationPageReqVO;
+import cn.iocoder.yudao.module.clubpoints.controller.leader.registration.vo.LeaderRegistrationRespVO;
+import cn.iocoder.yudao.module.clubpoints.controller.leader.registration.vo.LeaderSpecialAbsenceReqVO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActivityDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointActivityRegistrationDO;
 import cn.iocoder.yudao.module.clubpoints.dal.dataobject.activity.ClubPointAttendanceCorrectionDO;
@@ -105,6 +114,8 @@ import static org.junit.jupiter.api.Assertions.fail;
         ClubPointRegistrationAppController.class,
         ClubPointAttendanceAppController.class,
         ClubPointActivityLeaderController.class,
+        ClubPointRegistrationLeaderController.class,
+        ClubPointAttendanceLeaderController.class,
         ClubPointActivityAdminController.class,
         ClubPointAttendanceAdminController.class,
         ClubPointRegistrationAdminController.class,
@@ -129,6 +140,10 @@ class ClubPointActivityControllerTest extends BaseDbUnitTest {
     private ClubPointAttendanceAppController appAttendanceController;
     @Resource
     private ClubPointActivityLeaderController leaderActivityController;
+    @Resource
+    private ClubPointRegistrationLeaderController leaderRegistrationController;
+    @Resource
+    private ClubPointAttendanceLeaderController leaderAttendanceController;
     @Resource
     private ClubPointActivityAdminController adminActivityController;
     @Resource
@@ -292,6 +307,69 @@ class ClubPointActivityControllerTest extends BaseDbUnitTest {
     }
 
     @Test
+    void leaderRegistrationAndAttendanceEndpointsShouldUseManagedClubScopeWithoutUserFacingClubId() {
+        login(6203L, "负责人6203");
+        ClubPointClubDO managedClub = insertClub("CLUB-M13-7123", "负责签到俱乐部");
+        ClubPointClubDO otherClub = insertClub("CLUB-M13-7124", "非负责签到俱乐部");
+        insertLeader(managedClub, 6203L, "负责人6203");
+        ClubPointActivityDO managedActivity = insertActivity(managedClub, "负责活动",
+                ClubPointActivityStatusEnum.PUBLISHED.getStatus(), BASE_TIME.plusDays(7));
+        ClubPointActivityDO otherActivity = insertActivity(otherClub, "非负责活动",
+                ClubPointActivityStatusEnum.PUBLISHED.getStatus(), BASE_TIME.plusDays(7));
+        ClubPointActivityRegistrationDO managedRegistration = insertRegistration(managedActivity, 6301L);
+        ClubPointActivityRegistrationDO otherRegistration = insertRegistration(otherActivity, 6302L);
+        ClubPointAttendanceRecordDO managedRecord = insertAttendanceRecord(managedRegistration,
+                ClubPointAttendanceTargetTypeEnum.CHECK_IN.getTargetType(),
+                ClubPointAttendanceSourceTypeEnum.SELF.getSourceType(), BASE_TIME.plusDays(7).minusMinutes(5));
+        insertAttendanceRecord(otherRegistration, ClubPointAttendanceTargetTypeEnum.CHECK_IN.getTargetType(),
+                ClubPointAttendanceSourceTypeEnum.SELF.getSourceType(), BASE_TIME.plusDays(7).minusMinutes(5));
+
+        LeaderRegistrationPageReqVO registrationReqVO = new LeaderRegistrationPageReqVO();
+        registrationReqVO.setPageNo(1);
+        registrationReqVO.setPageSize(10);
+        PageResult<LeaderRegistrationRespVO> registrationPage =
+                leaderRegistrationController.getRegistrationPage(registrationReqVO).getCheckedData();
+        assertEquals(1L, registrationPage.getTotal());
+        assertEquals(managedRegistration.getId(), registrationPage.getList().get(0).getId());
+
+        LeaderAttendancePageReqVO attendanceReqVO = new LeaderAttendancePageReqVO();
+        attendanceReqVO.setPageNo(1);
+        attendanceReqVO.setPageSize(10);
+        PageResult<LeaderAttendanceRespVO> attendancePage =
+                leaderAttendanceController.getAttendancePage(attendanceReqVO).getCheckedData();
+        assertEquals(1L, attendancePage.getTotal());
+        assertEquals(managedRecord.getId(), attendancePage.getList().get(0).getId());
+
+        Long supplementId = leaderAttendanceController.supplementAttendance(new LeaderAttendanceSupplementReqVO()
+                .setRegistrationId(managedRegistration.getId())
+                .setTargetType(ClubPointAttendanceTargetTypeEnum.CHECK_OUT.getTargetType())
+                .setOccurTime(BASE_TIME.plusDays(7).plusHours(1))
+                .setReason("负责人补录签退")).getCheckedData();
+        LeaderAttendanceCorrectReqVO correctReqVO = new LeaderAttendanceCorrectReqVO();
+        correctReqVO.setId(managedRecord.getId());
+        correctReqVO.setRegistrationId(managedRegistration.getId());
+        correctReqVO.setTargetType(ClubPointAttendanceTargetTypeEnum.CHECK_IN.getTargetType());
+        correctReqVO.setOccurTime(BASE_TIME.plusDays(7).plusMinutes(3));
+        correctReqVO.setReason("负责人修正签到");
+        Long correctId = leaderAttendanceController.correctAttendance(correctReqVO).getCheckedData();
+        leaderRegistrationController.markSpecialAbsence(new LeaderSpecialAbsenceReqVO()
+                .setId(managedRegistration.getId())
+                .setReason("负责人标记特殊缺席")).checkError();
+
+        assertNotNull(correctionMapper.selectById(supplementId));
+        assertNotNull(correctionMapper.selectById(correctId));
+        assertEquals(BASE_TIME.plusDays(7).plusMinutes(3),
+                attendanceRecordMapper.selectById(managedRecord.getId()).getRecordTime());
+        assertTrue(registrationMapper.selectById(managedRegistration.getId()).getSpecialAbsenceFlag());
+        assertServiceException(() -> leaderAttendanceController.supplementAttendance(
+                new LeaderAttendanceSupplementReqVO()
+                        .setRegistrationId(otherRegistration.getId())
+                        .setTargetType(ClubPointAttendanceTargetTypeEnum.CHECK_OUT.getTargetType())
+                        .setOccurTime(BASE_TIME.plusDays(7).plusHours(1))
+                        .setReason("越权补录")), CLUB_SCOPE_DENIED);
+    }
+
+    @Test
     void adminActivityManagementEndpointsShouldUseGlobalScopeAndDocumentedPaths() {
         login(1L, "管理员");
         Long ruleVersionId = seedActivityRules();
@@ -391,6 +469,10 @@ class ClubPointActivityControllerTest extends BaseDbUnitTest {
                 ClubPointAttendanceAppController.class.getAnnotation(RequestMapping.class).value()[0]);
         assertEquals("/clubpoints/leader/activity",
                 ClubPointActivityLeaderController.class.getAnnotation(RequestMapping.class).value()[0]);
+        assertEquals("/clubpoints/leader/registration",
+                ClubPointRegistrationLeaderController.class.getAnnotation(RequestMapping.class).value()[0]);
+        assertEquals("/clubpoints/leader/attendance",
+                ClubPointAttendanceLeaderController.class.getAnnotation(RequestMapping.class).value()[0]);
         assertEquals("/clubpoints/activity",
                 ClubPointActivityAdminController.class.getAnnotation(RequestMapping.class).value()[0]);
         assertEquals("/clubpoints/attendance",
@@ -431,6 +513,21 @@ class ClubPointActivityControllerTest extends BaseDbUnitTest {
         assertPostMapping(ClubPointActivityLeaderController.class, "cancelActivity",
                 new Class<?>[]{Long.class, String.class}, "/cancel",
                 "@ss.hasPermission('clubpoints:activity:cancel')");
+        assertGetMapping(ClubPointRegistrationLeaderController.class, "getRegistrationPage",
+                new Class<?>[]{LeaderRegistrationPageReqVO.class}, "/page",
+                "@ss.hasPermission('clubpoints:registration:query')");
+        assertPostMapping(ClubPointRegistrationLeaderController.class, "markSpecialAbsence",
+                new Class<?>[]{LeaderSpecialAbsenceReqVO.class}, "/mark-special-absence",
+                "@ss.hasPermission('clubpoints:registration:special-absence')");
+        assertGetMapping(ClubPointAttendanceLeaderController.class, "getAttendancePage",
+                new Class<?>[]{LeaderAttendancePageReqVO.class}, "/page",
+                "@ss.hasPermission('clubpoints:attendance:query')");
+        assertPostMapping(ClubPointAttendanceLeaderController.class, "supplementAttendance",
+                new Class<?>[]{LeaderAttendanceSupplementReqVO.class}, "/supplement",
+                "@ss.hasPermission('clubpoints:attendance:correct')");
+        assertPostMapping(ClubPointAttendanceLeaderController.class, "correctAttendance",
+                new Class<?>[]{LeaderAttendanceCorrectReqVO.class}, "/correct",
+                "@ss.hasPermission('clubpoints:attendance:correct')");
         assertGetMapping(ClubPointActivityAdminController.class, "getActivityPage",
                 new Class<?>[]{AdminActivityPageReqVO.class}, "/page",
                 "@ss.hasPermission('clubpoints:activity:query')");

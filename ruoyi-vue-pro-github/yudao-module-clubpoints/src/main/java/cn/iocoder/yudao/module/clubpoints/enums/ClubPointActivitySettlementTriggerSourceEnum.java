@@ -5,7 +5,7 @@ import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import java.util.Arrays;
 
 /**
- * 活动结算触发来源枚举
+ * 活动积分发放触发来源枚举
  */
 public enum ClubPointActivitySettlementTriggerSourceEnum implements ArrayValuable<Integer> {
 
