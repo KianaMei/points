@@ -25,3 +25,6 @@
 
 # Local backups created when vendoring an upstream repository into this project
 ruoyi-vue-pro-github/.git.bak*/
+
+# Verification-only assets (not product code, not shipped)
+ruoyi-vue-pro-github/yudao-ui/yudao-ui-admin-vue3/scripts/clubpoints-business-e2e/
